@@ -26,11 +26,11 @@ This project facilitates the automated transfer of images from a mobile device t
 
 2. **Update the `move.bat` File**:
    - Open the `move.bat` file in a text editor.
-   - Locate the variable `mobile_device_image_location`.
+   - Locate the variable `source_folder`.
    - Replace the placeholder path with the full path to your mobile device’s image directory.
    - Example:
      ```batch
-     set mobile_device_image_location="C:\Users\YourUsername\MobileDevice\DCIM"
+     set "source_folder=C:\Users\YourUsername\MobileDevice\DCIM"
      ```
 
 ### Step 3: Configure the Meshroom Image Directory
@@ -40,11 +40,11 @@ This project facilitates the automated transfer of images from a mobile device t
    - Copy the full path to this directory.
 
 2. **Update the `move.bat` File**:
-   - In the same `move.bat` file, locate the variable `meshroom_image_location`.
+   - In the same `move.bat` file, locate the variable `destination_folder`.
    - Replace the placeholder path with the full path to your Meshroom image directory.
    - Example:
      ```batch
-     set meshroom_image_location="C:\Users\YourUsername\Meshroom\Images"
+     set "destination_folder=C:\Users\YourUsername\Meshroom\Images"
      ```
 
 ### Step 4: Execute the Transfer
