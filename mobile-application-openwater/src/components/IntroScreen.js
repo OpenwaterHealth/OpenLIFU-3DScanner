@@ -1,5 +1,7 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
+  Alert,
+  BackHandler,
   Dimensions,
   Image,
   ImageBackground,
@@ -13,8 +15,10 @@ import {
 } from "react-native";
 import Toast from "react-native-toast-message";
 import AntDesign from "react-native-vector-icons/AntDesign";
+import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import AiFace from "../../assets/Image/AiFacePlain.png";
 import BGImage from "../../assets/Image/circle.png";
+import BatteryStatus from "./BatteryStatus";
 
 const { height: HEIGHT } = Dimensions.get("window");
 
@@ -35,6 +39,35 @@ const IntroScreen = ({ navigation }) => {
     }
   };
 
+  const handleBackButtonPress = () => {
+    Alert.alert(
+      "Exit App",
+      "Are you sure you want to exit?",
+      [
+        {
+          text: "No",
+          onPress: () => null, // Do nothing on "No"
+          style: "cancel",
+        },
+        {
+          text: "Yes",
+          onPress: () => BackHandler.exitApp(), // Exit the app on "Yes"
+        },
+      ],
+      { cancelable: false }
+    );
+    return true; // Prevent default back button behavior
+  };
+
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener(
+      "hardwareBackPress",
+      handleBackButtonPress
+    );
+
+    return () => backHandler.remove(); // Clean up the event listener
+  }, []);
+
   return (
     <ScrollView>
       <StatusBar
@@ -46,7 +79,12 @@ const IntroScreen = ({ navigation }) => {
         <ImageBackground source={BGImage} style={styles.bgStyle}>
           <View style={styles.LogoContainer}>
             <Text style={styles.LogoText}>3DMesh</Text>
+            <View style={styles.UsbConnector}>
+              <MaterialIcons name="usb" size={20} color={"#92E622"} />
+              <BatteryStatus />
+            </View>
           </View>
+
           <View style={styles.AiFaceContainer}>
             <Image source={AiFace} style={styles.AiFaceStyle} />
           </View>
@@ -105,7 +143,10 @@ const styles = StyleSheet.create({
   LogoContainer: {
     width: "100%",
     height: 80,
-    marginTop: 60,
+    marginTop: 40,
+    justifyContent: "space-around",
+    alignItems: "center",
+    flexDirection: "row",
   },
   LogoText: {
     color: "#92E622",
@@ -141,10 +182,11 @@ const styles = StyleSheet.create({
   SubHeaderTextContainer: {
     width: "70%",
     height: 40,
+    bottom: 10,
+    left: 5,
   },
   SubHeaderText: {
     color: "#92E622",
-
     fontSize: 14,
     fontStyle: "normal",
     fontWeight: "600",
@@ -202,5 +244,24 @@ const styles = StyleSheet.create({
 
     shadowOpacity: 0.2,
     shadowRadius: 4,
+  },
+  UsbConnector: {
+    width: 130,
+    height: 40,
+    borderRadius: 100,
+    borderColor: "#92E622",
+    justifyContent: "center",
+    alignItems: "center",
+    elevation: 10,
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    borderWidth: 2,
+    flexDirection: "row",
+  },
+  StatusText: {
+    color: "#92E622",
+    fontSize: 16,
+    fontWeight: "600",
+    marginLeft: 5,
   },
 });

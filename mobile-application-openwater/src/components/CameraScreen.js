@@ -10,6 +10,7 @@ import React, {
   useState,
 } from "react";
 import {
+  Alert,
   Image,
   Linking,
   Modal,
@@ -20,6 +21,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { MD3Colors, ProgressBar } from "react-native-paper";
 import AntDesign from "react-native-vector-icons/AntDesign";
 import Feather from "react-native-vector-icons/Feather";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
@@ -50,8 +52,14 @@ function CameraComponent({ navigation, route }) {
   const [cameraError, setCameraError] = useState(null);
   const [batteryState, setBatteryState] = useState(null);
 
+  const photoCountRef = useRef(0); // Add this ref to track the photo count directly
+
   const captureInterval = useRef(null);
   const cameraRef = useRef(null);
+
+  const TOTAL_IMAGES = 50;
+
+  const progress = useMemo(() => photoCount / TOTAL_IMAGES, [photoCount]);
 
   const handlePermissionRequest = useCallback(async () => {
     const cameraGranted = await requestCameraPermission();
@@ -89,6 +97,8 @@ function CameraComponent({ navigation, route }) {
     [batteryState]
   );
 
+  console.log(isCharging, "isCharging");
+
   const handleCameraError = useCallback((error) => {
     console.error("Camera Error: ", error);
     setCameraError("Error accessing camera. Please try again.");
@@ -122,27 +132,62 @@ function CameraComponent({ navigation, route }) {
   }, [faceData]);
 
   const capturePhoto = useCallback(async () => {
-    if (hasPermission && cameraRef.current !== null && photoCount < 200) {
+    if (
+      hasPermission &&
+      cameraRef.current !== null &&
+      photoCountRef.current < TOTAL_IMAGES
+    ) {
       try {
-        const photo = await cameraRef.current.takePictureAsync({ quality: 1 });
+        const photo = await cameraRef.current.takePictureAsync({
+          quality: 1,
+          skipProcessing: true, // Skip processing, which may include autofocus
+        });
         const asset = await MediaLibrary.createAssetAsync(photo.uri);
         setImageSource((prevImages) => [...prevImages, asset.uri]);
-        setPhotoCount((prevCount) => prevCount + 1);
+        setPhotoCount((prevCount) => prevCount + 1); // Update the state for rendering
+        photoCountRef.current += 1; // Update the ref immediately
       } catch (error) {
         console.error("Error capturing photo:", error);
       }
+    } else if (photoCountRef.current >= TOTAL_IMAGES) {
+      Alert.alert(
+        "Limit Reached",
+        "You have already captured 50 images. No more captures allowed.",
+        [{ text: "OK", onPress: () => console.log("Limit alert dismissed") }]
+      );
     }
-  }, [hasPermission, photoCount]);
+  }, [hasPermission]);
 
   const startCapturing = useCallback(() => {
-    if (hasPermission) {
+    if (hasPermission && photoCountRef.current < TOTAL_IMAGES) {
       if (captureInterval.current) {
         clearInterval(captureInterval.current);
       }
       setIsCapturing(true);
       captureInterval.current = setInterval(() => {
-        capturePhoto();
+        if (photoCountRef.current < TOTAL_IMAGES) {
+          capturePhoto();
+        } else {
+          clearInterval(captureInterval.current); // Stop interval when limit is reached
+          setIsCapturing(false);
+          Alert.alert(
+            "Limit Reached",
+            "You have captured 50 images, no more captures are allowed.",
+            [
+              {
+                text: "OK",
+                onPress: () => console.log("Capture limit reached"),
+              },
+            ]
+          );
+        }
       }, 1000);
+    } else if (photoCountRef.current >= TOTAL_IMAGES) {
+      Alert.alert(
+        "Limit Reached",
+        "You have already captured 50 images. No more captures allowed.",
+        [{ text: "OK", onPress: () => console.log("Limit alert dismissed") }]
+      );
     }
   }, [capturePhoto, hasPermission]);
 
@@ -162,6 +207,25 @@ function CameraComponent({ navigation, route }) {
     setIsCapturing(false);
     setShowCamera(false);
   }, []);
+
+  const confirmRetake = () => {
+    Alert.alert(
+      "Retake",
+      "Are you sure you want to retake the images?",
+      [
+        {
+          text: "Cancel",
+          onPress: () => console.log("Cancel Pressed"),
+          style: "cancel",
+        },
+        {
+          text: "Yes",
+          onPress: handleRetake, // Call handleRetake if confirmed
+        },
+      ],
+      { cancelable: false }
+    );
+  };
 
   // Adding a delay before remounting the camera
   const handleRetake = useCallback(() => {
@@ -196,6 +260,8 @@ function CameraComponent({ navigation, route }) {
       </View>
     );
   }
+  console.log(progress, "progress");
+  console.log(photoCount, "photoCount");
 
   return (
     <>
@@ -223,6 +289,7 @@ function CameraComponent({ navigation, route }) {
               style={StyleSheet.absoluteFill}
               type={Camera.Constants.Type.back}
               onFacesDetected={handleFacesDetected}
+              autoFocus={Camera.Constants.AutoFocus.off} // Disable autofocus
               faceDetectorSettings={{
                 mode: FaceDetector.FaceDetectorMode.fast,
                 detectLandmarks: FaceDetector.FaceDetectorLandmarks.all,
@@ -249,6 +316,10 @@ function CameraComponent({ navigation, route }) {
               />
             </View>
             <View style={styles.UserIdentifiedContainer}>
+              <View style={styles.ProgressBarStyles}>
+                <ProgressBar progress={progress} color={MD3Colors.error50} />
+              </View>
+
               <TouchableOpacity
                 style={[styles.progressBar, { flexDirection: "row" }]}
               >
@@ -262,6 +333,16 @@ function CameraComponent({ navigation, route }) {
               >
                 <MaterialIcons name="photo-library" size={20} color={"#fff"} />
                 <Text style={styles.progressText}>+ {photoCount} images</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.progressBar, { flexDirection: "row" }]}
+              >
+                <MaterialIcons name="usb" size={20} color={"#fff"} />
+                <Text style={styles.progressText}>
+                  {batteryState === Battery.BatteryState.CHARGING
+                    ? "Connected"
+                    : "Not Connected"}
+                </Text>
               </TouchableOpacity>
             </View>
             <View style={styles.bottomBar}>
@@ -293,7 +374,7 @@ function CameraComponent({ navigation, route }) {
                 ></TouchableOpacity>
               )}
               <TouchableOpacity style={styles.camPause} onPress={ForwardImages}>
-                <AntDesign name="rightcircleo" size={25} color="#fff" />
+                <Text style={styles.progressText}>Done</Text>
               </TouchableOpacity>
             </View>
           </>
@@ -326,7 +407,7 @@ function CameraComponent({ navigation, route }) {
                     borderRadius: 50,
                     flexDirection: "row",
                   }}
-                  onPress={handleRetake}
+                  onPress={confirmRetake}
                 >
                   <AntDesign name="back" size={15} color="#fff" />
                   <Text style={styles.retakeText}>Retake</Text>
@@ -442,7 +523,7 @@ const styles = StyleSheet.create({
   },
   camPause: {
     height: 50,
-    width: 50,
+    width: 70,
     borderRadius: 40,
     backgroundColor: "rgba(255, 255, 255, 0.12)",
     borderColor: "white",
@@ -464,7 +545,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#00000059",
     flexDirection: "row",
     paddingVertical: 8,
-    paddingHorizontal: 20,
+    paddingHorizontal: 7,
     justifyContent: "center",
     alignItems: "center",
     borderRadius: 20,
@@ -541,7 +622,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   UserIdentifiedContainer: {
-    width: 300,
+    width: "100%",
     height: 40,
     alignItems: "center",
     flexDirection: "row",
@@ -567,6 +648,12 @@ const styles = StyleSheet.create({
     bottom: 180,
     position: "absolute",
     left: 0,
+  },
+  ProgressBarStyles: {
+    bottom: 50,
+    left: 10,
+    position: "absolute",
+    width: "90%",
   },
 });
 
