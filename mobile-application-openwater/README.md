@@ -40,7 +40,7 @@ This project is a mobile application built with React Native, utilizing Expo for
 Navigate to the project directory and install the necessary dependencies:
 
 ```bash
-cd camera-face-detection-app
+cd mobile-application-openwater
 npm install
 ```
 
