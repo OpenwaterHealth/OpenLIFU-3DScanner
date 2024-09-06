@@ -3,16 +3,16 @@
 # SDK Version 49 -- node version 16
 
 # Steps to start
-
+- Install Node.js v16 from here https://nodejs.org/en/download
 - npm install
-- cd face_detector
+- cd mobile-application-openwater
 - npx expo start
 
 -
 
 ## Overview
 
-This project is a mobile application built with React Native, utilizing Expo for face detection and battery status monitoring. The app captures images automatically when a face is detected within the camera's view, and it provides various functionalities like saving images, detecting battery charging status, and more.
+This project is a mobile application built with React Native, utilizing Expo for face detection and battery status monitoring. The app captures images automatically when a face is detected within the camera's view, and it provides various functionalities like saving images, detecting USB status.
 
 ## Features
 
