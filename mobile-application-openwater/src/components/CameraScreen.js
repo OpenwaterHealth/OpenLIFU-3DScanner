@@ -1,6 +1,7 @@
 import * as Battery from "expo-battery";
 import { Camera } from "expo-camera";
 import * as FaceDetector from "expo-face-detector";
+import * as FileSystem from "expo-file-system";
 import * as MediaLibrary from "expo-media-library";
 import React, {
   useCallback,
@@ -11,6 +12,7 @@ import React, {
 } from "react";
 import {
   Alert,
+  AppState,
   Image,
   Linking,
   Modal,
@@ -27,14 +29,22 @@ import Feather from "react-native-vector-icons/Feather";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import UsbGif from "../../assets/Image/usb-connected.png";
 
+// Request Storage Permission
 async function requestStoragePermission() {
-  if (Platform.OS === "android") {
+  const permission = await MediaLibrary.getPermissionsAsync();
+  if (permission.granted) {
+    return true; // Permission already granted
+  }
+
+  if (permission.canAskAgain) {
     const { status } = await MediaLibrary.requestPermissionsAsync();
     return status === "granted";
   }
-  return true;
+
+  return false;
 }
 
+// Request Camera Permission
 async function requestCameraPermission() {
   const { status } = await Camera.requestCameraPermissionsAsync();
   return status === "granted";
@@ -51,13 +61,39 @@ function CameraComponent({ navigation, route }) {
   const [faceData, setFaceData] = useState([]);
   const [cameraError, setCameraError] = useState(null);
   const [batteryState, setBatteryState] = useState(null);
+  const [appState, setAppState] = useState(AppState.currentState); // State to track app state
+
+  // AppState handling to resume capturing when the app comes back to foreground
+  useEffect(() => {
+    const subscription = AppState.addEventListener("change", (nextAppState) => {
+      if (appState.match(/inactive|background/) && nextAppState === "active") {
+        console.log("App has come to the foreground!");
+        // Resume camera or capture process here
+        if (isCapturing) {
+          startCapturing(); // Resume capturing if it was active
+        }
+      } else if (nextAppState === "background") {
+        console.log("App is going to the background!");
+        // Pause capturing when app goes to the background
+        pauseCapturing();
+      }
+      setAppState(nextAppState);
+    });
+
+    // Cleanup the event listener
+    return () => {
+      subscription.remove();
+    };
+  }, [appState, isCapturing, startCapturing, pauseCapturing]);
+
+  console.log(appState, "appState");
 
   const photoCountRef = useRef(0); // Add this ref to track the photo count directly
 
   const captureInterval = useRef(null);
   const cameraRef = useRef(null);
 
-  const TOTAL_IMAGES = 50;
+  const TOTAL_IMAGES = 60;
 
   const progress = useMemo(() => photoCount / TOTAL_IMAGES, [photoCount]);
 
@@ -97,8 +133,6 @@ function CameraComponent({ navigation, route }) {
     [batteryState]
   );
 
-  console.log(isCharging, "isCharging");
-
   const handleCameraError = useCallback((error) => {
     console.error("Camera Error: ", error);
     setCameraError("Error accessing camera. Please try again.");
@@ -131,6 +165,19 @@ function CameraComponent({ navigation, route }) {
     });
   }, [faceData]);
 
+  // Create folder for referNumber
+  const createFolderIfNotExists = async (referNumber) => {
+    const folderUri = `${FileSystem.documentDirectory}${referNumber}`;
+    const folderInfo = await FileSystem.getInfoAsync(folderUri);
+
+    if (!folderInfo.exists) {
+      await FileSystem.makeDirectoryAsync(folderUri, { intermediates: true });
+    }
+
+    return folderUri;
+  };
+
+  // Capture photo and save in referNumber folder
   const capturePhoto = useCallback(async () => {
     if (
       hasPermission &&
@@ -138,23 +185,35 @@ function CameraComponent({ navigation, route }) {
       photoCountRef.current < TOTAL_IMAGES
     ) {
       try {
+        // Create folder based on referNumber
+        const folderUri = await createFolderIfNotExists(referNumber);
+
         const photo = await cameraRef.current.takePictureAsync({
           quality: 1,
-          skipProcessing: true, // Skip processing, which may include autofocus
+          skipProcessing: true,
         });
-        const asset = await MediaLibrary.createAssetAsync(photo.uri);
-        setImageSource((prevImages) => [...prevImages, asset.uri]);
-        setPhotoCount((prevCount) => prevCount + 1); // Update the state for rendering
-        photoCountRef.current += 1; // Update the ref immediately
+
+        // Move the photo to the folder
+        const fileName = `${folderUri}/${referNumber}_${photoCountRef.current}.jpg`;
+        await FileSystem.moveAsync({
+          from: photo.uri,
+          to: fileName,
+        });
+
+        // Add the moved image to Media Library (to make it visible in the gallery)
+        await MediaLibrary.createAssetAsync(fileName);
+
+        // Update state
+        setImageSource((prevImages) => [...prevImages, fileName]);
+        setPhotoCount((prevCount) => prevCount + 1);
+        photoCountRef.current += 1;
       } catch (error) {
         console.error("Error capturing photo:", error);
       }
     } else if (photoCountRef.current >= TOTAL_IMAGES) {
-      Alert.alert(
-        "Limit Reached",
-        "You have already captured 50 images. No more captures allowed.",
-        [{ text: "OK", onPress: () => console.log("Limit alert dismissed") }]
-      );
+      Alert.alert("Limit Reached", "You have already captured 60 images.", [
+        { text: "OK" },
+      ]);
     }
   }, [hasPermission]);
 
@@ -172,21 +231,16 @@ function CameraComponent({ navigation, route }) {
           setIsCapturing(false);
           Alert.alert(
             "Limit Reached",
-            "You have captured 50 images, no more captures are allowed.",
-            [
-              {
-                text: "OK",
-                onPress: () => console.log("Capture limit reached"),
-              },
-            ]
+            "You have captured 60 images, no more captures are allowed.",
+            [{ text: "OK" }]
           );
         }
       }, 1000);
     } else if (photoCountRef.current >= TOTAL_IMAGES) {
       Alert.alert(
         "Limit Reached",
-        "You have already captured 50 images. No more captures allowed.",
-        [{ text: "OK", onPress: () => console.log("Limit alert dismissed") }]
+        "You have already captured 60 images. No more captures allowed.",
+        [{ text: "OK" }]
       );
     }
   }, [capturePhoto, hasPermission]);
@@ -260,8 +314,6 @@ function CameraComponent({ navigation, route }) {
       </View>
     );
   }
-  console.log(progress, "progress");
-  console.log(photoCount, "photoCount");
 
   return (
     <>
@@ -289,7 +341,7 @@ function CameraComponent({ navigation, route }) {
               style={StyleSheet.absoluteFill}
               type={Camera.Constants.Type.back}
               onFacesDetected={handleFacesDetected}
-              autoFocus={Camera.Constants.AutoFocus.off} // Disable autofocus
+              autoFocus={Camera.Constants.AutoFocus.on} // Enable autofocus
               faceDetectorSettings={{
                 mode: FaceDetector.FaceDetectorMode.fast,
                 detectLandmarks: FaceDetector.FaceDetectorLandmarks.all,
@@ -354,15 +406,7 @@ function CameraComponent({ navigation, route }) {
               </TouchableOpacity>
               {isCapturing ? (
                 <TouchableOpacity
-                  style={[
-                    styles.camButton,
-                    {
-                      backgroundColor: "rgba(255, 255, 255, 0.12)",
-                      borderColor: "white",
-                      justifyContent: "center",
-                      alignItems: "center",
-                    },
-                  ]}
+                  style={[styles.camButton, styles.pauseButton]}
                   onPress={pauseCapturing}
                 >
                   <Feather name="pause" size={25} color="#fff" />
@@ -398,31 +442,14 @@ function CameraComponent({ navigation, route }) {
             <View style={styles.buttonContainer}>
               <View style={styles.buttons}>
                 <TouchableOpacity
-                  style={{
-                    backgroundColor: "#0D0D0D",
-                    width: 127,
-                    height: 60,
-                    justifyContent: "center",
-                    alignItems: "center",
-                    borderRadius: 50,
-                    flexDirection: "row",
-                  }}
+                  style={styles.retakeButton}
                   onPress={confirmRetake}
                 >
                   <AntDesign name="back" size={15} color="#fff" />
                   <Text style={styles.retakeText}>Retake</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={{
-                    backgroundColor: "#92E622",
-                    paddingHorizontal: 10,
-                    justifyContent: "center",
-                    alignItems: "center",
-                    borderRadius: 50,
-                    width: 205,
-                    height: 60,
-                    flexDirection: "row",
-                  }}
+                  style={styles.processButton}
                   onPress={() => setIsModalVisible(true)}
                 >
                   <AntDesign name="sharealt" size={18} color="#0D0D0D" />
@@ -507,6 +534,12 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     borderWidth: 4,
     borderColor: "white",
+  },
+  pauseButton: {
+    backgroundColor: "rgba(255, 255, 255, 0.12)",
+    borderColor: "white",
+    justifyContent: "center",
+    alignItems: "center",
   },
   camFlip: {
     height: 50,
@@ -630,17 +663,30 @@ const styles = StyleSheet.create({
     bottom: 120,
     position: "absolute",
   },
-  lottie: {
-    width: 256,
-    height: 256,
-    bottom: 60,
+  ProgressBarStyles: {
+    bottom: 50,
+    left: 10,
     position: "absolute",
+    width: "90%",
   },
-  textView: {
-    position: "absolute",
-    bottom: 170,
-    color: "#fff",
-    fontSize: 12,
+  retakeButton: {
+    backgroundColor: "#0D0D0D",
+    width: 127,
+    height: 60,
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 50,
+    flexDirection: "row",
+  },
+  processButton: {
+    backgroundColor: "#92E622",
+    paddingHorizontal: 10,
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 50,
+    width: 205,
+    height: 60,
+    flexDirection: "row",
   },
   indicatorStyles: {
     backgroundColor: "transparent",
@@ -648,12 +694,6 @@ const styles = StyleSheet.create({
     bottom: 180,
     position: "absolute",
     left: 0,
-  },
-  ProgressBarStyles: {
-    bottom: 50,
-    left: 10,
-    position: "absolute",
-    width: "90%",
   },
 });
 
