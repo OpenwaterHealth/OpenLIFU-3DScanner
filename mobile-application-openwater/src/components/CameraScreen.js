@@ -62,6 +62,7 @@ function CameraComponent({ navigation, route }) {
   const [cameraError, setCameraError] = useState(null);
   const [batteryState, setBatteryState] = useState(null);
   const [appState, setAppState] = useState(AppState.currentState); // State to track app state
+  const [extraImages, setExtraImages] = useState(0); // Track extra images to be taken
 
   // AppState handling to resume capturing when the app comes back to foreground
   useEffect(() => {
@@ -93,9 +94,12 @@ function CameraComponent({ navigation, route }) {
   const captureInterval = useRef(null);
   const cameraRef = useRef(null);
 
-  const TOTAL_IMAGES = 60;
+  const TOTAL_IMAGES_INITIAL = 60;
 
-  const progress = useMemo(() => photoCount / TOTAL_IMAGES, [photoCount]);
+  const progress = useMemo(
+    () => photoCount / TOTAL_IMAGES_INITIAL,
+    [photoCount]
+  );
 
   const handlePermissionRequest = useCallback(async () => {
     const cameraGranted = await requestCameraPermission();
@@ -179,10 +183,13 @@ function CameraComponent({ navigation, route }) {
 
   // Capture photo and save in referNumber folder
   const capturePhoto = useCallback(async () => {
+    // Use TOTAL_IMAGES to consider extraImages
+    const TOTAL_IMAGES = TOTAL_IMAGES_INITIAL + extraImages;
+
     if (
       hasPermission &&
       cameraRef.current !== null &&
-      photoCountRef.current < TOTAL_IMAGES
+      photoCountRef.current < TOTAL_IMAGES // Use TOTAL_IMAGES instead of TOTAL_IMAGES_INITIAL
     ) {
       try {
         // Create folder based on referNumber
@@ -211,39 +218,63 @@ function CameraComponent({ navigation, route }) {
         console.error("Error capturing photo:", error);
       }
     } else if (photoCountRef.current >= TOTAL_IMAGES) {
-      Alert.alert("Limit Reached", "You have already captured 60 images.", [
-        { text: "OK" },
+      // Adjust to TOTAL_IMAGES
+      Alert.alert("Limit Reached", "Do you want to take more pictures", [
+        { text: "Finish", onPress: ForwardImages },
+        {
+          text: "Take More",
+          onPress: handleTakeMore, // Call handleTakeMore if user wants to take more images
+        },
       ]);
     }
-  }, [hasPermission]);
+  }, [hasPermission, extraImages, referNumber]); // Add extraImages and referNumber as dependencies
 
   const startCapturing = useCallback(() => {
+    const TOTAL_IMAGES = TOTAL_IMAGES_INITIAL + extraImages; // Adjust the total images based on extraImages
+
     if (hasPermission && photoCountRef.current < TOTAL_IMAGES) {
       if (captureInterval.current) {
         clearInterval(captureInterval.current);
       }
       setIsCapturing(true);
+
       captureInterval.current = setInterval(() => {
         if (photoCountRef.current < TOTAL_IMAGES) {
           capturePhoto();
         } else {
           clearInterval(captureInterval.current); // Stop interval when limit is reached
+          captureInterval.current = null; // Reset interval
           setIsCapturing(false);
-          Alert.alert(
-            "Limit Reached",
-            "You have captured 60 images, no more captures are allowed.",
-            [{ text: "OK" }]
-          );
+          Alert.alert("Limit Reached", "Do you want to take more pictures?", [
+            { text: "Finish", onPress: ForwardImages },
+            {
+              text: "Take More",
+              onPress: handleTakeMore, // Call handleTakeMore if user wants to take more images
+            },
+          ]);
         }
       }, 1000);
     } else if (photoCountRef.current >= TOTAL_IMAGES) {
-      Alert.alert(
-        "Limit Reached",
-        "You have already captured 60 images. No more captures allowed.",
-        [{ text: "OK" }]
-      );
+      Alert.alert("Limit Reached", "Do you want to take more pictures?", [
+        { text: "Finish", onPress: ForwardImages },
+        {
+          text: "Take More",
+          onPress: handleTakeMore, // Call handleTakeMore if user wants to take more images
+        },
+      ]);
     }
-  }, [capturePhoto, hasPermission]);
+  }, [capturePhoto, hasPermission, extraImages]);
+
+  useEffect(() => {
+    if (extraImages > 0) {
+      startCapturing(); // Start capturing again when extraImages is updated
+    }
+  }, [extraImages, startCapturing]);
+
+  const handleTakeMore = useCallback(() => {
+    setExtraImages((prevExtraImages) => prevExtraImages + 20); // Just update the extra images count
+    console.log(extraImages, "extraImages");
+  }, []);
 
   const pauseCapturing = useCallback(() => {
     if (captureInterval.current) {
@@ -417,7 +448,25 @@ function CameraComponent({ navigation, route }) {
                   onPress={startCapturing}
                 ></TouchableOpacity>
               )}
-              <TouchableOpacity style={styles.camPause} onPress={ForwardImages}>
+              <TouchableOpacity
+                style={styles.camPause}
+                onPress={() => {
+                  Alert.alert(
+                    "Finish Scan",
+                    "Do you want to finish this scan or take more?",
+                    [
+                      {
+                        text: "Finish",
+                        onPress: ForwardImages, // Call ForwardImages when user clicks "Finish"
+                      },
+                      {
+                        text: "Take More",
+                        onPress: handleTakeMore, // Call handleTakeMore to take more images
+                      },
+                    ]
+                  );
+                }}
+              >
                 <Text style={styles.progressText}>Done</Text>
               </TouchableOpacity>
             </View>
