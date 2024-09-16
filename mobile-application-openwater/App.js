@@ -1,6 +1,7 @@
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { Camera } from "expo-camera";
+import { useKeepAwake } from "expo-keep-awake"; // Import useKeepAwake
 import * as MediaLibrary from "expo-media-library"; // Import Media Library for storage permission
 import React, { useEffect, useState } from "react";
 import { Button, Text, View } from "react-native";
@@ -11,6 +12,9 @@ import IntroScreen from "./src/components/IntroScreen";
 const Stack = createNativeStackNavigator();
 
 function App() {
+  // Use the hook to keep the screen awake
+  useKeepAwake();
+
   const [hasPermission, setHasPermission] = useState(null);
 
   // Request Camera and Media Storage Permissions

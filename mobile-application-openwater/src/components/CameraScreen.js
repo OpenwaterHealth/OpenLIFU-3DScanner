@@ -64,24 +64,22 @@ function CameraComponent({ navigation, route }) {
   const [appState, setAppState] = useState(AppState.currentState); // State to track app state
   const [extraImages, setExtraImages] = useState(0); // Track extra images to be taken
 
-  // AppState handling to resume capturing when the app comes back to foreground
+  // Add log in useEffect to check AppState changes
   useEffect(() => {
+    console.log("AppState change detected: ", appState);
     const subscription = AppState.addEventListener("change", (nextAppState) => {
       if (appState.match(/inactive|background/) && nextAppState === "active") {
         console.log("App has come to the foreground!");
-        // Resume camera or capture process here
         if (isCapturing) {
           startCapturing(); // Resume capturing if it was active
         }
       } else if (nextAppState === "background") {
         console.log("App is going to the background!");
-        // Pause capturing when app goes to the background
         pauseCapturing();
       }
       setAppState(nextAppState);
     });
 
-    // Cleanup the event listener
     return () => {
       subscription.remove();
     };
@@ -102,9 +100,20 @@ function CameraComponent({ navigation, route }) {
   );
 
   const handlePermissionRequest = useCallback(async () => {
-    const cameraGranted = await requestCameraPermission();
-    const storageGranted = await requestStoragePermission();
-    setHasPermission(cameraGranted && storageGranted);
+    try {
+      const cameraGranted = await requestCameraPermission();
+      const storageGranted = await requestStoragePermission();
+      setHasPermission(cameraGranted && storageGranted);
+      if (!cameraGranted || !storageGranted) {
+        Alert.alert(
+          "Permissions Required",
+          "Camera and storage permissions are required for this feature to work. Please enable them in your device settings.",
+          [{ text: "OK" }]
+        );
+      }
+    } catch (error) {
+      console.error("Error requesting permissions:", error);
+    }
   }, []);
 
   useEffect(() => {
@@ -170,6 +179,7 @@ function CameraComponent({ navigation, route }) {
   }, [faceData]);
 
   // Create folder for referNumber
+
   const createFolderIfNotExists = async (referNumber) => {
     const folderUri = `${FileSystem.documentDirectory}${referNumber}`;
     const folderInfo = await FileSystem.getInfoAsync(folderUri);
@@ -192,13 +202,16 @@ function CameraComponent({ navigation, route }) {
       photoCountRef.current < TOTAL_IMAGES // Use TOTAL_IMAGES instead of TOTAL_IMAGES_INITIAL
     ) {
       try {
+        console.log("Attempting to capture a photo...");
         // Create folder based on referNumber
         const folderUri = await createFolderIfNotExists(referNumber);
 
         const photo = await cameraRef.current.takePictureAsync({
           quality: 1,
           skipProcessing: true,
+          mute: true, // Mute the camera sound
         });
+        console.log("Photo captured successfully.");
 
         // Move the photo to the folder
         const fileName = `${folderUri}/${referNumber}_${photoCountRef.current}.jpg`;
@@ -218,6 +231,8 @@ function CameraComponent({ navigation, route }) {
         console.error("Error capturing photo:", error);
       }
     } else if (photoCountRef.current >= TOTAL_IMAGES) {
+      console.log("Reached the limit for total images.");
+
       // Adjust to TOTAL_IMAGES
       Alert.alert("Limit Reached", "Do you want to take more pictures", [
         { text: "Finish", onPress: ForwardImages },
@@ -229,31 +244,52 @@ function CameraComponent({ navigation, route }) {
     }
   }, [hasPermission, extraImages, referNumber]); // Add extraImages and referNumber as dependencies
 
-  const startCapturing = useCallback(() => {
+  const startCapturing = useCallback(async () => {
+    console.log("startCapturing called.");
     const TOTAL_IMAGES = TOTAL_IMAGES_INITIAL + extraImages; // Adjust the total images based on extraImages
 
-    if (hasPermission && photoCountRef.current < TOTAL_IMAGES) {
+    // Wait for the permission to be checked before starting
+    if (!hasPermission) {
+      const cameraGranted = await requestCameraPermission();
+      const storageGranted = await requestStoragePermission();
+      setHasPermission(cameraGranted && storageGranted);
+      if (!cameraGranted || !storageGranted) {
+        console.error("Permissions not granted.");
+        return;
+      }
+    }
+
+    if (photoCountRef.current < TOTAL_IMAGES) {
       if (captureInterval.current) {
         clearInterval(captureInterval.current);
       }
       setIsCapturing(true);
+      console.log("Starting to capture photos...");
 
+      // Updated captureInterval block
       captureInterval.current = setInterval(() => {
-        if (photoCountRef.current < TOTAL_IMAGES) {
-          capturePhoto();
-        } else {
-          clearInterval(captureInterval.current); // Stop interval when limit is reached
+        try {
+          if (photoCountRef.current < TOTAL_IMAGES) {
+            capturePhoto();
+          } else {
+            clearInterval(captureInterval.current); // Stop interval when limit is reached
+            captureInterval.current = null; // Reset interval
+            setIsCapturing(false);
+            Alert.alert("Limit Reached", "Do you want to take more pictures?", [
+              { text: "Finish", onPress: ForwardImages },
+              {
+                text: "Take More",
+                onPress: handleTakeMore, // Call handleTakeMore if user wants to take more images
+              },
+            ]);
+          }
+        } catch (error) {
+          console.error("Error during capture interval:", error);
+          clearInterval(captureInterval.current); // Stop interval on error
           captureInterval.current = null; // Reset interval
           setIsCapturing(false);
-          Alert.alert("Limit Reached", "Do you want to take more pictures?", [
-            { text: "Finish", onPress: ForwardImages },
-            {
-              text: "Take More",
-              onPress: handleTakeMore, // Call handleTakeMore if user wants to take more images
-            },
-          ]);
         }
-      }, 1000);
+      }, 2000); // Adjust the interval time here if needed
     } else if (photoCountRef.current >= TOTAL_IMAGES) {
       Alert.alert("Limit Reached", "Do you want to take more pictures?", [
         { text: "Finish", onPress: ForwardImages },
@@ -369,6 +405,7 @@ function CameraComponent({ navigation, route }) {
           <>
             <Camera
               ref={cameraRef}
+              mute={true}
               style={StyleSheet.absoluteFill}
               type={Camera.Constants.Type.back}
               onFacesDetected={handleFacesDetected}
@@ -695,8 +732,6 @@ const styles = StyleSheet.create({
   },
   faceBox: {
     position: "absolute",
-    borderWidth: 2,
-    borderColor: "#92E622",
     backgroundColor: "transparent",
   },
   errorText: {

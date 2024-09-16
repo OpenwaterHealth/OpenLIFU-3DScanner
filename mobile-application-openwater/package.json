@@ -29,7 +29,8 @@
     "react-native-screens": "~3.22.0",
     "react-native-toast-message": "^2.2.0",
     "react-native-web": "~0.19.6",
-    "expo-file-system": "~15.4.5"
+    "expo-file-system": "~15.4.5",
+    "expo-keep-awake": "~12.3.0"
   },
   "devDependencies": {
     "@babel/core": "^7.12.9"
