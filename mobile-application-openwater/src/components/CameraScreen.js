@@ -92,7 +92,7 @@ function CameraComponent({ navigation, route }) {
   const captureInterval = useRef(null);
   const cameraRef = useRef(null);
 
-  const TOTAL_IMAGES_INITIAL = 60;
+  const TOTAL_IMAGES_INITIAL = 120;
 
   const progress = useMemo(
     () => photoCount / TOTAL_IMAGES_INITIAL,
