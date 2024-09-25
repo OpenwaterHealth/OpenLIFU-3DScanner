@@ -13,13 +13,16 @@ import React, {
 import {
   Alert,
   AppState,
+  Dimensions,
   Image,
   StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   View,
 } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import UsbGif from "../../assets/Image/usb-connected.png";
 
 // Request Storage Permission
@@ -57,8 +60,10 @@ function CameraComponent({ navigation, route }) {
   const [progressBarColor, setProgressBarColor] = useState("green"); // Default color set to orange
   const [isPaused, setIsPaused] = useState(false); // Track if the scan is paused
   const [showStopOptions, setShowStopOptions] = useState(false); // Track if "Discard," "Capture More," and "Finish" buttons are visible
-
-  console.log(isCapturing, isPaused, showStopOptions, "***isCapturing*");
+  const [focusPosition, setFocusPosition] = useState({ x: 0, y: 0 });
+  const [showFocusUI, setShowFocusUI] = useState(false);
+  const [focusDepth, setFocusDepth] = useState(0);
+  const windowHeight = Dimensions.get("window").height;
 
   // Add log in useEffect to check AppState changes
   useEffect(() => {
@@ -137,6 +142,18 @@ function CameraComponent({ navigation, route }) {
       subscription.remove();
     };
   }, []);
+
+  const handleTapToFocus = (event) => {
+    const { locationX, locationY } = event.nativeEvent;
+    const calculatedFocusDepth = locationY / windowHeight;
+
+    setFocusPosition({ x: locationX, y: locationY });
+    setFocusDepth(calculatedFocusDepth);
+    setShowFocusUI(true);
+
+    // Hide the focus indicator after 1 second
+    setTimeout(() => setShowFocusUI(false), 1000);
+  };
 
   const isCharging = useMemo(
     () => batteryState === Battery.BatteryState.CHARGING,
@@ -387,15 +404,12 @@ function CameraComponent({ navigation, route }) {
     );
   }
 
-  console.log(!isCapturing && !showStopOptions && !isPaused, "start ");
-
-  console.log(isPaused && !showStopOptions, "resume");
-
   return (
     <>
       <StatusBar barStyle={"dark-content"} />
       <View style={styles.container}>
         {cameraError && <Text style={styles.errorText}>{cameraError}</Text>}
+
         <View style={styles.ProgressBarContainer}>
           <View
             style={[
@@ -419,15 +433,15 @@ function CameraComponent({ navigation, route }) {
           <Image style={styles.fullImage} source={UsbGif} resizeMode="cover" />
         )}
 
-        {showCamera ? (
-          <>
+        {showCamera && (
+          <GestureHandlerRootView style={StyleSheet.absoluteFill}>
             <Camera
               ref={cameraRef}
               mute={true}
               style={StyleSheet.absoluteFill}
               type={Camera.Constants.Type.back}
               onFacesDetected={handleFacesDetected}
-              autoFocus={Camera.Constants.AutoFocus.on} // Enable autofocus
+              autoFocus={Camera.Constants.AutoFocus.on}
               faceDetectorSettings={{
                 mode: FaceDetector.FaceDetectorMode.fast,
                 detectLandmarks: FaceDetector.FaceDetectorLandmarks.all,
@@ -436,8 +450,25 @@ function CameraComponent({ navigation, route }) {
                 tracking: true,
               }}
               onMountError={handleCameraError}
+              focusDepth={focusDepth}
             >
               {renderFaceBoxes}
+
+              <TouchableWithoutFeedback onPress={handleTapToFocus}>
+                <View style={styles.focusArea}>
+                  {showFocusUI && (
+                    <View
+                      style={[
+                        styles.focusIndicator,
+                        {
+                          left: focusPosition.x - 50,
+                          top: focusPosition.y - 50,
+                        },
+                      ]}
+                    />
+                  )}
+                </View>
+              </TouchableWithoutFeedback>
             </Camera>
 
             {(isCapturing || showStopOptions || isPaused) && (
@@ -448,7 +479,7 @@ function CameraComponent({ navigation, route }) {
                     {
                       width: `${progress * 100}%`,
                       backgroundColor: progressBarColor,
-                    }, // Dynamic color applied here
+                    },
                   ]}
                 />
                 <Text style={styles.ProgressText}>{`${photoCount}/${
@@ -459,7 +490,6 @@ function CameraComponent({ navigation, route }) {
 
             <View style={styles.bottomBar}>
               {!isCapturing && !showStopOptions && !isPaused ? (
-                // Initial Stage: Show Start Scan and Cancel buttons
                 <>
                   <TouchableOpacity
                     style={styles.camButton}
@@ -477,7 +507,7 @@ function CameraComponent({ navigation, route }) {
                   <TouchableOpacity
                     style={[styles.camButton, { backgroundColor: "red" }]}
                     onPress={() => {
-                      resetAllStates(); // Reset the state before navigating away
+                      resetAllStates();
                       navigation.navigate("IntroScreen");
                     }}
                   >
@@ -492,15 +522,13 @@ function CameraComponent({ navigation, route }) {
                   </TouchableOpacity>
                 </>
               ) : isCapturing ? (
-                // Scanning State: Show Stop Scan button
                 <TouchableOpacity
                   style={[styles.camButton, styles.pauseButton]}
-                  onPress={pauseCapturing} // When pressed, it will pause capturing
+                  onPress={pauseCapturing}
                 >
                   <Text style={styles.buttonTextStyles}>Stop Scan</Text>
                 </TouchableOpacity>
               ) : isPaused && !showStopOptions ? (
-                // Paused State: Show Resume Scan and Stop Scan buttons
                 <>
                   <TouchableOpacity
                     style={[styles.camButton, styles.resumeButton]}
@@ -510,13 +538,12 @@ function CameraComponent({ navigation, route }) {
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[styles.camButton, styles.pauseButton]}
-                    onPress={handleStopScan} // When pressed, it shows the final set of buttons
+                    onPress={handleStopScan}
                   >
                     <Text style={styles.buttonTextStyles}>Stop Scan</Text>
                   </TouchableOpacity>
                 </>
               ) : showStopOptions ? (
-                // Show Discard, Capture More, and Finish buttons
                 <>
                   <TouchableOpacity
                     style={[styles.camButton, styles.discardButton]}
@@ -539,19 +566,19 @@ function CameraComponent({ navigation, route }) {
                 </>
               ) : null}
             </View>
-          </>
-        ) : (
-          <>
-            <View style={styles.buttonContainer}>
-              <View style={styles.buttons}>
-                <TouchableOpacity style={styles.processButton}>
-                  <Text style={styles.processText}>
-                    {isCharging ? "Connected" : "Waiting For USB..."}
-                  </Text>
-                </TouchableOpacity>
-              </View>
+          </GestureHandlerRootView>
+        )}
+
+        {!showCamera && (
+          <View style={styles.buttonContainer}>
+            <View style={styles.buttons}>
+              <TouchableOpacity style={styles.processButton}>
+                <Text style={styles.processText}>
+                  {isCharging ? "Connected" : "Waiting For USB..."}
+                </Text>
+              </TouchableOpacity>
             </View>
-          </>
+          </View>
         )}
       </View>
     </>
@@ -573,6 +600,17 @@ const styles = StyleSheet.create({
     backgroundColor: "#F03D2F",
     justifyContent: "center",
     alignItems: "center",
+  },
+  focusArea: {
+    flex: 1,
+  },
+  focusIndicator: {
+    position: "absolute",
+    width: 100,
+    height: 100,
+    borderWidth: 2,
+    borderColor: "yellow",
+    backgroundColor: "transparent",
   },
   finishButton: {
     backgroundColor: "#04AA6D",
@@ -652,12 +690,13 @@ const styles = StyleSheet.create({
   bottomBar: {
     flexDirection: "column",
     position: "absolute",
-    bottom: 30,
+    bottom: 30, // Ensure this is a reasonable distance from the bottom
     justifyContent: "center",
     alignItems: "center",
-    width: "80%",
+    width: "100%", // Make sure this gives enough width to center the buttons
     zIndex: 1,
   },
+
   retakeText: {
     color: "#ffffff",
     paddingLeft: 6,
