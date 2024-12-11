@@ -59,24 +59,28 @@
         android:textColor="#000000"
         android:textSize="18sp" />
 
-    <Button
-        android:id="@+id/backToHomeButton"
-        android:layout_width="375dp"
-        android:layout_height="65dp"
-        android:layout_alignParentBottom="true"
-        android:layout_marginStart="16dp"
-        android:layout_marginLeft="16dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="16dp"
-        android:layout_marginRight="16dp"
-        android:backgroundTint="#4CAF50"
-        android:padding="16dp"
-        android:textSize="18sp"
-        android:textColor="#ffffff"
-        android:text="Back to home"
-        android:layout_gravity="bottom|center_horizontal"
-        android:layout_marginBottom="10dp"
-        android:visibility="gone"
-        />
 
+
+    <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/backToHomeButton"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="250dp"
+            android:layout_height="60dp"
+            android:layout_gravity="center_horizontal|bottom"
+            android:layout_marginBottom="16dp"
+            android:text="Back to home"
+            android:textAllCaps="false"
+            android:textColor="#000000"
+            android:textSize="16sp"
+            app:strokeColor="#000000"
+            app:strokeWidth="2dp"
+            app:cornerRadius="25dp"
+            android:visibility="visible"/>
+    </FrameLayout>
 </RelativeLayout>

@@ -5,7 +5,7 @@
         <shape android:shape="oval">
              <!-- White circle background -->
             <stroke
-                android:width="2dp"
+                android:width="0.5dp"
                 android:color="#FFFF" /> <!-- Red circle border -->
         </shape>
     </item>
@@ -15,7 +15,7 @@
         <shape android:shape="rectangle">
             <size
                 android:width="50dp"
-                android:height="2dp" />
+                android:height="0.5dp" />
             <solid android:color="#FF0000" /> <!-- Red horizontal line -->
         </shape>
     </item>
@@ -26,7 +26,7 @@
         <shape android:shape="rectangle">
             <size
                 android:width="50dp"
-                android:height="2dp" />
+                android:height="0dp" />
             <solid android:color="#FF0000" /> <!-- Red horizontal line -->
         </shape>
         </rotate>

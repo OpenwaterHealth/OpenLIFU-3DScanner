@@ -1,11 +1,13 @@
 package com.example.facedetectionar
 
 import android.Manifest
+import android.animation.ValueAnimator
 import android.content.ContentValues
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Camera
 import android.graphics.ImageFormat
 import android.graphics.Rect
 import android.graphics.YuvImage
@@ -42,12 +44,19 @@ import kotlin.math.sqrt
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
+import android.widget.ImageView
+import androidx.collection.emptyLongSet
 import com.google.ar.core.CameraConfig
 import com.google.ar.core.CameraConfigFilter
 import java.util.EnumSet
 import androidx.exifinterface.media.ExifInterface
 import com.google.ar.core.Config
 import com.google.ar.core.Session
+import com.google.ar.core.exceptions.NotYetAvailableException
+import com.google.mlkit.vision.common.InputImage
+import com.google.mlkit.vision.face.FaceDetection
+import com.google.mlkit.vision.face.FaceDetectorOptions
+import com.google.mlkit.vision.face.FaceLandmark
 
 class CustomArFragment : ArFragment() {
 
@@ -57,14 +66,15 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var arFragment: ArFragment
     private lateinit var startButton: Button
+    private lateinit var pauseRestartCapture: Button
     private lateinit var grayMaterial: Material
     private lateinit var greenMaterial: Material
     private val bulletNodes = mutableListOf<AnchorNode>() // Track bullet nodes
     private var closestBulletNode: AnchorNode? = null // Track closest bullet node
     private var referenceNumber: String = "DEFAULT_REF" // Default reference number
     private var imageCounter: Int = 1
+    private var IsCaptureStarted: Boolean = true
     private lateinit var distanceLabel: TextView
-    private var noseCoordinates: Triple<Float, Float, Float>? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         try {
@@ -81,20 +91,14 @@ class MainActivity : AppCompatActivity() {
             // Initialize UI components
             distanceLabel = findViewById(R.id.distanceLabel)
             arFragment = supportFragmentManager.findFragmentById(R.id.arFragment) as ArFragment
+            val leftArrowInstruction = findViewById<TextView>(R.id.leftArrowInstruction)
             startButton = findViewById(R.id.startButton)
+            pauseRestartCapture = findViewById(R.id.pauseRestartCapture)
             LogFileUtil.appendLog("AR Fragment and UI elements initialized")
 
             // Set the reference number from the previous screen
             referenceNumber = intent.getStringExtra("REFERENCE_NUMBER") ?: "DEFAULT_REF"
             LogFileUtil.appendLog("Reference number set: $referenceNumber")
-
-            // Retrieve nose coordinates from the intent
-            noseCoordinates = intent.getSerializableExtra("NOSE_COORDINATES") as? Triple<Float, Float, Float>
-            if (noseCoordinates != null) {
-                LogFileUtil.appendLog("Nose Coordinates received: $noseCoordinates")
-            } else {
-                LogFileUtil.appendLog("No Nose Coordinates Received")
-            }
 
             // Disable AR plane detection
             LogFileUtil.appendLog("Disabling plane detection and visual elements")
@@ -142,9 +146,36 @@ class MainActivity : AppCompatActivity() {
                     // Stop capturing Logcat output
                     LogFileUtil.stopLogcatCapture()
 
-                    startBulletTracking() // Start tracking bullets
 
 
+                    // Show the instruction
+                    leftArrowInstruction.visibility = View.VISIBLE
+                    findViewById<ImageView>(R.id.targetCircle).visibility = View.VISIBLE
+                    // Start the blinking animation
+                    startBlinkingAnimation(leftArrowInstruction)
+
+                    // Hide it after 3 seconds
+                    leftArrowInstruction.postDelayed({
+                        leftArrowInstruction.visibility = View.GONE
+                        startBulletTracking() // Start tracking bullets
+                        pauseRestartCapture.visibility = View.VISIBLE
+                    }, 3000) // 3000 milliseconds = 3 seconds
+
+                }
+                pauseRestartCapture.setOnClickListener {
+                    if (IsCaptureStarted) {
+                        IsCaptureStarted = false
+                        pauseRestartCapture.text = "Start"
+
+                        // Change to red background with white border
+                        pauseRestartCapture.setTextColor(ContextCompat.getColor(this, android.R.color.white))
+                    } else {
+                        IsCaptureStarted = true
+                        pauseRestartCapture.text = "Pause"
+
+                        // Change to white background with red border
+                        pauseRestartCapture.setTextColor(ContextCompat.getColor(this, android.R.color.holo_red_dark))
+                    }
                 }
             }
 
@@ -156,6 +187,8 @@ class MainActivity : AppCompatActivity() {
                 LogFileUtil.appendLog("Camera permission already granted")
             }
 
+            startFaceDetection()
+
             LogFileUtil.appendLog("AR screen setup completed successfully")
         } catch (e: Exception) {
             LogFileUtil.appendLog("Exception in onCreate: ${e.message}")
@@ -163,8 +196,48 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun startBlinkingAnimation(textView: TextView) {
+        val animator = ValueAnimator.ofFloat(1f, 0f, 1f) // From fully visible to invisible to visible
+        animator.duration = 1000 // 500ms per blink
+        animator.repeatCount = ValueAnimator.INFINITE // Keep repeating
+        animator.addUpdateListener { animation ->
+            val alphaValue = animation.animatedValue as Float
+            textView.alpha = alphaValue // Set alpha value for blinking effect
+            textView.elevation = 10 * (1 - alphaValue) // Simulate shadow elevation
+        }
+        animator.start()
+    }
+    private var frameCounter = 0
+    private var isFaceDetected = false
+    private fun startFaceDetection() {
+        LogFileUtil.appendLog("AR screen: face detection started")
 
+        // Initially hide start button and targetCircle
+        startButton.visibility = View.GONE
+        findViewById<ImageView>(R.id.targetCircle).visibility = View.GONE
+        distanceLabel.text = "Face detecting"
 
+        arFragment.arSceneView.scene.addOnUpdateListener {
+            frameCounter++
+            if (frameCounter == 10 && !isFaceDetected) { // Process every 10th frame
+                try {
+                    val frame: Frame = arFragment.arSceneView.arFrame ?: return@addOnUpdateListener
+                    val cameraImage = frame.acquireCameraImage()
+
+                    // Process face detection
+                    val bitmapImage = convertImageToBitmap(cameraImage)
+                    processBitmapForFaceDetection(bitmapImage)
+
+                    cameraImage.close()
+                    frameCounter = 0
+                } catch (e: NotYetAvailableException) {
+                    Log.e("FaceDetection", "No image available for this frame: ${e.message}")
+                } catch (e: Exception) {
+                    Log.e("FaceDetection", "Unexpected error: ${e.message}")
+                }
+            }
+        }
+    }
     private fun preRenderMaterials(onComplete: () -> Unit) {
         try{
             MaterialFactory.makeOpaqueWithColor(this, com.google.ar.sceneform.rendering.Color(android.graphics.Color.GRAY))
@@ -199,7 +272,7 @@ class MainActivity : AppCompatActivity() {
 
             // Calculate position 1 meter in front of the camera
             //val forwardVector = floatArrayOf(UP/DOWN, 0f, CLOSE/FAR)
-            val forwardVector = floatArrayOf(-0.14f, 0f, -0.4f)
+            val forwardVector = floatArrayOf(-0.22f, 0f, -0.5f)
 
             val cameraPosition = cameraPose.transformPoint(forwardVector)
 
@@ -288,6 +361,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+
     private fun addBulletIdText(parentNode: AnchorNode, bulletId: Int) {
         ViewRenderable.builder()
             .setView(this, R.layout.bullet_id_text) // Layout for bullet ID text
@@ -310,6 +384,7 @@ class MainActivity : AppCompatActivity() {
     private fun startBulletTracking() {
         try{
             LogFileUtil.appendLog("AR screen: step 8")
+            var skipFrame = 0;
             arFragment.arSceneView.scene.addOnUpdateListener {
                 val frame: Frame = arFragment.arSceneView.arFrame ?: return@addOnUpdateListener
                 val cameraPose = frame.camera.pose
@@ -317,9 +392,11 @@ class MainActivity : AppCompatActivity() {
 
                 var closestDistance = Float.MAX_VALUE
                 var closestNode: AnchorNode? = null
+                skipFrame++;
 
                 bulletNodes.forEach { bulletNode ->
-                    val bulletPosition = bulletNode.worldPosition // Get global position of the bullet
+                    val bulletPosition =
+                        bulletNode.worldPosition // Get global position of the bullet
                     val distance = calculateDistance(cameraPosition, bulletPosition)
 
                     // Log distances for debugging
@@ -327,29 +404,47 @@ class MainActivity : AppCompatActivity() {
 
                     if (distance < closestDistance) { // Find the closest bullet
                         closestDistance = distance
-                        closestNode = bulletNode
+
 
                         // Update the distance label based on the distance
                         when {
                             distance < 0.2f -> {
                                 distanceLabel.text = "Too Close"
-                                distanceLabel.setTextColor(ContextCompat.getColor(this, android.R.color.holo_red_dark)) // Set text color to red
+                                distanceLabel.setTextColor(
+                                    ContextCompat.getColor(
+                                        this,
+                                        android.R.color.holo_red_dark
+                                    )
+                                ) // Set text color to red
                             }
+
                             distance > 0.4f -> {
                                 distanceLabel.text = "Too Far"
-                                distanceLabel.setTextColor(ContextCompat.getColor(this, android.R.color.holo_red_dark)) // Set text color to red
+                                distanceLabel.setTextColor(
+                                    ContextCompat.getColor(
+                                        this,
+                                        android.R.color.holo_red_dark
+                                    )
+                                ) // Set text color to red
                             }
-                            else -> {
+
+                            distance > 0.2f && distance < 0.4f-> {
+                                closestNode = bulletNode
                                 distanceLabel.text = "Good"
-                                distanceLabel.setTextColor(ContextCompat.getColor(this, android.R.color.holo_green_dark)) // Set text color to green
+                                distanceLabel.setTextColor(
+                                    ContextCompat.getColor(
+                                        this,
+                                        android.R.color.holo_green_dark
+                                    )
+                                ) // Set text color to green
+                                if (skipFrame > 10 && IsCaptureStarted) {
+                                    // Update bullet colors
+                                    updateBulletColors(closestNode)
+                                }
                             }
                         }
-
                     }
                 }
-
-                // Update bullet colors
-                updateBulletColors(closestNode)
             }
         }
         catch (e: Exception)
@@ -357,6 +452,115 @@ class MainActivity : AppCompatActivity() {
             LogFileUtil.appendLog("AR screen startBulletTracking: ${e.message}")
         }
     }
+
+
+
+    private fun processBitmapForFaceDetection(bitmap: Bitmap) {
+        try {
+            val inputImage = InputImage.fromBitmap(bitmap, 0)
+
+            val faceDetectorOptions = FaceDetectorOptions.Builder()
+                .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_FAST)
+                .setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_ALL)
+                .build()
+
+            val faceDetector = FaceDetection.getClient(faceDetectorOptions)
+
+            faceDetector.process(inputImage)
+                .addOnSuccessListener { faces ->
+                    if (faces.isNotEmpty()) {
+                        val face = faces[0] // Assuming the first detected face is the one we want
+                        val nose = face.getLandmark(FaceLandmark.NOSE_BASE)?.position
+                        val leftEye = face.getLandmark(FaceLandmark.LEFT_EYE)?.position
+                        val rightEye = face.getLandmark(FaceLandmark.RIGHT_EYE)?.position
+
+                        if (nose != null && leftEye != null && rightEye != null) {
+                            // Calculate face center
+                            val faceCenterX = (nose.x + leftEye.x + rightEye.x) / 3
+                            val faceCenterY = (nose.y + leftEye.y + rightEye.y) / 3
+
+                            // Get screen dimensions
+                            val screenWidth = bitmap.width
+                            val screenHeight = bitmap.height
+
+                            // Define the circle properties
+                            val circleCenterX = screenWidth / 2f
+                            val circleCenterY = screenHeight / 2f
+                            val circleRadius = screenWidth / 6f // Adjust as needed
+
+                            // Calculate the distance between face center and circle center
+                            val distanceToCenter = Math.sqrt(
+                                Math.pow((faceCenterX - circleCenterX).toDouble(), 2.0) +
+                                        Math.pow((faceCenterY - circleCenterY).toDouble(), 2.0)
+                            ).toFloat()
+
+                            // Check face alignment
+                            when {
+                                //distanceToCenter > circleRadius -> {
+                                //    distanceLabel.text = "Align Face in Circle :"+ face.boundingBox.width()
+                                //    distanceLabel.setTextColor(ContextCompat.getColor(this, android.R.color.holo_red_dark))
+                                //}
+                                face.boundingBox.width() < 199 -> { // Adjust minimum size for "Too Close"
+                                    if(!isFaceDetected) {
+                                        distanceLabel.text = "Too Far"
+                                        distanceLabel.setTextColor(
+                                            ContextCompat.getColor(
+                                                this,
+                                                android.R.color.holo_red_dark
+                                            )
+                                        )
+                                    }
+                                }
+                                face.boundingBox.width() > 200 && face.boundingBox.width() < 230 -> { // Adjust maximum size for "Too Far"
+                                    isFaceDetected = true
+                                    distanceLabel.text = "Good"
+                                    distanceLabel.setTextColor(ContextCompat.getColor(this, android.R.color.holo_green_dark))
+                                    startButton.visibility = View.VISIBLE
+                                    isFaceDetected = true
+                                }
+                                face.boundingBox.width() > 230 ->  {
+                                    if(!isFaceDetected) {
+                                        distanceLabel.text = "Too Close"
+                                        distanceLabel.setTextColor(
+                                            ContextCompat.getColor(
+                                                this,
+                                                android.R.color.holo_red_dark
+                                            )
+                                        )
+                                    }
+                                }
+                                else ->{
+                                    if(!isFaceDetected) {
+                                        distanceLabel.text = "Too Far"
+                                        distanceLabel.setTextColor(
+                                            ContextCompat.getColor(
+                                                this,
+                                                android.R.color.holo_red_dark
+                                            )
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                .addOnFailureListener { e ->
+                    Log.e("FaceDetection", "Face detection failed: ${e.message}")
+                    distanceLabel.text = "Detecting Face..."
+                    distanceLabel.setTextColor(ContextCompat.getColor(this, android.R.color.black))
+                    startButton.visibility = View.GONE
+                    findViewById<ImageView>(R.id.targetCircle).visibility = View.GONE
+                }
+        } catch (e: Exception) {
+            Log.e("FaceDetection", "Error in processing bitmap for face detection: ${e.message}")
+            distanceLabel.text = "Detecting Face..."
+            distanceLabel.setTextColor(ContextCompat.getColor(this, android.R.color.black))
+            startButton.visibility = View.GONE
+            findViewById<ImageView>(R.id.targetCircle).visibility = View.GONE
+        }
+    }
+
+
     val greenBulletList = mutableSetOf<AnchorNode>() // Ensures no duplicate entries
 
     private fun updateBulletColors(closestNode: AnchorNode?) {

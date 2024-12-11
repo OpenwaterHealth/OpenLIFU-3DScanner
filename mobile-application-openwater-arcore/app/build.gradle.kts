@@ -52,8 +52,9 @@ android {
 dependencies {
 
     implementation(libs.androidx.core.ktx)
-    implementation("com.google.ar:core:1.37.0")
+    implementation("com.google.ar:core")
     implementation("com.google.mlkit:face-detection:16.1.7")
+    implementation("androidx.cardview:cardview:1.0.0")
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
@@ -70,6 +71,7 @@ dependencies {
     implementation(libs.androidx.camera.lifecycle)
     implementation(libs.play.services.vision)
     implementation(libs.androidx.camera.view)
+    implementation(libs.material)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

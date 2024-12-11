@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <!-- AR Fragment -->
     <fragment
@@ -12,47 +13,107 @@
 
     <TextView
         android:id="@+id/distanceLabel"
-        android:layout_width="105dp"
+        android:layout_width="140dp"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="10dp"
-        android:layout_marginLeft="10dp"
+        android:layout_marginTop="15dp"
+        android:layout_marginLeft="15dp"
         android:background="@drawable/textview_background"
-        android:padding="6dp"
+        android:padding="4dp"
         android:text="Status"
         android:textColor="#000000"
         android:textAlignment="center"
-        android:textSize="15sp" />
+        android:textSize="11sp" />
 
 
     <ImageView
         android:id="@+id/targetCircle"
-        android:layout_width="50dp"
-        android:layout_height="50dp"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
         android:layout_gravity="center"
-        android:layout_marginTop="-200dp"
-        android:src="@drawable/target_with_cross" />
+        android:layout_marginTop="-260dp"
+        android:src="@drawable/target_with_cross"
+        android:visibility="visible"/>
+
+    <ImageView
+        android:id="@+id/faceRing"
+        android:layout_width="200dp"
+        android:layout_height="200dp"
+        android:layout_gravity="center"
+        android:layout_marginTop="-50dp"
+        android:background="@drawable/circle_ring"
+        android:visibility="gone" />
 
 
+    <!-- Left Arrow and Instruction -->
 
     <!-- Start Button -->
-    <Button
-        android:id="@+id/startButton"
-        android:layout_width="375dp"
-        android:layout_height="65dp"
-        android:layout_alignParentBottom="true"
-        android:layout_marginStart="16dp"
-        android:layout_marginLeft="16dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="16dp"
-        android:layout_marginRight="16dp"
-        android:backgroundTint="#4CAF50"
-        android:padding="16dp"
-        android:textSize="18sp"
-        android:textColor="#ffffff"
-        android:text="Start Scan "
-        android:layout_gravity="bottom|center_horizontal"
-        android:layout_marginBottom="10dp" />
+    <TextView
+        android:id="@+id/leftArrowInstruction"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginTop="0dp"
+        android:drawableStart="@drawable/ic_left_arrow"
+        android:drawablePadding="8dp"
+        android:gravity="center"
+        android:padding="8dp"
+        android:text="Start Moving Left"
+        android:textColor="#FFFF"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:visibility="gone"/>
+
+
+    <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/startButton"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="250dp"
+            android:layout_height="60dp"
+            android:layout_gravity="center_horizontal|bottom"
+            android:layout_marginBottom="16dp"
+            android:text="Start Scan"
+            android:textAllCaps="false"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            app:strokeColor="#FFFFFF"
+            app:strokeWidth="2dp"
+            app:cornerRadius="25dp"
+            android:visibility="gone"/>
+    </FrameLayout>
+
+
+
+
+    <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/pauseRestartCapture"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="160dp"
+            android:layout_height="60dp"
+            android:layout_gravity="center_horizontal|bottom"
+            android:layout_marginBottom="16dp"
+            android:text="Pause"
+            android:textAllCaps="false"
+            android:textColor="#FF5722"
+            android:textSize="16sp"
+            app:strokeColor="#FFFFFF"
+            app:strokeWidth="2dp"
+            app:cornerRadius="25dp"
+            android:visibility="gone"/>
+    </FrameLayout>
+
+
+
 
 </FrameLayout>

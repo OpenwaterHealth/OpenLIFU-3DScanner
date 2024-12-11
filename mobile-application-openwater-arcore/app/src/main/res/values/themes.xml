@@ -2,7 +2,7 @@
 <resources>
 
     <style name="Theme.FaceDetectionAR" parent="android:Theme.Material.Light.NoActionBar" />
-    <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
+    <style name="AppTheme" parent="Theme.MaterialComponents.Light.NoActionBar">
         <item name="android:windowFullscreen">true</item>
     </style>
 </resources>
