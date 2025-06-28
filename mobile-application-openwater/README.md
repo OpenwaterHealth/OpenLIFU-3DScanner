@@ -1,109 +1,121 @@
-# Auto image capturing and face detection
+Here's a `README.md` file formatted for GitHub:
 
-# SDK Version 49 -- node version 16
+markdown
+# React Native Android Setup Guide
 
-# Steps to start
-- Install Node.js v16 from here https://nodejs.org/en/download
-- npm install
-- cd mobile-application-openwater
-- npx expo start
+A step-by-step guide to set up and run a React Native project for Android using **Node.js v20**.
 
--
+---
 
-## Overview
+## Prerequisites
 
-This project is a mobile application built with React Native, utilizing Expo for face detection and battery status monitoring. The app captures images automatically when a face is detected within the camera's view, and it provides various functionalities like saving images, detecting USB status.
+Ensure you have the following installed on your system:
 
-## Features
+- **Node.js v20:**  
+  Install Node.js v20.x and ensure `npm` is included.
 
-- **Face Detection**: Uses Expo's FaceDetector API to detect faces in real-time through the camera.
-- **USB Detection**: Monitors the device's USB status, providing feedback on whether the device is connected or not.
-- **Automatic Image Capture**: Automatically captures photos at intervals when a face is detected.
-- **Gallery Integration**: Allows users to view captured images and open the device's gallery.
-- **Responsive UI**: The app is optimized for various screen sizes, ensuring a consistent user experience.
+- **React Native CLI:**  
+  Install globally:
+  bash
+  npm install -g react-native-cli
+  
 
-## Installation
+- **Java Development Kit (JDK):**  
+  Use JDK 11 or 17.
 
-### Prerequisites
+- **Android Studio:**  
+  Install Android SDK, Platform Tools, and AVD.  
+  Ensure `ANDROID_HOME` is set in your environment variables:
+  bash
+  export ANDROID_HOME=$HOME/Android/Sdk
+  export PATH=$PATH:$ANDROID_HOME/emulator:$ANDROID_HOME/tools:$ANDROID_HOME/tools/bin:$ANDROID_HOME/platform-tools
+  
 
-- **Node.js**: Make sure you have Node.js installed on your system.
-- **Expo CLI**: You need to have Expo CLI installed globally. You can install it using the following command:
+---
 
-  ```bash
-  npm install -g expo-cli
-  ```
+## Getting Started
 
-### Clone the Repository
+### 1. Clone the Repository
+Clone this project using:
+bash
+git clone <repository-url>
 
-### Install Dependencies
 
-Navigate to the project directory and install the necessary dependencies:
+### 2. Navigate to the Project Directory
+bash
+cd <project-directory>
 
-```bash
-cd mobile-application-openwater
+
+### 3. Install Dependencies
+Run the following command to install all dependencies:
+bash
 npm install
-```
 
-### Run the Application
 
-To start the application, run the following command:
+### 4. Start Metro Bundler
+Start the React Native Metro server:
+bash
+npx react-native start
 
-```bash
-expo start
-```
 
-This will open the Expo development tools in your browser. You can then run the app on an Android/iOS emulator or scan the QR code with the Expo Go app on your mobile device.
+### 5. Run the App on Android
+- Start an emulator from Android Studio **or** connect a physical device via USB.
+- Run the project on the Android emulator or connected device:
+  bash
+  npx react-native run-android
+  
 
-## Usage
+---
 
-### Face Detection
+## Common Issues and Solutions
 
-- **Automatic Detection**: Once the app is running, it will automatically detect faces in front of the camera.
-- **Photo Capture**: The app captures photos at intervals when a face is detected, and these images are stored in the device's media library.
+### Metro Bundler Not Running
+Ensure the Metro server is running:
+bash
+npx react-native start
 
-### USB Status
 
-- If the device is connected, a USB connection message is shown, otherwise, a prompt to connect the USB is displayed.
+### Android Device Not Detected
+Check if `adb` detects your device:
+bash
+adb devices
 
-### Gallery Access
 
-- Users can access the device's gallery directly from the app to view the captured images.
+### Build Errors
+1. Verify `ANDROID_HOME` is set up correctly.
+2. Clear the cache and rebuild:
+   bash
+   npx react-native start --reset-cache
+   npx react-native run-android
+   
 
-## Configuration
+---
 
-### Permissions
+## Useful Commands
 
-Ensure the following permissions are requested in your app:
+| Command                                  | Description                       |
+|------------------------------------------|-----------------------------------|
+| `npx react-native start`                 | Start Metro bundler.              |
+| `npx react-native run-android`           | Build and run the app on Android. |
+| `npm install <package-name>`             | Install a new dependency.         |
+| `npx react-native link`                  | Link native modules.              |
+| `adb devices`                            | List connected Android devices.   |
 
-- **Camera**: For face detection and image capture.
-- **Media Library**: For saving images and accessing the gallery.
-- **Battery**: For monitoring the battery status with USB. to get USB status
+---
 
-### Modifying Face Detection
+## Environment Details
 
-To customize the face detection functionality, you can adjust the settings in the `handleFacesDetected` callback. The current implementation draws rectangles around detected faces.
+- **Node.js Version**: 20.x
+- **React Native Version**: Check in `package.json`
+- **Java Development Kit**: JDK 11 or 17
+- **Android SDK**: Installed via Android Studio
 
-### Customization
+---
 
-You can customize various aspects of the app, such as:
+## License
 
-- **Face Box Color**: Modify the color of the bounding box drawn around detected faces in the styles.
-- **Capture Interval**: Adjust the frequency of photo captures by changing the interval in the `startCapturing` function.
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
-## Troubleshooting
+---
 
-### Common Issues
-
-- **Permission Denied**: Ensure that the app has the necessary permissions to access the camera and media library.
-- **Camera Error**: If the camera fails to initialize, check the device's camera settings and try restarting the app.
-
-### Debugging
-
-Use the React Native debugger and Expo's logging to troubleshoot any issues. The app logs useful information to the console for debugging purposes.
-
-## Acknowledgments
-
-- **Expo**: For providing a powerful and easy-to-use framework for building mobile apps.
-- **React Native**: For enabling cross-platform mobile development.
-- **Vector Icons**: The app uses icons from the `react-native-vector-icons` library for a better UI experience.
-
+Happy Coding! 🎉
