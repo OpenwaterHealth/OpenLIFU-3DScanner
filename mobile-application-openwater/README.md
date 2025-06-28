@@ -5,7 +5,7 @@
 # Steps to start
 - Install Node.js v16 from here https://nodejs.org/en/download
 - npm install
-- cd mobile-application-openwater
+- cd mobile-application-openwater-v2
 - npx expo start
 
 -
@@ -40,7 +40,7 @@ This project is a mobile application built with React Native, utilizing Expo for
 Navigate to the project directory and install the necessary dependencies:
 
 ```bash
-cd mobile-application-openwater
+cd mobile-application-openwater-v2
 npm install
 ```
 

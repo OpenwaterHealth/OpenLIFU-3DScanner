@@ -50,7 +50,7 @@ const styles = StyleSheet.create({
   },
   text: {
     color: "#92E622",
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: "600",
   },
 });

@@ -44,8 +44,7 @@ export default function FaceDetection({ navigation, route }) {
   const handleFacesDetected = useCallback(
     ({ faces }) => {
       if (faces.length > 0) {
-        // console.log("Faces detected:", faces);
-        faceDataRef.current = faces; // Update face data reference
+        faceDataRef.current = faces;
 
         if (!faceDetected) {
           setFaceDetected(true);
@@ -74,7 +73,6 @@ export default function FaceDetection({ navigation, route }) {
     return faceDataRef.current.map((face, index) => {
       const { origin, size } = face.bounds;
 
-      // Calculate the left, top, width, and height of the square
       const left = origin.x;
       const top = origin.y;
       const width = size.width;
@@ -159,10 +157,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   successMessageText: {
-    fontSize: 12,
+    fontSize: 15,
     color: "#fff",
     backgroundColor: "#00000059",
-    padding: 10,
+    padding: 20,
     borderRadius: 5,
   },
 });

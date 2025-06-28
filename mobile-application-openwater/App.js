@@ -16,31 +16,47 @@ function App() {
   useKeepAwake();
 
   const [hasPermission, setHasPermission] = useState(null);
+  const [isLoading, setIsLoading] = useState(true); // New state for loading
+
+  console.log(hasPermission);
 
   // Request Camera and Media Storage Permissions
   const requestPermissions = async () => {
-    // Request camera permission
-    const cameraStatus = await Camera.requestCameraPermissionsAsync();
+    try {
+      // Request camera permission
+      const cameraStatus = await Camera.requestCameraPermissionsAsync();
 
-    // Request media storage permission
-    const mediaStatus = await MediaLibrary.requestPermissionsAsync();
+      // Request media storage permission
+      const mediaStatus = await MediaLibrary.requestPermissionsAsync();
 
-    // Check if both permissions are granted
-    if (cameraStatus.status === "granted" && mediaStatus.status === "granted") {
-      setHasPermission(true); // Both permissions granted
-    } else {
-      setHasPermission(false); // One or both permissions denied
+      // Check if both permissions are granted
+      if (
+        cameraStatus.status === "granted" &&
+        mediaStatus.status === "granted"
+      ) {
+        setHasPermission(true); // Both permissions granted
+      } else {
+        setHasPermission(false); // One or both permissions denied
+      }
+    } catch (error) {
+      console.error("Error requesting permissions", error);
+      setHasPermission(false); // Handle the error case
+    } finally {
+      setIsLoading(false); // Ensure loading is set to false after permissions check
     }
   };
 
-  console.log(hasPermission, "Permissions");
-
   // Ask for permissions when the app starts
   useEffect(() => {
-    requestPermissions();
+    // Call the requestPermissions function and wait for it to complete
+    const checkPermissions = async () => {
+      await requestPermissions();
+    };
+
+    checkPermissions();
   }, []);
 
-  // If permissions are not granted, ask repeatedly
+  // If permissions are not granted, show permission request screen
   const renderPermissionScreen = () => {
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
@@ -49,15 +65,19 @@ function App() {
         </Text>
         <Button
           title="Grant Permissions"
-          onPress={() => requestPermissions()}
+          onPress={() => {
+            setIsLoading(true); // Set loading to true while requesting permissions again
+            requestPermissions();
+          }}
         />
       </View>
     );
   };
 
+  // Render the app
   return (
     <NavigationContainer>
-      {hasPermission === null ? (
+      {isLoading ? (
         // Loading screen while checking permissions
         <View
           style={{ flex: 1, justifyContent: "center", alignItems: "center" }}

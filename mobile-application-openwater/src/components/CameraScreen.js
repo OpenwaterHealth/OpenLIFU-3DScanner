@@ -13,20 +13,16 @@ import React, {
 import {
   Alert,
   AppState,
+  Dimensions,
   Image,
-  Linking,
-  Modal,
-  Platform,
   StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   View,
 } from "react-native";
-import { MD3Colors, ProgressBar } from "react-native-paper";
-import AntDesign from "react-native-vector-icons/AntDesign";
-import Feather from "react-native-vector-icons/Feather";
-import MaterialIcons from "react-native-vector-icons/MaterialIcons";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import UsbGif from "../../assets/Image/usb-connected.png";
 
 // Request Storage Permission
@@ -53,29 +49,36 @@ async function requestCameraPermission() {
 function CameraComponent({ navigation, route }) {
   const referNumber = route.params?.referNumber;
   const [hasPermission, setHasPermission] = useState(null);
-  const [imageSource, setImageSource] = useState([]);
   const [photoCount, setPhotoCount] = useState(0);
   const [isCapturing, setIsCapturing] = useState(false);
-  const [isModalVisible, setIsModalVisible] = useState(false);
   const [showCamera, setShowCamera] = useState(true);
   const [faceData, setFaceData] = useState([]);
   const [cameraError, setCameraError] = useState(null);
   const [batteryState, setBatteryState] = useState(null);
   const [appState, setAppState] = useState(AppState.currentState); // State to track app state
   const [extraImages, setExtraImages] = useState(0); // Track extra images to be taken
+  const [progressBarColor, setProgressBarColor] = useState("green"); // Default color set to orange
+  const [isPaused, setIsPaused] = useState(false); // Track if the scan is paused
+  const [showStopOptions, setShowStopOptions] = useState(false); // Track if "Discard," "Capture More," and "Finish" buttons are visible
+  const [focusPosition, setFocusPosition] = useState({ x: 0, y: 0 });
+  const [showFocusUI, setShowFocusUI] = useState(false);
+  const [focusDepth, setFocusDepth] = useState(0);
+  const windowHeight = Dimensions.get("window").height;
 
   // Add log in useEffect to check AppState changes
   useEffect(() => {
-    console.log("AppState change detected: ", appState);
     const subscription = AppState.addEventListener("change", (nextAppState) => {
       if (appState.match(/inactive|background/) && nextAppState === "active") {
         console.log("App has come to the foreground!");
-        if (isCapturing) {
-          startCapturing(); // Resume capturing if it was active
+        // Only resume if it was paused before
+        if (isPaused) {
+          resumeCapturing();
         }
       } else if (nextAppState === "background") {
         console.log("App is going to the background!");
-        pauseCapturing();
+        if (isCapturing) {
+          pauseCapturing();
+        }
       }
       setAppState(nextAppState);
     });
@@ -83,9 +86,7 @@ function CameraComponent({ navigation, route }) {
     return () => {
       subscription.remove();
     };
-  }, [appState, isCapturing, startCapturing, pauseCapturing]);
-
-  console.log(appState, "appState");
+  }, [appState, isCapturing, isPaused, resumeCapturing, pauseCapturing]);
 
   const photoCountRef = useRef(0); // Add this ref to track the photo count directly
 
@@ -104,6 +105,7 @@ function CameraComponent({ navigation, route }) {
       const cameraGranted = await requestCameraPermission();
       const storageGranted = await requestStoragePermission();
       setHasPermission(cameraGranted && storageGranted);
+
       if (!cameraGranted || !storageGranted) {
         Alert.alert(
           "Permissions Required",
@@ -140,6 +142,18 @@ function CameraComponent({ navigation, route }) {
       subscription.remove();
     };
   }, []);
+
+  const handleTapToFocus = (event) => {
+    const { locationX, locationY } = event.nativeEvent;
+    const calculatedFocusDepth = locationY / windowHeight;
+
+    setFocusPosition({ x: locationX, y: locationY });
+    setFocusDepth(calculatedFocusDepth);
+    setShowFocusUI(true);
+
+    // Hide the focus indicator after 1 second
+    setTimeout(() => setShowFocusUI(false), 1000);
+  };
 
   const isCharging = useMemo(
     () => batteryState === Battery.BatteryState.CHARGING,
@@ -179,7 +193,6 @@ function CameraComponent({ navigation, route }) {
   }, [faceData]);
 
   // Create folder for referNumber
-
   const createFolderIfNotExists = async (referNumber) => {
     const folderUri = `${FileSystem.documentDirectory}${referNumber}`;
     const folderInfo = await FileSystem.getInfoAsync(folderUri);
@@ -199,11 +212,10 @@ function CameraComponent({ navigation, route }) {
     if (
       hasPermission &&
       cameraRef.current !== null &&
-      photoCountRef.current < TOTAL_IMAGES // Use TOTAL_IMAGES instead of TOTAL_IMAGES_INITIAL
+      photoCountRef.current < TOTAL_IMAGES
     ) {
       try {
-        console.log("Attempting to capture a photo...");
-        // Create folder based on referNumber
+        // Creating folder based on referNumber
         const folderUri = await createFolderIfNotExists(referNumber);
 
         const photo = await cameraRef.current.takePictureAsync({
@@ -211,44 +223,29 @@ function CameraComponent({ navigation, route }) {
           skipProcessing: true,
           mute: true, // Mute the camera sound
         });
-        console.log("Photo captured successfully.");
 
-        // Move the photo to the folder
         const fileName = `${folderUri}/${referNumber}_${photoCountRef.current}.jpg`;
         await FileSystem.moveAsync({
           from: photo.uri,
           to: fileName,
         });
 
-        // Add the moved image to Media Library (to make it visible in the gallery)
         await MediaLibrary.createAssetAsync(fileName);
 
-        // Update state
-        setImageSource((prevImages) => [...prevImages, fileName]);
         setPhotoCount((prevCount) => prevCount + 1);
         photoCountRef.current += 1;
       } catch (error) {
         console.error("Error capturing photo:", error);
       }
     } else if (photoCountRef.current >= TOTAL_IMAGES) {
-      console.log("Reached the limit for total images.");
-
-      // Adjust to TOTAL_IMAGES
-      Alert.alert("Limit Reached", "Do you want to take more pictures", [
-        { text: "Finish", onPress: ForwardImages },
-        {
-          text: "Take More",
-          onPress: handleTakeMore, // Call handleTakeMore if user wants to take more images
-        },
-      ]);
     }
   }, [hasPermission, extraImages, referNumber]); // Add extraImages and referNumber as dependencies
 
   const startCapturing = useCallback(async () => {
-    console.log("startCapturing called.");
-    const TOTAL_IMAGES = TOTAL_IMAGES_INITIAL + extraImages; // Adjust the total images based on extraImages
+    const TOTAL_IMAGES = TOTAL_IMAGES_INITIAL + extraImages;
 
-    // Wait for the permission to be checked before starting
+    setProgressBarColor("#87CEEB");
+
     if (!hasPermission) {
       const cameraGranted = await requestCameraPermission();
       const storageGranted = await requestStoragePermission();
@@ -264,7 +261,6 @@ function CameraComponent({ navigation, route }) {
         clearInterval(captureInterval.current);
       }
       setIsCapturing(true);
-      console.log("Starting to capture photos...");
 
       // Updated captureInterval block
       captureInterval.current = setInterval(() => {
@@ -275,29 +271,25 @@ function CameraComponent({ navigation, route }) {
             clearInterval(captureInterval.current); // Stop interval when limit is reached
             captureInterval.current = null; // Reset interval
             setIsCapturing(false);
-            Alert.alert("Limit Reached", "Do you want to take more pictures?", [
-              { text: "Finish", onPress: ForwardImages },
-              {
-                text: "Take More",
-                onPress: handleTakeMore, // Call handleTakeMore if user wants to take more images
-              },
-            ]);
+
+            // Set progress bar color to green when finished
+            setProgressBarColor("#92E622");
+            setShowStopOptions(true);
           }
         } catch (error) {
           console.error("Error during capture interval:", error);
           clearInterval(captureInterval.current); // Stop interval on error
           captureInterval.current = null; // Reset interval
           setIsCapturing(false);
+
+          // Set progress bar color to green if an error occurs
+          setProgressBarColor("#92E622");
+          setShowStopOptions(true);
         }
       }, 2000); // Adjust the interval time here if needed
     } else if (photoCountRef.current >= TOTAL_IMAGES) {
-      Alert.alert("Limit Reached", "Do you want to take more pictures?", [
-        { text: "Finish", onPress: ForwardImages },
-        {
-          text: "Take More",
-          onPress: handleTakeMore, // Call handleTakeMore if user wants to take more images
-        },
-      ]);
+      setProgressBarColor("#92E622");
+      setShowStopOptions(true);
     }
   }, [capturePhoto, hasPermission, extraImages]);
 
@@ -307,17 +299,79 @@ function CameraComponent({ navigation, route }) {
     }
   }, [extraImages, startCapturing]);
 
-  const handleTakeMore = useCallback(() => {
-    setExtraImages((prevExtraImages) => prevExtraImages + 20); // Just update the extra images count
-    console.log(extraImages, "extraImages");
+  const handleDiscard = useCallback(() => {
+    Alert.alert(
+      "Confirmation", // Title of the alert
+      "Are you sure?", // Message of the alert
+      [
+        {
+          text: "No",
+          onPress: () => console.log("Discard Canceled"), // Do nothing on "No"
+          style: "cancel",
+        },
+        {
+          text: "Yes, Discard",
+          onPress: () => {
+            // Reset to the initial state if the user confirms
+            resetAllStates();
+          },
+        },
+      ],
+      { cancelable: true }
+    );
   }, []);
 
+  const handleCaptureMore = useCallback(() => {
+    setShowStopOptions(false); // Hide options
+    setExtraImages((prevExtraImages) => prevExtraImages + 20); // Allow capturing more images
+  }, []);
+
+  const handleFinish = useCallback(() => {
+    setShowStopOptions(false); // Hide options
+    resetAllStates();
+    ForwardImages(); // Finish capturing and move to the next step
+  }, [ForwardImages]);
+
+  // Function to reset all states
+  // Function to reset all states
+  const resetAllStates = () => {
+    setShowStopOptions(false); // Hide options
+    setPhotoCount(0); // Reset photo count
+    setIsCapturing(false); // Set capturing to false
+    setIsPaused(false); // Reset paused state
+    setShowCamera(true); // Show camera again
+    setProgressBarColor("green"); // Reset the progress bar color
+    setExtraImages(0); // Reset extra images count
+
+    // Clear capture interval if active
+    if (captureInterval.current) {
+      clearInterval(captureInterval.current);
+      captureInterval.current = null;
+    }
+
+    // Reset the photo count ref
+    photoCountRef.current = 0;
+  };
+
   const pauseCapturing = useCallback(() => {
+    setProgressBarColor("#FBBB04");
+    setIsPaused(true); // Set the scan as paused
+
     if (captureInterval.current) {
       clearInterval(captureInterval.current);
       captureInterval.current = null;
     }
     setIsCapturing(false);
+  }, []);
+
+  const resumeCapturing = useCallback(() => {
+    setIsPaused(false); // Resume the scan
+    startCapturing();
+  }, [startCapturing]);
+
+  const handleStopScan = useCallback(() => {
+    setIsPaused(false); // Reset the paused state
+    setShowStopOptions(true); // Show "Discard," "Capture More," and "Finish" options
   }, []);
 
   const ForwardImages = useCallback(() => {
@@ -327,41 +381,9 @@ function CameraComponent({ navigation, route }) {
     }
     setIsCapturing(false);
     setShowCamera(false);
-  }, []);
 
-  const confirmRetake = () => {
-    Alert.alert(
-      "Retake",
-      "Are you sure you want to retake the images?",
-      [
-        {
-          text: "Cancel",
-          onPress: () => console.log("Cancel Pressed"),
-          style: "cancel",
-        },
-        {
-          text: "Yes",
-          onPress: handleRetake, // Call handleRetake if confirmed
-        },
-      ],
-      { cancelable: false }
-    );
-  };
-
-  // Adding a delay before remounting the camera
-  const handleRetake = useCallback(() => {
-    setShowCamera(false);
-    setTimeout(() => {
-      setShowCamera(true);
-    }, 300); // Adding a 300ms delay
-  }, []);
-
-  const openGallery = useCallback(() => {
-    if (Platform.OS === "android") {
-      Linking.openURL("content://media/internal/images/media");
-    } else if (Platform.OS === "ios") {
-      Linking.openURL("photos-redirect://");
-    }
+    // Set progress bar color to green when finishing
+    setProgressBarColor("#92E622");
   }, []);
 
   if (hasPermission === null) {
@@ -387,29 +409,39 @@ function CameraComponent({ navigation, route }) {
       <StatusBar barStyle={"dark-content"} />
       <View style={styles.container}>
         {cameraError && <Text style={styles.errorText}>{cameraError}</Text>}
-        {imageSource.length > 0 && (
-          <Image
-            style={styles.image}
-            source={{ uri: imageSource[imageSource.length - 1] }}
-          />
-        )}
-        <TouchableOpacity
-          style={[styles.progressBarImage, { flexDirection: "row" }]}
-          onPress={openGallery}
-        >
-          <MaterialIcons name="photo-library" size={20} color={"#fff"} />
-          <Text style={styles.progressText}>+ {photoCount} images</Text>
-        </TouchableOpacity>
 
-        {showCamera ? (
-          <>
+        <View style={styles.ProgressBarContainer}>
+          <View
+            style={[
+              styles.ProgressBar,
+              {
+                width: "100%",
+                backgroundColor: "#92E622",
+              },
+            ]}
+          />
+          <Text style={styles.ProgressText}>Scan Completed</Text>
+        </View>
+
+        {!isCharging ? (
+          <Image
+            style={styles.fullImage}
+            source={require("../../assets/Image/connectusb.gif")}
+            resizeMode="cover"
+          />
+        ) : (
+          <Image style={styles.fullImage} source={UsbGif} resizeMode="cover" />
+        )}
+
+        {showCamera && (
+          <GestureHandlerRootView style={StyleSheet.absoluteFill}>
             <Camera
               ref={cameraRef}
               mute={true}
               style={StyleSheet.absoluteFill}
               type={Camera.Constants.Type.back}
               onFacesDetected={handleFacesDetected}
-              autoFocus={Camera.Constants.AutoFocus.on} // Enable autofocus
+              autoFocus={Camera.Constants.AutoFocus.on}
               faceDetectorSettings={{
                 mode: FaceDetector.FaceDetectorMode.fast,
                 detectLandmarks: FaceDetector.FaceDetectorLandmarks.all,
@@ -418,175 +450,136 @@ function CameraComponent({ navigation, route }) {
                 tracking: true,
               }}
               onMountError={handleCameraError}
+              focusDepth={focusDepth}
             >
               {renderFaceBoxes}
+
+              <TouchableWithoutFeedback onPress={handleTapToFocus}>
+                <View style={styles.focusArea}>
+                  {showFocusUI && (
+                    <View
+                      style={[
+                        styles.focusIndicator,
+                        {
+                          left: focusPosition.x - 50,
+                          top: focusPosition.y - 50,
+                        },
+                      ]}
+                    />
+                  )}
+                </View>
+              </TouchableWithoutFeedback>
             </Camera>
-            <View style={styles.indicatorStyles}>
-              <Image
-                style={{ width: 100, height: 100 }}
-                source={require("../../assets/Image/mobile.png")}
-              />
-              <Image
-                style={{
-                  width: 30,
-                  height: 30,
-                  left: 30,
-                }}
-                source={require("../../assets/Image/left.gif")}
-              />
-            </View>
-            <View style={styles.UserIdentifiedContainer}>
-              <View style={styles.ProgressBarStyles}>
-                <ProgressBar progress={progress} color={MD3Colors.error50} />
+
+            {(isCapturing || showStopOptions || isPaused) && (
+              <View style={styles.ProgressBarContainer}>
+                <View
+                  style={[
+                    styles.ProgressBar,
+                    {
+                      width: `${progress * 100}%`,
+                      backgroundColor: progressBarColor,
+                    },
+                  ]}
+                />
+                <Text style={styles.ProgressText}>{`${photoCount}/${
+                  TOTAL_IMAGES_INITIAL + extraImages
+                }`}</Text>
               </View>
+            )}
 
-              <TouchableOpacity
-                style={[styles.progressBar, { flexDirection: "row" }]}
-              >
-                <MaterialIcons name="face" size={20} color={"#fff"} />
-                <Text style={styles.progressText}>face detected</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.progressBar, { flexDirection: "row" }]}
-                onPress={openGallery}
-              >
-                <MaterialIcons name="photo-library" size={20} color={"#fff"} />
-                <Text style={styles.progressText}>+ {photoCount} images</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.progressBar, { flexDirection: "row" }]}
-              >
-                <MaterialIcons name="usb" size={20} color={"#fff"} />
-                <Text style={styles.progressText}>
-                  {batteryState === Battery.BatteryState.CHARGING
-                    ? "Connected"
-                    : "Not Connected"}
-                </Text>
-              </TouchableOpacity>
-            </View>
             <View style={styles.bottomBar}>
-              <TouchableOpacity
-                style={styles.camFlip}
-                onPress={() => navigation.navigate("IntroScreen")}
-              >
-                <AntDesign name="back" size={25} color="#fff" />
-              </TouchableOpacity>
-              {isCapturing ? (
+              {!isCapturing && !showStopOptions && !isPaused ? (
+                <>
+                  <TouchableOpacity
+                    style={styles.camButton}
+                    onPress={startCapturing}
+                  >
+                    <Text
+                      style={[
+                        styles.buttonTextStyles,
+                        { color: "#000", fontWeight: "600" },
+                      ]}
+                    >
+                      Start Scan
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.camButton, { backgroundColor: "red" }]}
+                    onPress={() => {
+                      resetAllStates();
+                      navigation.navigate("IntroScreen");
+                    }}
+                  >
+                    <Text
+                      style={[
+                        styles.buttonTextStyles,
+                        { color: "#fff", fontWeight: "600" },
+                      ]}
+                    >
+                      Cancel
+                    </Text>
+                  </TouchableOpacity>
+                </>
+              ) : isCapturing ? (
                 <TouchableOpacity
                   style={[styles.camButton, styles.pauseButton]}
                   onPress={pauseCapturing}
                 >
-                  <Feather name="pause" size={25} color="#fff" />
+                  <Text style={styles.buttonTextStyles}>Stop Scan</Text>
                 </TouchableOpacity>
-              ) : (
-                <TouchableOpacity
-                  style={styles.camButton}
-                  onPress={startCapturing}
-                ></TouchableOpacity>
-              )}
-              <TouchableOpacity
-                style={styles.camPause}
-                onPress={() => {
-                  Alert.alert(
-                    "Finish Scan",
-                    "Do you want to finish this scan or take more?",
-                    [
-                      {
-                        text: "Finish",
-                        onPress: ForwardImages, // Call ForwardImages when user clicks "Finish"
-                      },
-                      {
-                        text: "Take More",
-                        onPress: handleTakeMore, // Call handleTakeMore to take more images
-                      },
-                    ]
-                  );
-                }}
-              >
-                <Text style={styles.progressText}>Done</Text>
-              </TouchableOpacity>
+              ) : isPaused && !showStopOptions ? (
+                <>
+                  <TouchableOpacity
+                    style={[styles.camButton, styles.resumeButton]}
+                    onPress={resumeCapturing}
+                  >
+                    <Text style={styles.buttonTextStyles}>Resume Scan</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.camButton, styles.pauseButton]}
+                    onPress={handleStopScan}
+                  >
+                    <Text style={styles.buttonTextStyles}>Stop Scan</Text>
+                  </TouchableOpacity>
+                </>
+              ) : showStopOptions ? (
+                <>
+                  <TouchableOpacity
+                    style={[styles.camButton, styles.discardButton]}
+                    onPress={handleDiscard}
+                  >
+                    <Text style={styles.buttonTextStyles}>Discard</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.camButton, styles.captureMoreButton]}
+                    onPress={handleCaptureMore}
+                  >
+                    <Text style={styles.buttonTextStyles}>Capture More</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.camButton, styles.finishButton]}
+                    onPress={handleFinish}
+                  >
+                    <Text style={styles.buttonTextStyles}>Finish</Text>
+                  </TouchableOpacity>
+                </>
+              ) : null}
             </View>
-          </>
-        ) : (
-          <>
-            {imageSource.length > 0 && (
-              <Image
-                style={styles.fullImage}
-                source={{ uri: imageSource[imageSource.length - 1] }}
-                resizeMode="cover"
-              />
-            )}
-            <TouchableOpacity
-              style={[styles.progressBarImage, { flexDirection: "row" }]}
-              onPress={openGallery}
-            >
-              <MaterialIcons name="photo-library" size={20} color={"#fff"} />
-              <Text style={styles.progressText}>+ {photoCount} images</Text>
-            </TouchableOpacity>
-
-            <View style={styles.buttonContainer}>
-              <View style={styles.buttons}>
-                <TouchableOpacity
-                  style={styles.retakeButton}
-                  onPress={confirmRetake}
-                >
-                  <AntDesign name="back" size={15} color="#fff" />
-                  <Text style={styles.retakeText}>Retake</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.processButton}
-                  onPress={() => setIsModalVisible(true)}
-                >
-                  <AntDesign name="sharealt" size={18} color="#0D0D0D" />
-                  <Text style={styles.processText}>Send for processing</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </>
+          </GestureHandlerRootView>
         )}
 
-        <Modal
-          animationType="slide"
-          transparent={true}
-          visible={isModalVisible}
-          onRequestClose={() => {
-            setIsModalVisible(false);
-          }}
-        >
-          {!isCharging ? (
-            <TouchableOpacity
-              style={styles.modalContainer}
-              activeOpacity={1}
-              onPressOut={() => setIsModalVisible(false)}
-            >
-              <View style={styles.modalContent}>
-                <Image
-                  style={{ width: 200, height: 200 }}
-                  source={require("../../assets/Image/connectusb.gif")}
-                />
-                <Text style={styles.modalTitle}>Reference number</Text>
-                <Text style={styles.BoldTextStyle}>{referNumber}</Text>
-                <Text style={styles.modalTitle}>
-                  USB is not connected. Please connect USB.
+        {!showCamera && (
+          <View style={styles.buttonContainer}>
+            <View style={styles.buttons}>
+              <TouchableOpacity style={styles.processButton}>
+                <Text style={styles.processText}>
+                  {isCharging ? "Connected" : "Waiting For USB..."}
                 </Text>
-              </View>
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity
-              style={styles.modalContainer}
-              activeOpacity={1}
-              onPressOut={() => setIsModalVisible(false)}
-            >
-              <View style={styles.modalContent}>
-                <Image style={{ width: 200, height: 200 }} source={UsbGif} />
-                <Text style={styles.modalTitle}>Reference number</Text>
-                <Text style={styles.BoldTextStyle}>{referNumber}</Text>
-                <Text style={styles.modalTitle}>USB is connected</Text>
-              </View>
-            </TouchableOpacity>
-          )}
-        </Modal>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
       </View>
     </>
   );
@@ -597,44 +590,61 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: "#fff",
   },
   buttonContainer: {
     position: "absolute",
-    justifyContent: "space-around",
     alignItems: "center",
-    width: "100%",
-    bottom: 0,
-    paddingHorizontal: 10,
-    paddingBottom: 30,
   },
-  buttons: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    width: "100%",
+  discardButton: {
+    backgroundColor: "#F03D2F",
+    justifyContent: "center",
+    alignItems: "center",
   },
+  focusArea: {
+    flex: 1,
+  },
+  focusIndicator: {
+    position: "absolute",
+    width: 100,
+    height: 100,
+    borderWidth: 2,
+    borderColor: "yellow",
+    backgroundColor: "transparent",
+  },
+  finishButton: {
+    backgroundColor: "#04AA6D",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  buttons: {},
   camButton: {
-    height: 80,
-    width: 80,
-    borderRadius: 40,
-    backgroundColor: "red",
-    alignSelf: "center",
-    borderWidth: 4,
-    borderColor: "white",
+    height: 50,
+    width: "90%",
+    borderRadius: 10,
+    backgroundColor: "#92E622",
+    marginBottom: 10,
+    justifyContent: "center",
+    alignItems: "center",
   },
   pauseButton: {
-    backgroundColor: "rgba(255, 255, 255, 0.12)",
-    borderColor: "white",
+    backgroundColor: "red",
     justifyContent: "center",
     alignItems: "center",
   },
   camFlip: {
     height: 50,
-    width: 50,
-    borderRadius: 40,
-    backgroundColor: "rgba(255, 255, 255, 0.12)",
+    width: "90%",
+    borderRadius: 10,
+    backgroundColor: "red",
     borderColor: "white",
     justifyContent: "center",
     alignItems: "center",
+  },
+  buttonTextStyles: {
+    color: "#fff",
+    fontSize: 18,
+    letterSpacing: 1,
   },
   image: {
     width: "100%",
@@ -649,51 +659,56 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  progressBarImage: {
-    backgroundColor: "#00000059",
-    flexDirection: "row",
-    paddingVertical: 8,
-    paddingHorizontal: 20,
-    justifyContent: "center",
-    alignItems: "center",
-    borderRadius: 20,
+  ProgressBarContainer: {
+    width: "90%",
+    height: 30,
+    overflow: "hidden",
+    marginVertical: 10,
+    justifyContent: "center", // Remove any centering styles
     position: "absolute",
-    bottom: 120,
-  },
-  progressBar: {
-    backgroundColor: "#00000059",
-    flexDirection: "row",
-    paddingVertical: 8,
-    paddingHorizontal: 7,
-    justifyContent: "center",
+    top: 10, // Adjust position as needed
+    left: 10, // Adjust position as needed
     alignItems: "center",
-    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: "#000", // Progress bar border color
   },
-  progressText: {
-    color: "#ffffff",
-    paddingLeft: 6,
+
+  ProgressBar: {
+    height: "100%",
+    backgroundColor: "#92E622", // Progress bar color
+    position: "absolute", // Make sure this is absolute to fill from the left
+    left: 0, // Ensure it starts from the left
   },
+
+  ProgressText: {
+    position: "absolute",
+    color: "#000", // Text color for the count
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+
   bottomBar: {
-    flexDirection: "row",
+    flexDirection: "column",
     position: "absolute",
-    bottom: 30,
-    justifyContent: "space-around",
+    bottom: 30, // Ensure this is a reasonable distance from the bottom
+    justifyContent: "center",
     alignItems: "center",
-    width: "80%",
+    width: "100%", // Make sure this gives enough width to center the buttons
     zIndex: 1,
   },
+
   retakeText: {
     color: "#ffffff",
     paddingLeft: 6,
   },
   processText: {
     color: "#0D0D0D",
-    paddingLeft: 6,
+    fontSize: 18,
   },
   fullImage: {
     width: "100%",
-    height: "100%",
-    flex: 1,
+    height: "80%",
+    resizeMode: "contain",
   },
   modalContainer: {
     flex: 1,
@@ -748,7 +763,7 @@ const styles = StyleSheet.create({
     position: "absolute",
   },
   ProgressBarStyles: {
-    bottom: 50,
+    top: 10,
     left: 10,
     position: "absolute",
     width: "90%",
@@ -763,14 +778,14 @@ const styles = StyleSheet.create({
     flexDirection: "row",
   },
   processButton: {
-    backgroundColor: "#92E622",
+    backgroundColor: "#ffff",
     paddingHorizontal: 10,
     justifyContent: "center",
     alignItems: "center",
-    borderRadius: 50,
+    borderRadius: 10,
     width: 205,
     height: 60,
-    flexDirection: "row",
+    borderWidth: 4,
   },
   indicatorStyles: {
     backgroundColor: "transparent",
