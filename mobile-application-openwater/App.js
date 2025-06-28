@@ -23,6 +23,7 @@ function App() {
   const [hasPermission, setHasPermission] = useState(null); // Track permission status
   const [isLoading, setIsLoading] = useState(true); // State to handle loading
 
+<<<<<<< HEAD
   useEffect(() => {
     KeepAwake.activate(); // Activates keep awake mode when component is mounted
 
@@ -39,6 +40,12 @@ function App() {
         KeepAwake.deactivate(); // Allow sleep when the app is backgrounded
       }
     };
+=======
+  const [hasPermission, setHasPermission] = useState(null);
+  const [isLoading, setIsLoading] = useState(true); // New state for loading
+
+  console.log(hasPermission);
+>>>>>>> main
 
     AppState.addEventListener('change', handleAppStateChange);
 
@@ -50,6 +57,7 @@ function App() {
   // Request Camera, Microphone, and Storage Permissions upfront on app launch
   const requestPermissions = async () => {
     try {
+<<<<<<< HEAD
       let storagePermissionGranted = true; // Assume true for Android 33 and above
 
       // Check if Android version is below 33, then request WRITE_EXTERNAL_STORAGE permission
@@ -126,10 +134,67 @@ function App() {
       />
     </View>
   );
+=======
+      // Request camera permission
+      const cameraStatus = await Camera.requestCameraPermissionsAsync();
 
+      // Request media storage permission
+      const mediaStatus = await MediaLibrary.requestPermissionsAsync();
+
+      // Check if both permissions are granted
+      if (
+        cameraStatus.status === "granted" &&
+        mediaStatus.status === "granted"
+      ) {
+        setHasPermission(true); // Both permissions granted
+      } else {
+        setHasPermission(false); // One or both permissions denied
+      }
+    } catch (error) {
+      console.error("Error requesting permissions", error);
+      setHasPermission(false); // Handle the error case
+    } finally {
+      setIsLoading(false); // Ensure loading is set to false after permissions check
+    }
+  };
+
+  // Ask for permissions when the app starts
+  useEffect(() => {
+    // Call the requestPermissions function and wait for it to complete
+    const checkPermissions = async () => {
+      await requestPermissions();
+    };
+
+    checkPermissions();
+  }, []);
+
+  // If permissions are not granted, show permission request screen
+  const renderPermissionScreen = () => {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <Text style={{ fontSize: 18 }}>
+          Camera and media storage permissions are required to proceed
+        </Text>
+        <Button
+          title="Grant Permissions"
+          onPress={() => {
+            setIsLoading(true); // Set loading to true while requesting permissions again
+            requestPermissions();
+          }}
+        />
+      </View>
+    );
+  };
+>>>>>>> main
+
+  // Render the app
   return (
     <NavigationContainer>
       {isLoading ? (
+<<<<<<< HEAD
+=======
+        // Loading screen while checking permissions
+>>>>>>> main
         <View
           style={{
             flex: 1,
