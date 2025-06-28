@@ -14,7 +14,6 @@ import {
   View,
 } from "react-native";
 import Toast from "react-native-toast-message";
-import AntDesign from "react-native-vector-icons/AntDesign";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import AiFace from "../../assets/Image/AiFacePlain.png";
 import BGImage from "../../assets/Image/circle.png";
@@ -104,21 +103,19 @@ const IntroScreen = ({ navigation }) => {
 
           <TouchableOpacity style={styles.ButtonContainer}>
             <TextInput
-              placeholder="Enter Your Refer Number"
+              placeholder="Scan ID"
               placeholderTextColor={"#0D0D0D"}
               onChangeText={setReferNumber}
               value={referNumber}
               style={styles.InputStyle}
               underlineColorAndroid="transparent"
-              keyboardType="numeric"
             />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.ButtonContainer}
             onPress={handleStartRecording}
           >
-            <Text style={styles.ButtonText}>Start recording</Text>
-            <AntDesign name="arrowright" size={25} color="#0D0D0D" />
+            <Text style={styles.ButtonText}>Start</Text>
           </TouchableOpacity>
         </ImageBackground>
       </View>
@@ -200,11 +197,12 @@ const styles = StyleSheet.create({
     backgroundColor: "#92E622",
     justifyContent: "center",
     alignItems: "center",
-    borderRadius: 25,
+    borderRadius: 10,
     marginTop: 5,
     marginHorizontal: 20,
     elevation: 20,
     flexDirection: "row",
+    marginBottom: 10,
   },
   ButtonText: {
     color: "#0D0D0D",
