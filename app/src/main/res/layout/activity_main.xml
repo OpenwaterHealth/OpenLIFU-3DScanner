@@ -1,0 +1,314 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+
+    android:background="@drawable/screen_background"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+
+<!--first half-->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:orientation="vertical"
+        android:paddingVertical="30dp"
+        android:gravity="center_vertical"
+        android:layout_height="140dp">
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:id="@+id/mainScreenTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Start Capture"
+                android:textAlignment="center"
+                android:textSize="26sp"
+                android:visibility="visible"
+                android:textColor="@color/white"/>
+
+            <TextView
+                android:id="@+id/cameraAngle"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:text="Camera "
+                android:layout_marginRight="20dp"
+                android:textSize="20sp"
+                android:visibility="visible"
+                android:layout_gravity="end"
+                android:textColor="@color/white"
+                />
+
+
+
+
+
+
+        </FrameLayout>
+
+
+
+        <FrameLayout
+            android:layout_width="match_parent"
+
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:id="@+id/mainScreenSubTitle"
+                android:layout_width="match_parent"
+                android:layout_marginTop="10dp"
+                android:layout_height="wrap_content"
+                android:text="Position the Subject in the Frame"
+                android:textAlignment="center"
+                android:textSize="18sp"
+                android:visibility="visible"
+                android:textColor="@color/white"/>
+
+
+
+            <TextView
+                android:id="@+id/imageCountText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textStyle="bold"
+                android:text="0/80"
+                android:textAlignment="center"
+                android:textSize="40sp"
+                android:visibility="gone"
+                android:textColor="@color/white"/>
+
+        </FrameLayout>
+
+    </LinearLayout>
+
+
+
+
+
+
+
+
+
+<!--    second half-->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:background="@color/white"
+        android:layout_weight="1"
+        android:layout_height="0dp">
+
+        <!-- AR Fragment -->
+        <fragment
+            android:id="@+id/arFragment"
+            android:name="com.google.ar.sceneform.ux.ArFragment"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <TextView
+            android:id="@+id/distanceLabel"
+            android:layout_width="200dp"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="15dp"
+            android:layout_marginLeft="15dp"
+            android:background="@drawable/textview_background"
+            android:padding="4dp"
+            android:layout_gravity="center_horizontal"
+            android:text="Status"
+            android:textColor="#000000"
+            android:textAlignment="center"
+            android:textSize="12sp" />
+
+        <ImageView
+            android:id="@+id/targetCircle"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_gravity="center"
+            android:layout_marginTop="-260dp"
+            android:src="@drawable/target_with_cross"
+            android:visibility="visible"/>
+
+        <ImageView
+            android:id="@+id/faceRing"
+            android:layout_width="200dp"
+            android:layout_height="200dp"
+            android:layout_gravity="center"
+            android:layout_marginTop="-50dp"
+            android:background="@drawable/circle_ring"
+            android:visibility="gone" />
+
+
+        <!-- Left Arrow-->
+        <TextView
+            android:id="@+id/leftArrowInstruction"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginTop="0dp"
+            android:drawableStart="@drawable/ic_left_arrow"
+            android:drawablePadding="8dp"
+            android:gravity="center"
+            android:padding="8dp"
+            android:text="Start Moving Left"
+            android:textColor="#FFFF"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:visibility="gone"/>
+
+
+        <FrameLayout
+            android:id="@+id/overlayContainer"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clickable="false"
+            android:focusable="false"
+            android:background="@android:color/transparent" />
+
+        <View
+            android:id="@+id/captureOverlay"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#40FFFFFF"
+            android:alpha="0.0"
+            android:visibility="invisible"
+        android:elevation="100dp"/>
+
+
+
+
+    </FrameLayout>
+
+
+
+<!--    third half-->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:orientation="vertical"
+        android:layout_gravity="bottom"
+        android:layout_height="140dp">
+
+        <Button
+            android:id="@+id/confirm_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Confirm"
+            android:textAllCaps="false"
+            android:enabled="false"
+            android:textStyle="bold"
+            app:backgroundTint="@null"
+            android:background="@drawable/round_green_button"
+            android:layout_marginHorizontal="40dp"
+            android:layout_marginVertical="10dp"
+            android:visibility="visible"
+            android:textColor="@color/disable_button_text"/>
+
+        <Button
+            android:id="@+id/intialRenderCamCancel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Cancel"
+            android:textStyle="bold"
+            android:textAllCaps="false"
+            app:backgroundTint="@null"
+            android:background="@drawable/round_cancel_ok"
+            android:layout_marginHorizontal="40dp"
+            android:layout_marginVertical="10dp"
+            android:visibility="visible"
+            android:textColor="@color/white"/>
+
+
+        <Button
+            android:id="@+id/startButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Start"
+            android:textStyle="bold"
+            android:textAllCaps="false"
+            app:backgroundTint="@null"
+            android:background="@drawable/round_green_button"
+            android:layout_marginHorizontal="40dp"
+            android:layout_marginVertical="10dp"
+            android:visibility="gone"
+            android:textColor="@color/white"/>
+
+        <Button
+            android:id="@+id/stopButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Stop"
+            android:textStyle="bold"
+            android:textAllCaps="false"
+            app:backgroundTint="@null"
+            android:background="@drawable/round_green_button"
+            android:layout_marginHorizontal="40dp"
+            android:layout_marginVertical="10dp"
+            android:visibility="gone"
+            android:textColor="@color/white"/>
+
+        <Button
+            android:id="@+id/BackInStartCapture"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Back"
+            android:textAllCaps="false"
+            android:textStyle="bold"
+            app:backgroundTint="@null"
+            android:background="@drawable/round_cancel_ok"
+            android:layout_marginHorizontal="40dp"
+            android:layout_marginVertical="10dp"
+            android:visibility="gone"
+            android:textColor="@color/white"/>
+
+        <Button
+            android:id="@+id/endCapture_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="End Capture"
+            android:textAllCaps="false"
+            android:textStyle="bold"
+            app:backgroundTint="@null"
+            android:background="@drawable/round_cancel_ok"
+            android:layout_marginHorizontal="40dp"
+            android:layout_marginVertical="10dp"
+            android:visibility="gone"
+            android:textColor="@color/white"/>
+
+        <Button
+            android:id="@+id/resumeCapture_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Resume"
+            android:textAllCaps="false"
+            android:textStyle="bold"
+            app:backgroundTint="@null"
+            android:background="@drawable/round_cancel_ok"
+            android:layout_marginHorizontal="40dp"
+            android:layout_marginVertical="10dp"
+            android:visibility="gone"
+            android:textColor="@color/white"/>
+
+    </LinearLayout>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</LinearLayout>

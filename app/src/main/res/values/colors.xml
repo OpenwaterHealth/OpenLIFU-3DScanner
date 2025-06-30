@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="purple_200">#FFBB86FC</color>
+    <color name="purple_500">#FF6200EE</color>
+    <color name="purple_700">#FF3700B3</color>
+    <color name="teal_200">#FF03DAC5</color>
+    <color name="teal_700">#FF018786</color>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="colorAccent">#03DAC5</color>
+    <color name="row_default_bg">#D3D3D3</color>
+
+<!--    adding doc colors-->
+    <color name="algae">#537371</color>
+    <color name="light_green">#488C75</color>
+    <color name="white_light">#F1F5F5</color>
+    <color name='red'>#8D0808</color>
+    <color name='ripple_green'>#559692</color>
+    <color name='ripple_blue'>#4a768e</color>
+    <color name='ripple_red'>#cc2626</color>
+    <color name='ripple_light_green'>#4eb792</color>
+</resources>
