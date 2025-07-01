@@ -7,11 +7,24 @@
     android:layout_height="match_parent"
     android:background="@drawable/screen_background"
     android:padding="16dp"
-    tools:layout_editor_absoluteX="0dp"
-    tools:layout_editor_absoluteY="42dp">
+    tools:context=".YourActivity">
 
+    <!-- Title -->
+    <TextView
+        android:id="@+id/title"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="60dp"
+        android:text="Capture Complete"
+        android:textAlignment="center"
+        android:textColor="@color/white"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
-
+    <!-- Ref Number -->
     <TextView
         android:id="@+id/RefNumTextCaptureComplete"
         android:layout_width="0dp"
@@ -22,25 +35,11 @@
         android:textColor="@color/white"
         android:textSize="20sp"
         android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintTop_toBottomOf="@id/title"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/title" />
+        app:layout_constraintEnd_toEndOf="parent" />
 
-    <TextView
-        android:id="@+id/title"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="60dp"
-        android:text="Capture Complete"
-        android:textAlignment="center"
-        android:textColor="@color/white"
-        android:textSize="22sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
+    <!-- Count -->
     <TextView
         android:id="@+id/CaptureCountTextOnComplete"
         android:layout_width="0dp"
@@ -51,45 +50,33 @@
         android:textColor="@color/white"
         android:textSize="32sp"
         android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintTop_toBottomOf="@id/RefNumTextCaptureComplete"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/RefNumTextCaptureComplete" />
+        app:layout_constraintEnd_toEndOf="parent" />
 
-    <ImageButton
-        android:id="@+id/btnPreviousInCaptureComplete"
-        android:layout_width="45dp"
-        android:layout_height="50dp"
-        android:layout_marginStart="8dp"
-        android:background="@android:color/transparent"
-        android:src="@drawable/show_prev"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@id/imageFrame"
-        app:layout_constraintBottom_toBottomOf="@id/imageFrame"
-        app:layout_constraintVertical_bias="0.5"/>
-
-
+    <!-- Image Frame -->
     <FrameLayout
         android:id="@+id/imageFrame"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        app:layout_constraintBottom_toTopOf="@id/discardCaptureButton"
-        app:layout_constraintEnd_toStartOf="@id/btnNextInCaptureComplete"
-        app:layout_constraintHeight_percent="0.55"
-        app:layout_constraintStart_toEndOf="@id/btnPreviousInCaptureComplete"
         app:layout_constraintTop_toBottomOf="@id/CaptureCountTextOnComplete"
-        app:layout_constraintWidth_percent="0.8">
+        app:layout_constraintBottom_toTopOf="@id/discardCaptureButton"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintWidth_percent="0.8"
+        app:layout_constraintHeight_percent="0.5">
 
-
+        <!-- Image Preview -->
         <ImageView
             android:id="@+id/imageViewPreview"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:adjustViewBounds="true"
-            android:background="@android:color/darker_gray"
             android:scaleType="centerCrop"
+            android:background="@android:color/darker_gray"
             android:src="@drawable/default_image" />
 
+        <!-- RecyclerView -->
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recyclerViewDiscard"
             android:layout_width="match_parent"
@@ -100,7 +87,20 @@
             android:padding="6dp" />
     </FrameLayout>
 
+    <!-- 🔼 Left Arrow (After Frame) -->
+    <ImageButton
+        android:id="@+id/btnPreviousInCaptureComplete"
+        android:layout_width="40dp"
+        android:layout_height="50dp"
+        android:layout_marginStart="8dp"
+        android:background="@android:color/transparent"
+        android:src="@drawable/show_prev"
+        app:layout_constraintTop_toTopOf="@id/imageFrame"
+        app:layout_constraintBottom_toBottomOf="@id/imageFrame"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintVertical_bias="0.5" />
 
+    <!-- 🔼 Right Arrow (Also after Frame) -->
     <ImageButton
         android:id="@+id/btnNextInCaptureComplete"
         android:layout_width="40dp"
@@ -108,12 +108,12 @@
         android:layout_marginEnd="8dp"
         android:background="@android:color/transparent"
         android:src="@drawable/show_next"
-        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@id/imageFrame"
         app:layout_constraintBottom_toBottomOf="@id/imageFrame"
-        app:layout_constraintVertical_bias="0.5"/>
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintVertical_bias="0.5" />
 
-
+    <!-- Discard Button -->
     <Button
         android:id="@+id/discardCaptureButton"
         android:layout_width="0dp"
@@ -124,8 +124,8 @@
         android:text="Discard"
         app:backgroundTint="@null"
         app:layout_constraintBottom_toTopOf="@id/completeSaveFinishButton"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
     <!-- Save & Finish Button -->
     <Button
@@ -138,6 +138,7 @@
         android:text="Save &amp; Finish"
         app:backgroundTint="@null"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

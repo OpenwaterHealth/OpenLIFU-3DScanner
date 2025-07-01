@@ -34,9 +34,10 @@
                 android:id="@+id/cameraAngle"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:text="Camera "
+                android:text="0"
                 android:layout_marginRight="20dp"
                 android:textSize="20sp"
+                android:gravity="end"
                 android:visibility="visible"
                 android:layout_gravity="end"
                 android:textColor="@color/white"
@@ -127,7 +128,7 @@
             android:layout_width="40dp"
             android:layout_height="40dp"
             android:layout_gravity="center"
-            android:layout_marginTop="-260dp"
+            android:layout_marginTop="-120dp"
             android:src="@drawable/target_with_cross"
             android:visibility="visible"/>
 
@@ -141,10 +142,15 @@
             android:visibility="gone" />
 
 
+
+
+
+
         <!-- Left Arrow-->
         <TextView
             android:id="@+id/leftArrowInstruction"
             android:layout_width="wrap_content"
+
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:layout_marginTop="0dp"
@@ -165,18 +171,18 @@
             android:layout_height="match_parent"
             android:clickable="false"
             android:focusable="false"
-            android:background="@android:color/transparent" />
+            android:background="@android:color/transparent" >
 
-        <View
-            android:id="@+id/captureOverlay"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="#40FFFFFF"
-            android:alpha="0.0"
-            android:visibility="invisible"
-        android:elevation="100dp"/>
+            <View
+                android:id="@+id/captureOverlay"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:alpha="0.0"
 
-
+                android:background="#40FFFFFF"
+                android:elevation="100dp"
+                android:visibility="invisible" />
+        </FrameLayout>
 
 
     </FrameLayout>

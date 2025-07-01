@@ -3,7 +3,11 @@ package com.example.facedetectionar
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
 import android.util.Log
 import android.widget.Toast
 import androidx.annotation.OptIn
@@ -75,6 +79,24 @@ class QrActivity : AppCompatActivity() {
                         for (barcode in barcodes) {
                             barcode.rawValue?.let { qrText ->
                                 isScanned = true // ✅ Prevent further scans
+
+                                if(isScanned){
+                                    // Trigger vibration (your existing code)
+                                    val vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                                        getSystemService(VibratorManager::class.java)?.defaultVibrator
+                                    } else {
+                                        @Suppress("DEPRECATION")
+                                        getSystemService(Vibrator::class.java)
+                                    }
+                                    vibrator?.let {
+                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                            it.vibrate(VibrationEffect.createOneShot(50, VibrationEffect.DEFAULT_AMPLITUDE))
+                                        } else {
+                                            @Suppress("DEPRECATION")
+                                            it.vibrate(50)
+                                        }
+                                    }
+                                }
 
                                 Toast.makeText(this, "ID Fetched Successfully!", Toast.LENGTH_SHORT).show()
 

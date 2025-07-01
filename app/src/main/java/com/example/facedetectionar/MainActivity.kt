@@ -80,6 +80,10 @@ import com.google.mlkit.vision.face.FaceLandmark
 import com.google.mlkit.vision.facemesh.FaceMesh
 import com.google.mlkit.vision.facemesh.FaceMeshDetection
 import com.google.mlkit.vision.facemesh.FaceMeshDetectorOptions
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -117,7 +121,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var rotationVectorSensor: Sensor
     private val rotationMatrix = FloatArray(9)
     private val orientationAngles = FloatArray(3)
-    private var angleString = ""
+    private var angleString = "0"
 
 
 
@@ -146,8 +150,8 @@ class MainActivity : AppCompatActivity() {
             val mainScreenTitle=findViewById<TextView>(R.id.mainScreenTitle)
             val mainScreenSubTitle=findViewById<TextView>(R.id.mainScreenSubTitle)
             val imageCountText=findViewById<TextView>(R.id.imageCountText)
-            val cameraAngleText=findViewById<TextView>(R.id.cameraAngle)
-            cameraAngleText.text=angleString;
+
+
 
 
 
@@ -742,7 +746,7 @@ class MainActivity : AppCompatActivity() {
 
                                 }
 
-                                distance > 0.2f && distance < 0.4f-> {
+                                distance > 0.2f && distance < 0.3f-> {
 
                                     closestNode = bulletNode
                                     updateDistanceLabel("Move to next Position")
@@ -751,6 +755,10 @@ class MainActivity : AppCompatActivity() {
                                         Log.d("startBulletTracking","skip frame count"+skipFrame)
                                         Log.d("startBulletTracking","Bullet Distance: ${distance}")
                                         updateBulletColors(closestNode,distance)
+                                        CoroutineScope(Dispatchers.Main).launch {
+                                            delay(1000)
+                                            // Continue with any other logic after delay if needed
+                                        }
                                     }
                                 }
 
@@ -796,8 +804,10 @@ class MainActivity : AppCompatActivity() {
                     val normalizedPitch = pitch.toInt() // no need to normalize; pitch already covers up/down
 
                     // Show camera tilt (vertical movement) — e.g., 0° (straight), -45° (tilted down), +45° (tilted up)
-                    angleString = "CameraTilt: ${normalizedPitch}°"
-                    Log.d("CameraTilt","CameraTilt"+normalizedPitch);
+                    angleString = "${normalizedPitch}°"
+                    val cameraAngleText=findViewById<TextView>(R.id.cameraAngle)
+                    cameraAngleText.text=angleString;
+
                 }
             }
 
