@@ -1,5 +1,7 @@
 package com.example.facedetectionar;
 
+import static com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withCrossFade;
+
 import android.annotation.SuppressLint;
 import android.app.Dialog;
 import android.content.Intent;
@@ -119,7 +121,7 @@ public class ImagePreview extends AppCompatActivity {
         adapter.setSelectedPosition(currentPosition);
         File imageFile = adapter.getSelectedImageFile();
         if (imageFile != null) {
-            Glide.with(this).load(imageFile).into(imageViewPreview);
+            Glide.with(this).load(imageFile).transition(withCrossFade(500)).into(imageViewPreview);
         }
     }
 
