@@ -8,6 +8,7 @@
         android:required="true" />
 
     <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.USB_PERMISSION" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
@@ -32,6 +33,7 @@
     <uses-feature android:name="android.hardware.usb.host" />
 
     <application
+        android:requestLegacyExternalStorage="true"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
@@ -41,9 +43,7 @@
         <activity
             android:name=".MainActivity"
             android:exported="false" />
-        <activity
-            android:name=".dummy"
-            android:exported="false" />
+
         <activity
             android:name=".QrActivity"
             android:exported="false" />
@@ -53,9 +53,9 @@
         <activity
             android:name=".completeCapture"
             android:exported="false" />
-        <activity
-            android:name=".CaptureCompleteActivity"
-            android:exported="false" />
+<!--        <activity-->
+<!--            android:name=".CaptureCompleteActivity"-->
+<!--            android:exported="false" />-->
         <activity
             android:name=".New_capture"
             android:exported="false" /> <!-- <activity -->

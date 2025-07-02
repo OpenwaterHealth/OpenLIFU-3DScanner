@@ -432,25 +432,25 @@ class New_capture : AppCompatActivity() {
 
 
                 })
-                put(JSONObject().apply {
-                    put("type", "horizontal")
-                    put("radius", 0.18)
-                    put("bulletCount", 40)
-                    put("upDown", -0.12)
-                    put("closeFar", -0.35)
-                    put("minAngle", 20)
-                    put("maxAngle", 50)
-                })
-
-                put(JSONObject().apply {
-                    put("type", "horizontal")
-                    put("radius", 0.18)
-                    put("bulletCount", 60)
-                    put("upDown", -0.14)
-                    put("closeFar", -0.35)
-                    put("minAngle", 0)
-                    put("maxAngle", 10)
-                })
+//                put(JSONObject().apply {
+//                    put("type", "horizontal")
+//                    put("radius", 0.18)
+//                    put("bulletCount", 40)
+//                    put("upDown", -0.12)
+//                    put("closeFar", -0.35)
+//                    put("minAngle", 20)
+//                    put("maxAngle", 50)
+//                })
+//
+//                put(JSONObject().apply {
+//                    put("type", "horizontal")
+//                    put("radius", 0.18)
+//                    put("bulletCount", 60)
+//                    put("upDown", -0.14)
+//                    put("closeFar", -0.35)
+//                    put("minAngle", 0)
+//                    put("maxAngle", 10)
+//                })
 
 
 

@@ -649,21 +649,27 @@ class MainActivity : AppCompatActivity() {
 
                                 }
 
-                                distance > 0.2f && distance < 0.3f && angleString > minAngle && angleString < maxAngle -> {
+                                distance > 0.2f && distance < 0.3f-> {
 
                                     closestNode = bulletNode
-                                    updateDistanceLabel("Move to next Position")
-                                    if (skipFrame > 10 && IsCaptureStarted) {
-                                        // Update bullet colors
-                                        Log.d("startBulletTracking","skip frame count"+skipFrame)
-                                        Log.d("startBulletTracking","Bullet Distance: ${distance}")
 
-                                        CoroutineScope(Dispatchers.Main).launch {
-                                            delay(500)
-                                            // Continue with any other logic after delay if needed
-                                            updateBulletColors(closestNode,distance)
+
+
+                                    if( angleString > minAngle && angleString < maxAngle){
+                                        updateDistanceLabel("Move to next Position")
+                                        if (skipFrame > 10 && IsCaptureStarted) {
+                                            // Update bullet colors
+                                            Log.d("startBulletTracking","skip frame count"+skipFrame)
+                                            Log.d("startBulletTracking","Bullet Distance: ${distance}")
+
+                                            CoroutineScope(Dispatchers.Main).launch {
+                                                delay(500)
+                                                // Continue with any other logic after delay if needed
+                                                updateBulletColors(closestNode,distance)
+                                            }
                                         }
                                     }
+
                                 }
 
                             }

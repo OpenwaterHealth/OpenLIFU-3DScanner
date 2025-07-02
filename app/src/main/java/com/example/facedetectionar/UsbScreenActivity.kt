@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.hardware.usb.UsbManager
+import android.os.BatteryManager
 import android.os.Bundle
 import android.os.Environment
 import android.os.Handler
@@ -14,36 +15,32 @@ import android.view.View
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import java.io.File
 
 class UsbScreenActivity : AppCompatActivity() {
 
-
-
     private lateinit var imageCountTextView: TextView
-
-
-
     private val handler = Handler(Looper.getMainLooper())
     private var isUsbConnected = false
+    private var isStorageMounted = false
     private var referenceNumber: String = "REFNO"
 
-    private val usbReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context, intent: Intent) {
-            //Log.d("USB Receiver", "Action: ${intent.action}")
-            when (intent.action) {
-                UsbManager.ACTION_USB_DEVICE_ATTACHED -> {
-                    isUsbConnected = true
-
-
+    private val powerReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            when (intent?.action) {
+                Intent.ACTION_POWER_CONNECTED -> {
+                    Log.d("USB_STATE", "Power connected")
+                    checkUsbAndStorage()
                 }
-                UsbManager.ACTION_USB_DEVICE_DETACHED -> {
+                Intent.ACTION_POWER_DISCONNECTED -> {
+                    Log.d("USB_STATE", "Power disconnected")
                     isUsbConnected = false
-                    //usbStatusTextView.text = "USB Disconnected!"
+                    isStorageMounted = false
+                    updateUSBconnectionText()
                 }
             }
-
         }
     }
 
@@ -51,106 +48,96 @@ class UsbScreenActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_usb_screen)
 
-
         val readyForTransferText = findViewById<TextView>(R.id.readyForTransferText)
-
-
+//        imageCountTextView = findViewById(R.id.imageCountTextView) // Add this TextView in layout
         val usbOkButton = findViewById<Button>(R.id.usbOkButton)
 
-
         usbOkButton.setOnClickListener {
-            val intent= Intent(this, welcomeActivity::class.java)
+            val intent = Intent(this, welcomeActivity::class.java)
             startActivity(intent)
             finish()
         }
 
-
-
-
-
-
-        // Get the reference number from intent
         referenceNumber = intent.getStringExtra("REFERENCE_NUMBER") ?: "REFNO"
-        readyForTransferText.text="Ready for Transfer Scan ${referenceNumber}"
+        readyForTransferText.text = "Ready for Transfer Scan $referenceNumber"
 
-        // Register USB receiver
         val filter = IntentFilter().apply {
-            addAction(UsbManager.ACTION_USB_DEVICE_ATTACHED)
-            addAction(UsbManager.ACTION_USB_DEVICE_DETACHED)
+            addAction(Intent.ACTION_POWER_CONNECTED)
+            addAction(Intent.ACTION_POWER_DISCONNECTED)
         }
-        registerReceiver(usbReceiver, filter)
+        registerReceiver(powerReceiver, filter)
 
-        // Check USB connection status and image directory continuously
         handler.post(updateStatusRunnable)
-
-
-
     }
 
     private val updateStatusRunnable = object : Runnable {
         override fun run() {
-            // Check USB connection
-            checkUsbConnection()
-
-
-            //update usb status ui
+            checkUsbAndStorage()
             updateUSBconnectionText()
 
-            // Check total captured images
-            val totalImages = getTotalCapturedImages(referenceNumber)
-            if (totalImages > 0) {
-                imageCountTextView.text = "Total Captured Images: $totalImages"
-            } else {
-//                showSuccessMessage()
+            // Safely check for images only when storage is mounted
+            if (isUsbConnected && isStorageMounted) {
+                try {
+                    val totalImages = getTotalCapturedImages(referenceNumber)
+                    imageCountTextView.text = "Total Captured Images: $totalImages"
+                } catch (e: Exception) {
+                    Log.e("ImageCheck", "Error reading images: ${e.message}")
+                }
             }
 
-            // Re-run this task after 500 milliseconds
-            handler.postDelayed(this, 500)
+            handler.postDelayed(this, 1000)
         }
     }
 
-    private fun getTotalCapturedImages(referenceNumber: String): Int {
-        // Define the custom directory path
-        val imageDir = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM), "Camera")
-        if (!imageDir.exists() || !imageDir.isDirectory) return 0
+    private fun checkUsbAndStorage() {
+        val batteryStatusIntent = registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+        val plugged = batteryStatusIntent?.getIntExtra(BatteryManager.EXTRA_PLUGGED, -1)
+        isUsbConnected = plugged == BatteryManager.BATTERY_PLUGGED_USB
 
-        // Filter files based on the reference number prefix and ".jpeg" extension
-        return imageDir.listFiles()?.count { it.name.startsWith(referenceNumber) && it.name.endsWith(".jpeg") } ?: 0
+        val state = Environment.getExternalStorageState()
+        isStorageMounted = state == Environment.MEDIA_MOUNTED
+
+        Log.d("isUsbConnected", "USB: $isUsbConnected | Storage Mounted: $isStorageMounted")
     }
 
-    private fun checkUsbConnection() {
-        val usbManager = getSystemService(Context.USB_SERVICE) as UsbManager
-        isUsbConnected = usbManager.deviceList.isNotEmpty()
-        val devices = usbManager.deviceList
-        //Log.d("USB Devices", devices.toString())
-        //usbStatusTextView.text = if (isUsbConnected) "USB Connected!" else "USB Disconnected!"
+    private fun getTotalCapturedImages(referenceNumber: String) {
+
+        val imageFolderName="${referenceNumber}_${200}"
+        Log.d("fileCalled", "fileLogic Called $referenceNumber")
+        val folder = File(Environment.getExternalStorageDirectory(), "OpenLIFU-3DScanner/$imageFolderName")
+
+        if (!folder.exists()) {
+            Log.d("fileCalled","Congratulations !!!!!!!!!!")
+            val usbStatusText = findViewById<TextView>(R.id.usbStatusText)
+            usbStatusText.text = "Capture has been transferred off of this device"
+
+        }
+
     }
 
-
-
-    override fun onDestroy() {
-        super.onDestroy()
-        // Unregister USB receiver
-        unregisterReceiver(usbReceiver)
-
-        // Stop the handler
-        handler.removeCallbacks(updateStatusRunnable)
-    }
-
-
-    //updating the ui based on usb connection
-    private fun updateUSBconnectionText(){
+    private fun updateUSBconnectionText() {
         val usbStatusText = findViewById<TextView>(R.id.usbStatusText)
         val usbConnectedIconImage = findViewById<ImageView>(R.id.usbConnectedIconImage)
         val usbDisConnectedIconImage = findViewById<ImageView>(R.id.usbDisConnectedIconImage)
-        if(isUsbConnected){
-            usbDisConnectedIconImage.visibility=View.GONE;
-            usbConnectedIconImage.visibility=View.VISIBLE;
-            usbStatusText.text="Connected"
+
+        if (isUsbConnected && isStorageMounted) {
+            usbDisConnectedIconImage.visibility = View.GONE
+            usbConnectedIconImage.visibility = View.VISIBLE
+            usbStatusText.text = "Connected"
+        } else if (isUsbConnected) {
+            usbConnectedIconImage.visibility = View.GONE
+            usbDisConnectedIconImage.visibility = View.VISIBLE
+            usbStatusText.text = "Connected"
+        } else {
+            usbConnectedIconImage.visibility = View.GONE
+            usbDisConnectedIconImage.visibility = View.VISIBLE
+            usbStatusText.text = "Disconnected"
         }
-        else{
-            usbConnectedIconImage.visibility=View.GONE;
-            usbDisConnectedIconImage.visibility=View.VISIBLE
-            usbStatusText.text="Disconnected"
     }
-}}
+
+    override fun onDestroy() {
+        super.onDestroy()
+        unregisterReceiver(powerReceiver)
+        handler.removeCallbacks(updateStatusRunnable)
+    }
+}
