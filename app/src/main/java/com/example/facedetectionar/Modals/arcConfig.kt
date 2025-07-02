@@ -5,5 +5,7 @@ data class ArcConfig(
     val radius: Double,
     val bulletCount: Int,
     val upDown: Double,
-    val closeFar: Double
+    val closeFar: Double,
+    val minAngle: Int,
+    val maxAngle: Int
 )

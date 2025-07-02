@@ -3,15 +3,12 @@ package com.example.facedetectionar
 import android.Manifest
 import android.animation.ValueAnimator
 import android.app.Dialog
-import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.graphics.Camera
 import android.graphics.ImageFormat
-import android.graphics.PointF
 import android.graphics.Rect
 import android.graphics.YuvImage
 import android.hardware.Sensor
@@ -27,9 +24,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
-import android.provider.MediaStore
 import android.util.Log
-import android.view.PixelCopy
 import android.view.View
 import android.widget.Button
 import android.widget.TextView
@@ -50,7 +45,6 @@ import com.google.ar.sceneform.ux.ArFragment
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
-import java.io.OutputStream
 import kotlin.math.sqrt
 import android.os.VibrationEffect
 import android.os.Vibrator
@@ -61,23 +55,14 @@ import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.ImageView
 import androidx.annotation.RequiresApi
-import androidx.collection.emptyLongSet
-import androidx.compose.ui.window.Dialog
-import com.google.ar.core.CameraConfig
-import com.google.ar.core.CameraConfigFilter
-import java.util.EnumSet
 import androidx.exifinterface.media.ExifInterface
 import com.example.facedetectionar.Modals.ArcConfig
 import com.google.ar.core.Config
 import com.google.ar.core.Session
 import com.google.ar.core.exceptions.NotYetAvailableException
 import com.google.mlkit.vision.common.InputImage
-import com.google.mlkit.vision.face.FaceDetection
-import com.google.mlkit.vision.face.FaceDetectorOptions
-import com.google.mlkit.vision.face.FaceLandmark
 
 
-import com.google.mlkit.vision.facemesh.FaceMesh
 import com.google.mlkit.vision.facemesh.FaceMeshDetection
 import com.google.mlkit.vision.facemesh.FaceMeshDetectorOptions
 import kotlinx.coroutines.CoroutineScope
@@ -121,7 +106,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var rotationVectorSensor: Sensor
     private val rotationMatrix = FloatArray(9)
     private val orientationAngles = FloatArray(3)
-    private var angleString = "0"
+    private var angleString = 0
 
 
 
@@ -532,110 +517,13 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun getFacePositionFromDetection(): PointF {
-        // This should return the center position of the detected face
-        // in normalized screen coordinates (0-1)
 
-        // Example implementation:
-        return PointF(0.5f, 0.5f) // Center of screen
 
-        // In your actual code, you should use the face detection results
-        // from your face mesh detection to get the actual face position
-    }
 
-    private fun placeRingAroundFaceWithDepth() {
-        val frame = arFragment.arSceneView.arFrame ?: return
-        val depthImage =  frame.acquireDepthImage16Bits() ?: run {
-            Log.w("DepthAPI", "No depth image available")
-            return
-        }
 
-        try {
-            // Get face position from your face detection
-            val facePosition = getFacePositionFromDetection() ?: return
 
-            // Get depth at face position
-            val depthValue = getDepthAtPosition(depthImage, facePosition)
 
-            if (depthValue <= 0f) {
-                Log.w("DepthAPI", "Invalid depth value")
-                return
-            }
 
-            // Calculate position in front of the face
-            val cameraPose = frame.camera.pose
-            val cameraForward = floatArrayOf(0f, 0f, -1f) // Camera's forward vector
-            val distanceInFrontOfFace = 0.05f // 5cm in front of face
-
-            // Calculate world position for the ring
-            val ringPosition = floatArrayOf(
-                facePosition.x,
-                facePosition.y,
-                -(depthValue + distanceInFrontOfFace)
-            )
-
-            // Transform to world coordinates
-            val worldPosition = cameraPose.transformPoint(ringPosition)
-
-            // Create anchor at this position
-            val session = arFragment.arSceneView.session ?: return
-            val anchor = session.createAnchor(Pose(worldPosition, floatArrayOf(0f, 0f, 0f, 1f)))
-
-            // Create AnchorNode from the Anchor
-            val anchorNode = AnchorNode(anchor)
-            anchorNode.setParent(arFragment.arSceneView.scene)
-
-            // Create the ring
-            createBulletRing(anchorNode)
-
-        } finally {
-            depthImage.close()
-        }
-    }
-
-    private fun createBulletRing(anchorNode: AnchorNode) {
-        val radius = 0.18f // Radius of the ring
-        val bulletCount = 70
-
-        bulletNodes.clear() // Clear previous bullets
-
-        for (i in 0 until bulletCount) {
-            val angle = 2 * Math.PI * i / bulletCount - Math.PI / -2
-            val x = (radius * kotlin.math.cos(angle)).toFloat()
-            val z = (radius * kotlin.math.sin(angle)).toFloat()
-
-            val position = Vector3(x, 0f, z)
-            val bulletNode = AnchorNode()
-            bulletNode.setParent(anchorNode)
-            bulletNode.localPosition = position
-
-            bulletNodes.add(bulletNode)
-
-            bulletNode.renderable = ShapeFactory.makeSphere(0.007f, Vector3.zero(), grayMaterial).apply {
-                isShadowCaster = false
-                isShadowReceiver = false
-            }
-        }
-
-        // Add vertical bullets (same as before)
-//        addVerticalBullets(anchorNode)
-    }
-
-    private fun getDepthAtPosition(depthImage: Image, position: PointF): Float {
-        val depthBuffer = depthImage.planes[0].buffer
-        val depthWidth = depthImage.width
-        val depthHeight = depthImage.height
-
-        // Convert normalized position to depth image coordinates
-        val u = (position.x * depthWidth).toInt().coerceIn(0, depthWidth - 1)
-        val v = (position.y * depthHeight).toInt().coerceIn(0, depthHeight - 1)
-
-        // Get depth value (in millimeters)
-        val depthValue = depthBuffer.getShort(v * depthWidth + u).toFloat()
-
-        // Convert to meters
-        return depthValue / 1000f
-    }
 
     private fun placeDynamicBulletsAtCameraFocusFlat() {
         try {
@@ -647,7 +535,7 @@ class MainActivity : AppCompatActivity() {
                     val ringBullets = mutableListOf<AnchorNode>()  // NEW: Store bullets for this ring
 
 
-                    Log.d("placeDynamicBulletsAtCameraFocusFlat","Bullet Config$index:Count: ${arc.bulletCount} ,Up down: ${arc.upDown.toFloat()}")
+                    Log.d("placeDynamicBulletsAtCameraFocusFlat","Bullet Config$index:Count: Up down: ${arc.upDown.toFloat()}")
 
                     // --- YOUR EXISTING BULLET PLACEMENT CODE ---
                     val upDownValue = arc.upDown.toFloat()
@@ -722,6 +610,20 @@ class MainActivity : AppCompatActivity() {
             if (currentRingIndex < ringNodes.size) {
                 val currentRing = ringNodes[currentRingIndex]
                 var closestDistance = Float.MAX_VALUE
+                var minAngle=0;
+                var maxAngle=0;
+
+                if (bulletConfigList.isNotEmpty()) {
+                    bulletConfigList.forEachIndexed { index, arc ->
+                      if(index==currentRingIndex) {
+                          minAngle = arc.minAngle.toInt();
+                          maxAngle = arc.maxAngle.toInt();
+                      }
+
+                    }}
+
+
+                Log.d("ringAngle","minAngle: ${minAngle}, maxAngle: ${maxAngle} for ring ${currentRingIndex}")
 
 
                 currentRing.forEach { bulletNode ->
@@ -730,6 +632,7 @@ class MainActivity : AppCompatActivity() {
                         val distance = calculateDistance(cameraPosition, bulletPosition)
 
                         Log.d("startBulletTracking","closestDistance: ${closestDistance}")
+
 
                         if (distance < closestDistance) { // Find the closest bullet
                             closestDistance = distance
@@ -746,7 +649,7 @@ class MainActivity : AppCompatActivity() {
 
                                 }
 
-                                distance > 0.2f && distance < 0.3f-> {
+                                distance > 0.2f && distance < 0.3f && angleString > minAngle && angleString < maxAngle -> {
 
                                     closestNode = bulletNode
                                     updateDistanceLabel("Move to next Position")
@@ -754,10 +657,11 @@ class MainActivity : AppCompatActivity() {
                                         // Update bullet colors
                                         Log.d("startBulletTracking","skip frame count"+skipFrame)
                                         Log.d("startBulletTracking","Bullet Distance: ${distance}")
-                                        updateBulletColors(closestNode,distance)
+
                                         CoroutineScope(Dispatchers.Main).launch {
-                                            delay(1000)
+                                            delay(500)
                                             // Continue with any other logic after delay if needed
+                                            updateBulletColors(closestNode,distance)
                                         }
                                     }
                                 }
@@ -804,9 +708,9 @@ class MainActivity : AppCompatActivity() {
                     val normalizedPitch = pitch.toInt() // no need to normalize; pitch already covers up/down
 
                     // Show camera tilt (vertical movement) — e.g., 0° (straight), -45° (tilted down), +45° (tilted up)
-                    angleString = "${normalizedPitch}°"
+                    angleString = normalizedPitch
                     val cameraAngleText=findViewById<TextView>(R.id.cameraAngle)
-                    cameraAngleText.text=angleString;
+                    cameraAngleText.text=angleString.toString();
 
                 }
             }
@@ -1361,7 +1265,10 @@ class MainActivity : AppCompatActivity() {
                     radius = arcObject.getDouble("radius"),
                     bulletCount = arcObject.getInt("bulletCount"),
                     upDown = arcObject.getDouble("upDown"),
-                    closeFar = arcObject.getDouble("closeFar")
+                    closeFar = arcObject.getDouble("closeFar") ,
+                   minAngle = arcObject.getInt("minAngle"),
+                   maxAngle = arcObject.getInt("maxAngle"),
+
                 ))
             }
 

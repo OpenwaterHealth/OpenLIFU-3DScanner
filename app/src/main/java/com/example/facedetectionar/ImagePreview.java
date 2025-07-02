@@ -1,10 +1,11 @@
 package com.example.facedetectionar;
 
-import static com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withCrossFade;
+import static com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.with;
 
 import android.annotation.SuppressLint;
 import android.app.Dialog;
 import android.content.Intent;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.DisplayMetrics;
@@ -22,6 +23,9 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.DataSource;
+import com.bumptech.glide.request.transition.DrawableCrossFadeFactory;
+import com.bumptech.glide.request.transition.Transition;
 import com.example.facedetectionar.Adapters.ImagePreviewAdapter;
 import com.example.facedetectionar.Adapters.OnImageClickListener;
 import com.example.facedetectionar.Modals.ImagePreviewModal;
@@ -116,12 +120,14 @@ public class ImagePreview extends AppCompatActivity {
         });
     }
 
+
+
     private void updatePreviewAndSelection() {
         recyclerView.smoothScrollToPosition(currentPosition);
         adapter.setSelectedPosition(currentPosition);
         File imageFile = adapter.getSelectedImageFile();
         if (imageFile != null) {
-            Glide.with(this).load(imageFile).transition(withCrossFade(500)).into(imageViewPreview);
+            Glide.with(this).load(imageFile).into(imageViewPreview);
         }
     }
 
