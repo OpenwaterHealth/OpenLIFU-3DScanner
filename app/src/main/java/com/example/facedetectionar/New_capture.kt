@@ -430,7 +430,7 @@ class New_capture : AppCompatActivity() {
                 put(JSONObject().apply {
                     put("type", "horizontal")
                     put("radius", 0.18)
-                    put("bulletCount", 30)
+                    put("bulletCount", 31)
                     put("upDown", -0.05)
                     put("closeFar", -0.35)
                     put("minAngle", 20)
@@ -441,7 +441,7 @@ class New_capture : AppCompatActivity() {
                 put(JSONObject().apply {
                     put("type", "horizontal")
                     put("radius", 0.15)
-                    put("bulletCount", 20)
+                    put("bulletCount", 21)
                     put("upDown", -0.12)
                     put("closeFar", -0.35)
                     put("minAngle", 25)
@@ -451,7 +451,7 @@ class New_capture : AppCompatActivity() {
                 put(JSONObject().apply {
                     put("type", "horizontal")
                     put("radius", 0.18)
-                    put("bulletCount", 30)
+                    put("bulletCount", 31)
                     put("upDown", 0.00)
                     put("closeFar", -0.35)
                     put("minAngle", 20)

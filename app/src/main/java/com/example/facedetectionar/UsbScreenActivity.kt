@@ -26,6 +26,7 @@ class UsbScreenActivity : AppCompatActivity() {
     private var isUsbConnected = false
     private var isStorageMounted = false
     private var referenceNumber: String = "REFNO"
+    private var totalImageCount: String = "00"
 
     private val powerReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -59,6 +60,9 @@ class UsbScreenActivity : AppCompatActivity() {
         }
 
         referenceNumber = intent.getStringExtra("REFERENCE_NUMBER") ?: "REFNO"
+        totalImageCount = intent.getStringExtra("TOTAL_IMAGE_COUNT") ?: "00"
+
+        Log.d("totalImageCount",totalImageCount)
         readyForTransferText.text = "Ready for Transfer Scan $referenceNumber"
 
         val filter = IntentFilter().apply {
@@ -78,8 +82,8 @@ class UsbScreenActivity : AppCompatActivity() {
             // Safely check for images only when storage is mounted
             if (isUsbConnected && isStorageMounted) {
                 try {
-                    val totalImages = getTotalCapturedImages(referenceNumber)
-                    imageCountTextView.text = "Total Captured Images: $totalImages"
+                    checkFolderExistance(referenceNumber)
+                    
                 } catch (e: Exception) {
                     Log.e("ImageCheck", "Error reading images: ${e.message}")
                 }
@@ -100,10 +104,12 @@ class UsbScreenActivity : AppCompatActivity() {
         Log.d("isUsbConnected", "USB: $isUsbConnected | Storage Mounted: $isStorageMounted")
     }
 
-    private fun getTotalCapturedImages(referenceNumber: String) {
+    private fun checkFolderExistance(referenceNumber: String) {
 
-        val imageFolderName="${referenceNumber}_${200}"
-        Log.d("fileCalled", "fileLogic Called $referenceNumber")
+        val imageFolderName="${referenceNumber}_${totalImageCount}"
+
+        Log.d("FolderIs","imageFolderName"+imageFolderName)
+
         val folder = File(Environment.getExternalStorageDirectory(), "OpenLIFU-3DScanner/$imageFolderName")
 
         if (!folder.exists()) {

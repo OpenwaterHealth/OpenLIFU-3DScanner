@@ -155,6 +155,7 @@ class completeCapture : AppCompatActivity() {
                 dialog.dismiss()
                 val intent = Intent(this, UsbScreenActivity::class.java)
                 intent.putExtra("REFERENCE_NUMBER", referenceNumber)
+                intent.putExtra("TOTAL_IMAGE_COUNT", totalImageCount)
                 startActivity(intent)
             }
 
