@@ -107,6 +107,7 @@ class MainActivity : AppCompatActivity() {
     private val rotationMatrix = FloatArray(9)
     private val orientationAngles = FloatArray(3)
     private var angleString = 0
+    private lateinit  var minMaxAngleText: TextView
 
 
 
@@ -135,6 +136,8 @@ class MainActivity : AppCompatActivity() {
             val mainScreenTitle=findViewById<TextView>(R.id.mainScreenTitle)
             val mainScreenSubTitle=findViewById<TextView>(R.id.mainScreenSubTitle)
             val imageCountText=findViewById<TextView>(R.id.imageCountText)
+            minMaxAngleText=findViewById<TextView>(R.id.angleText)
+
 
 
 
@@ -249,6 +252,7 @@ class MainActivity : AppCompatActivity() {
                 val imageCount = greenBulletList.size // addding image count to modal
                 val text = getString(R.string.endcaptureText, imageCount)
                 val endText=view.findViewById<TextView>(R.id.endCaptureTextLabel)
+
                 endText.text = text
 
                 val yesButton=view.findViewById<Button>(R.id.endCaptureYesBtn)
@@ -266,6 +270,7 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 yesButton.setOnClickListener {
+
                     if(greenBulletList.size==0){
                         val intent= Intent(this, New_capture::class.java)
                         startActivity(intent)
@@ -310,6 +315,8 @@ class MainActivity : AppCompatActivity() {
                     //LogFileUtil.appendLog("Start button clicked: initializing bullets")
 
                     placeDynamicBulletsAtCameraFocusFlat() // Place the ring dynamically
+
+                    minMaxAngleText.visibility= View.VISIBLE;
                     mainScreenTitle.text="Capture"
                     mainScreenSubTitle.visibility= View.GONE
                     imageCountText.visibility= View.VISIBLE
@@ -622,6 +629,8 @@ class MainActivity : AppCompatActivity() {
 
                     }}
 
+                minMaxAngleText.text="MinAngle: ${minAngle}, MaxAngle: ${maxAngle}"
+
 
                 Log.d("ringAngle","minAngle: ${minAngle}, maxAngle: ${maxAngle} for ring ${currentRingIndex}")
 
@@ -652,7 +661,7 @@ class MainActivity : AppCompatActivity() {
                                 distance > 0.2f && distance < 0.3f-> {
 
                                     closestNode = bulletNode
-
+                                    updateDistanceLabel("Adjust angles")
 
 
                                     if( angleString > minAngle && angleString < maxAngle){
@@ -878,6 +887,11 @@ class MainActivity : AppCompatActivity() {
                     distanceLabel.setTextColor(ContextCompat.getColor(this, android.R.color.white))
                 }
                 "Paused" -> {
+                    distanceLabel.setTextColor(ContextCompat.getColor(this, android.R.color.white))
+                    distanceLabel.setBackground(ContextCompat.getDrawable(this, R.drawable.round_yellow))
+                }
+
+                "Adjust angles" -> {
                     distanceLabel.setTextColor(ContextCompat.getColor(this, android.R.color.white))
                     distanceLabel.setBackground(ContextCompat.getDrawable(this, R.drawable.round_yellow))
                 }

@@ -12,9 +12,18 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:orientation="vertical"
-        android:paddingVertical="30dp"
+        android:paddingVertical="10dp"
         android:gravity="center_vertical"
         android:layout_height="140dp">
+
+        <TextView
+            android:id="@+id/angleText"
+            android:textAlignment="center"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/white"
+            android:visibility="invisible"
+            android:text="MinAngle X and MaxAngle Y"/>
 
         <FrameLayout
             android:layout_width="match_parent"
@@ -82,6 +91,7 @@
                 android:textColor="@color/white"/>
 
         </FrameLayout>
+
 
     </LinearLayout>
 

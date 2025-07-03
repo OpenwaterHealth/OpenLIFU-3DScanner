@@ -8,6 +8,7 @@ import android.net.Uri
 import java.io.File
 import android.os.Build
 import android.os.Bundle
+
 import android.os.Environment
 import android.os.Handler
 import android.os.Looper
@@ -22,6 +23,7 @@ import android.widget.CheckBox
 import android.widget.CompoundButton
 import android.widget.EditText
 import android.widget.ImageButton
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
@@ -74,24 +76,22 @@ class New_capture : AppCompatActivity() {
             insets
         }
 
+        val dotsLayout = findViewById<LinearLayout>(R.id.dotsContainer)
 
-        val parameters = listOf(
-            "Capture Parameters",
-            "Number of Arcs: 1",
-            "Arc 1",
-            "Min Angle: -180",
-            "Max Angle: 180",
-            "Height: 0 cm",
-            "Expected Acquisition",
-            "Time: 3 minutes"
-        )
+
+
 
         val recyclerView = findViewById<RecyclerView>(R.id.parametersRecyclerView)
         recyclerView.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
         recyclerView.adapter = ArcConfigAdapter(ringPrametersList)
+
+
+
         // Snap helper to snap items like pages
         val snapHelper = LinearSnapHelper()
         snapHelper.attachToRecyclerView(recyclerView)
+
+        setupDotsIndicator(ringPrametersList.size, recyclerView, dotsLayout)
 
 
 
@@ -430,32 +430,32 @@ class New_capture : AppCompatActivity() {
                 put(JSONObject().apply {
                     put("type", "horizontal")
                     put("radius", 0.18)
-                    put("bulletCount", 100)
+                    put("bulletCount", 30)
                     put("upDown", -0.05)
                     put("closeFar", -0.35)
-                    put("minAngle", 0)
-                    put("maxAngle", 10)
+                    put("minAngle", 20)
+                    put("maxAngle", 30)
 
 
                 })
                 put(JSONObject().apply {
                     put("type", "horizontal")
-                    put("radius", 0.18)
-                    put("bulletCount", 40)
+                    put("radius", 0.15)
+                    put("bulletCount", 20)
                     put("upDown", -0.12)
                     put("closeFar", -0.35)
-                    put("minAngle", 20)
-                    put("maxAngle", 50)
+                    put("minAngle", 25)
+                    put("maxAngle", 40)
                 })
 
                 put(JSONObject().apply {
                     put("type", "horizontal")
                     put("radius", 0.18)
-                    put("bulletCount", 60)
-                    put("upDown", -0.14)
+                    put("bulletCount", 30)
+                    put("upDown", 0.00)
                     put("closeFar", -0.35)
-                    put("minAngle", 0)
-                    put("maxAngle", 10)
+                    put("minAngle", 20)
+                    put("maxAngle", 30)
                 })
 
 
@@ -515,6 +515,46 @@ class New_capture : AppCompatActivity() {
 
 
     }
+
+
+
+    //dots in recycler
+    private fun setupDotsIndicator(itemCount: Int, recyclerView: RecyclerView, dotsLayout: LinearLayout) {
+
+        val dots = mutableListOf<ImageView>()
+        dotsLayout.removeAllViews()
+
+        for (i in 0 until itemCount) {
+            val dot = ImageView(this)
+            val params = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply {
+                setMargins(8, 0, 8, 0)
+            }
+            dot.layoutParams = params
+            dot.setImageResource(R.drawable.dot_inactive)
+            dotsLayout.addView(dot)
+            dots.add(dot)
+        }
+
+        if (dots.isNotEmpty()) {
+            dots[0].setImageResource(R.drawable.dot_active)
+        }
+
+        recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
+                val layoutManager = recyclerView.layoutManager as LinearLayoutManager
+                val visiblePosition = layoutManager.findFirstCompletelyVisibleItemPosition()
+                if (visiblePosition != RecyclerView.NO_POSITION) {
+                    for (i in dots.indices) {
+                        dots[i].setImageResource(if (i == visiblePosition) R.drawable.dot_active else R.drawable.dot_inactive)
+                    }
+                }
+            }
+        })
+    }
+
 
 
 
