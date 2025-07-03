@@ -14,6 +14,7 @@ import android.os.Looper
 import android.provider.Settings
 import android.text.Editable
 import android.util.Log
+import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
@@ -34,6 +35,12 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.marginBottom
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.LinearSnapHelper
+import androidx.recyclerview.widget.RecyclerView
+import com.example.facedetectionar.Adapters.ArcConfigAdapter
+import com.example.facedetectionar.Modals.ArcConfig
+import com.example.facedetectionar.Modals.RingParameter
 import com.google.ar.core.ArCoreApk
 import com.google.ar.core.exceptions.UnavailableDeviceNotCompatibleException
 import org.json.JSONArray
@@ -41,6 +48,7 @@ import org.json.JSONObject
 
 
 class New_capture : AppCompatActivity() {
+    val ringPrametersList=mutableListOf<ArcConfig>()
 
     private val REQUIRED_PERMISSIONS = when {
         Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU -> arrayOf(
@@ -78,11 +86,19 @@ class New_capture : AppCompatActivity() {
             "Time: 3 minutes"
         )
 
+        val recyclerView = findViewById<RecyclerView>(R.id.parametersRecyclerView)
+        recyclerView.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
+        recyclerView.adapter = ArcConfigAdapter(ringPrametersList)
+        // Snap helper to snap items like pages
+        val snapHelper = LinearSnapHelper()
+        snapHelper.attachToRecyclerView(recyclerView)
 
 
 
 
-        val linearLayout=findViewById<LinearLayout>(R.id.linerLayoutOfParameters)
+
+
+//        val linearLayout=findViewById<LinearLayout>(R.id.linerLayoutOfParameters)
         val errorText=findViewById<TextView>(R.id.errorText)
         val cancelButton=findViewById<Button>(R.id.cancelButton);
         val qrIconButton=findViewById<ImageButton>(R.id.qrIconButton);
@@ -150,18 +166,6 @@ class New_capture : AppCompatActivity() {
         val dialog= Dialog(this);
 
 
-        for (item in parameters) {
-            val textView = TextView(this)
-            textView.text = item
-            textView.setTextColor(ContextCompat.getColor(this, R.color.white))
-            textView.textSize = 16f
-
-            textView.layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            )
-            linearLayout.addView(textView)
-        }
 
 
 
@@ -199,6 +203,8 @@ class New_capture : AppCompatActivity() {
 
         //make json config file
         makeRingConfigJsonFile()
+
+        loadsRingConfigFromJson()
 
 
 
@@ -432,25 +438,25 @@ class New_capture : AppCompatActivity() {
 
 
                 })
-//                put(JSONObject().apply {
-//                    put("type", "horizontal")
-//                    put("radius", 0.18)
-//                    put("bulletCount", 40)
-//                    put("upDown", -0.12)
-//                    put("closeFar", -0.35)
-//                    put("minAngle", 20)
-//                    put("maxAngle", 50)
-//                })
-//
-//                put(JSONObject().apply {
-//                    put("type", "horizontal")
-//                    put("radius", 0.18)
-//                    put("bulletCount", 60)
-//                    put("upDown", -0.14)
-//                    put("closeFar", -0.35)
-//                    put("minAngle", 0)
-//                    put("maxAngle", 10)
-//                })
+                put(JSONObject().apply {
+                    put("type", "horizontal")
+                    put("radius", 0.18)
+                    put("bulletCount", 40)
+                    put("upDown", -0.12)
+                    put("closeFar", -0.35)
+                    put("minAngle", 20)
+                    put("maxAngle", 50)
+                })
+
+                put(JSONObject().apply {
+                    put("type", "horizontal")
+                    put("radius", 0.18)
+                    put("bulletCount", 60)
+                    put("upDown", -0.14)
+                    put("closeFar", -0.35)
+                    put("minAngle", 0)
+                    put("maxAngle", 10)
+                })
 
 
 
@@ -466,10 +472,61 @@ class New_capture : AppCompatActivity() {
 
             Log.d("makeRingConfigJsonFile", "ringConfig.json created at: ${savedFile.absolutePath}")
 
+
         } catch (e: Exception) {
             Log.e("makeRingConfigJsonFile", "Error creating JSON file: ${e.message}")
         }
     }
+
+
+
+    //this gets data from ringconfig.json file to show on ui
+
+    private fun loadsRingConfigFromJson(){
+        val jsonFile = File(Environment.getExternalStorageDirectory(), "OpenLIFU-Config/ringConfig.json")
+        if (!jsonFile.exists()) return
+
+        val jsonObject = JSONObject(jsonFile.readText().trim())
+        if (!jsonObject.has("arcs")) return
+
+
+
+
+
+        ringPrametersList.clear()
+        val arcsArray = jsonObject.getJSONArray("arcs")
+
+        for (i in 0 until arcsArray.length()) {
+            val arcObject = arcsArray.getJSONObject(i)
+            ringPrametersList.add(ArcConfig(
+                type = arcObject.getString("type"),
+                radius = arcObject.getDouble("radius"),
+                bulletCount = arcObject.getInt("bulletCount"),
+                upDown = arcObject.getDouble("upDown"),
+                closeFar = arcObject.getDouble("closeFar") ,
+                minAngle = arcObject.getInt("minAngle"),
+                maxAngle = arcObject.getInt("maxAngle"),
+
+                ))
+        }
+
+        ringPrametersList.sortBy { it.upDown }
+
+
+
+    }
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

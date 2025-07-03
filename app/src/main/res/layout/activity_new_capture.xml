@@ -1,162 +1,180 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main"
-    android:orientation="vertical"
     android:layout_width="match_parent"
-   android:gravity="center_vertical"
-    android:background="@drawable/screen_background"
     android:layout_height="match_parent"
+    android:background="@drawable/screen_background"
     tools:context=".New_capture">
 
+    <!-- Header -->
+
+    <!-- Label -->
 
     <TextView
-        android:layout_width="match_parent"
+        android:id="@+id/textViewTitle"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="144dp"
+        android:gravity="center"
         android:text="New Capture"
         android:textColor="@color/white"
         android:textSize="28sp"
         android:textStyle="bold"
-        android:layout_marginBottom="60dp"
-        android:gravity="center"
-
-        android:textAlignment="center" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.451"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
-        android:layout_width="match_parent"
+        android:id="@+id/labelScanId"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginHorizontal="24dp"
+        android:layout_marginTop="24dp"
         android:text="Scan ID"
         android:textColor="@color/white"
         android:textSize="20sp"
-        android:layout_marginHorizontal="20dp"
         android:textStyle="bold"
-        android:gravity="start"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/textViewTitle" />
 
-        android:textAlignment="textStart" />
-
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center_vertical"
+    <!-- EditText -->
+    <EditText
+        android:id="@+id/scanIDInputText"
+        android:layout_width="0dp"
+        android:layout_height="55dp"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="12dp"
+        android:layout_marginEnd="8dp"
+        android:background="@drawable/rounded_edittext_background"
+        android:hint="Scan ID"
+        android:imeOptions="actionDone"
+        android:inputType="text"
         android:paddingHorizontal="20dp"
-        android:orientation="horizontal">
+        android:textColor="@color/white"
+        android:textColorHint="@color/white"
+        app:layout_constraintEnd_toStartOf="@+id/qrIconButton"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/labelScanId" />
 
-        <EditText
-            android:id="@+id/scanIDInputText"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="55dp"
-            android:imeOptions="actionDone"
-            android:inputType="text"
+    <!-- QR Icon -->
+    <ImageButton
+        android:id="@+id/qrIconButton"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginEnd="24dp"
+        android:background="@drawable/ripple_transparent"
+        android:contentDescription="QR"
+        android:src="@drawable/qr_icon"
+        app:layout_constraintBottom_toBottomOf="@id/scanIDInputText"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/scanIDInputText" />
 
-            android:layout_marginVertical="10dp"
-            android:hint="Scan ID"
-            android:textColorHint="@color/white"
-            android:textColor="@color/white"
-            android:background="@drawable/rounded_edittext_background"
-            android:paddingHorizontal="20dp"/>
-
-        <ImageButton
-            android:id="@+id/qrIconButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginLeft="10dp"
-            android:src="@drawable/qr_icon"
-            android:clickable="true"
-            android:focusable="true"
-            android:background="@drawable/ripple_transparent"/>
-
-    </LinearLayout>
-
+    <!-- Error Text -->
     <TextView
         android:id="@+id/errorText"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:layout_marginStart="10dp"
         android:paddingHorizontal="20dp"
         android:text="Please enter a Scan Id"
         android:textColor="#f72b2a"
-        android:layout_marginBottom="10dp"
-        android:layout_marginHorizontal="20dp"
         android:visibility="invisible"
-/>
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/scanIDInputText" />
 
-
-
-
-
-
+    <!-- Recycler Container -->
     <LinearLayout
-        android:id="@+id/linerLayoutOfParameters"
-        android:layout_width="match_parent"
-        android:gravity="center_horizontal"
-        android:padding="10dp"
+        android:id="@+id/recyclerContainer"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="24dp"
+        android:layout_marginTop="16dp"
         android:background="@drawable/parameters_background"
         android:orientation="vertical"
-        android:layout_marginHorizontal="20dp"
-        android:layout_marginBottom="100dp"
-        android:layout_height="wrap_content"/>
 
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/errorText">
 
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/parametersRecyclerView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:clipToPadding="false"
+            android:overScrollMode="never"
+             />
+    </LinearLayout>
 
+    <!-- Checkbox and label -->
 
+    <!-- Start Capture -->
+
+    <!-- Cancel Button -->
 
     <LinearLayout
+        android:id="@+id/instructionContainer"
         android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
         android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:layout_marginLeft="20dp"
-        android:layout_marginTop="20dp"
-        android:layout_height="wrap_content">
+        app:layout_constraintBottom_toTopOf="@+id/startCaptureButton"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.13"
+        app:layout_constraintStart_toStartOf="parent">
 
         <CheckBox
             android:id="@+id/newCaptureCheckbox"
             android:layout_width="38dp"
-            android:checked="true"
             android:layout_height="32dp"
             android:buttonTint="@color/algae"
-            />
+            android:checked="true" />
 
         <TextView
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:layout_marginStart="8dp"
             android:text="Show instructions"
-            android:textColor="@color/white"/>
-
+            android:textColor="@color/white" />
     </LinearLayout>
-
 
     <Button
         android:id="@+id/startCaptureButton"
-        app:backgroundTint="@null"
-        android:layout_width="match_parent"
+        android:layout_width="325dp"
         android:layout_height="wrap_content"
-        android:layout_gravity="center"
+        app:backgroundTint="@null"
         android:layout_marginHorizontal="40dp"
-        android:layout_marginTop="10dp"
         android:background="@drawable/round_green_button"
-       android:textAllCaps="false"
         android:text="Start Capture"
-
-        android:textColor="@color/white" />
+        android:textAllCaps="false"
+        android:textColor="@color/white"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.873" />
 
     <Button
         android:id="@+id/cancelButton"
-        app:backgroundTint="@null"
-        android:layout_width="match_parent"
-        android:textAllCaps="false"
+        android:layout_width="321dp"
         android:layout_height="wrap_content"
-        android:layout_gravity="center"
+        app:backgroundTint="@null"
         android:layout_marginHorizontal="40dp"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="12dp"
+        android:layout_marginBottom="24dp"
         android:background="@drawable/round_cancel_ok"
-        android:backgroundTint="@null"
         android:text="Cancel"
-        android:textColor="@color/white" />
-
-
-
-
-
-</LinearLayout>
+        android:textAllCaps="false"
+        android:textColor="@color/white"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/startCaptureButton"
+        app:layout_constraintVertical_bias="0.039" />
+</androidx.constraintlayout.widget.ConstraintLayout>

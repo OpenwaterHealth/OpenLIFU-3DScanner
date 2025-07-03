@@ -1,0 +1,94 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:padding="12dp"
+    android:layout_margin="10dp"
+
+
+   >
+
+    <!-- LEFT SIDE -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/ringName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Arc:"
+            android:textColor="@color/white"
+            android:textAlignment="center" />
+
+        <TextView
+            android:id="@+id/ringType"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Type:"
+            android:textColor="@color/white" />
+
+
+
+
+
+        <TextView
+            android:id="@+id/ringRadius"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Radius:"
+            android:textColor="@color/white"
+            android:textAlignment="center" />
+
+        <TextView
+            android:id="@+id/ringBulletCount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Bullet Count:"
+            android:textColor="@color/white"
+            android:textAlignment="center" />
+    </LinearLayout>
+
+    <!-- RIGHT SIDE -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="end|center_vertical">
+
+        <TextView
+            android:id="@+id/ringUpDown"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Up-Down:"
+            android:textColor="@color/white"
+            android:textAlignment="center" />
+
+        <TextView
+            android:id="@+id/ringCloseFar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Close-Far:"
+            android:textColor="@color/white"
+            android:textAlignment="center" />
+
+        <TextView
+            android:id="@+id/ringMinAngle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Min Angle:"
+            android:textColor="@color/white"
+            android:textAlignment="center" />
+
+        <TextView
+            android:id="@+id/ringMaxAngle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Max Angle:"
+            android:textColor="@color/white"
+            android:textAlignment="center" />
+    </LinearLayout>
+
+</LinearLayout>

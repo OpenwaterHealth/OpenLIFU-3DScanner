@@ -109,7 +109,7 @@ class UsbScreenActivity : AppCompatActivity() {
         if (!folder.exists()) {
             Log.d("fileCalled","Congratulations !!!!!!!!!!")
             val usbStatusText = findViewById<TextView>(R.id.usbStatusText)
-            usbStatusText.text = "Capture has been transferred off of this device"
+            usbStatusText.text = "Capture has been transferred successfully !"
 
         }
 
