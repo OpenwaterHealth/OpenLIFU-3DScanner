@@ -133,6 +133,21 @@
             android:textAlignment="center"
             android:textSize="12sp" />
 
+        <TextView
+            android:id="@+id/MoveBackText"
+            android:layout_width="200dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="15dp"
+            android:layout_marginLeft="15dp"
+            android:background="@drawable/round_cancel_ok"
+            android:padding="4dp"
+            android:layout_gravity="center_horizontal"
+            android:text="Move Back to Subject"
+            android:textColor="@color/white"
+            android:visibility="gone"
+            android:textAlignment="center"
+            android:textSize="12sp" />
+
         <ImageView
             android:id="@+id/targetCircle"
             android:layout_width="40dp"
@@ -150,6 +165,16 @@
             android:layout_marginTop="-50dp"
             android:background="@drawable/circle_ring"
             android:visibility="gone" />
+
+
+        <ImageView
+            android:id="@+id/faceOutline"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:src="@drawable/face_outline"
+            android:layout_marginTop="20dp"
+            android:visibility="visible"
+/>
 
 
 
@@ -176,6 +201,7 @@
 
 
         <FrameLayout
+
             android:id="@+id/overlayContainer"
             android:layout_width="match_parent"
             android:layout_height="match_parent"

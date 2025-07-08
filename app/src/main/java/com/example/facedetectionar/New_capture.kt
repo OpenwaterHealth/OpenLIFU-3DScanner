@@ -51,6 +51,8 @@ import org.json.JSONObject
 
 class New_capture : AppCompatActivity() {
     val ringPrametersList=mutableListOf<ArcConfig>()
+    private lateinit var dotsContainer: LinearLayout
+    private lateinit var dots: ArrayList<ImageView>
 
     private val REQUIRED_PERMISSIONS = when {
         Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU -> arrayOf(
@@ -76,7 +78,7 @@ class New_capture : AppCompatActivity() {
             insets
         }
 
-        val dotsLayout = findViewById<LinearLayout>(R.id.dotsContainer)
+
 
 
 
@@ -91,7 +93,10 @@ class New_capture : AppCompatActivity() {
         val snapHelper = LinearSnapHelper()
         snapHelper.attachToRecyclerView(recyclerView)
 
-        setupDotsIndicator(ringPrametersList.size, recyclerView, dotsLayout)
+        loadsRingConfigFromJson()
+        setupDotsIndicator()
+        setupRecyclerViewWithDots()
+
 
 
 
@@ -518,42 +523,55 @@ class New_capture : AppCompatActivity() {
 
 
 
-    //dots in recycler
-    private fun setupDotsIndicator(itemCount: Int, recyclerView: RecyclerView, dotsLayout: LinearLayout) {
+    private fun setupDotsIndicator() {
+        dots = ArrayList()
+        dotsContainer = findViewById(R.id.dotsContainer)
+        dotsContainer.removeAllViews()
 
-        val dots = mutableListOf<ImageView>()
-        dotsLayout.removeAllViews()
-
-        for (i in 0 until itemCount) {
-            val dot = ImageView(this)
-            val params = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            ).apply {
-                setMargins(8, 0, 8, 0)
+        if (ringPrametersList.size > 1) { // Only show dots if there are multiple items
+            for (i in ringPrametersList.indices) {
+                dots.add(ImageView(this).apply {
+                    setImageResource(if (i == 0) R.drawable.dot_indicator_selected else R.drawable.dot_indicator)
+                    val params = LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.WRAP_CONTENT,
+                        LinearLayout.LayoutParams.WRAP_CONTENT
+                    )
+                    params.setMargins(8, 0, 8, 0)
+                    layoutParams = params
+                })
+                dotsContainer.addView(dots[i])
             }
-            dot.layoutParams = params
-            dot.setImageResource(R.drawable.dot_inactive)
-            dotsLayout.addView(dot)
-            dots.add(dot)
         }
+    }
 
-        if (dots.isNotEmpty()) {
-            dots[0].setImageResource(R.drawable.dot_active)
-        }
-
+    private fun setupRecyclerViewWithDots() {
+        val recyclerView = findViewById<RecyclerView>(R.id.parametersRecyclerView)
         recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
-            override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
+            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                super.onScrolled(recyclerView, dx, dy)
+
                 val layoutManager = recyclerView.layoutManager as LinearLayoutManager
-                val visiblePosition = layoutManager.findFirstCompletelyVisibleItemPosition()
-                if (visiblePosition != RecyclerView.NO_POSITION) {
-                    for (i in dots.indices) {
-                        dots[i].setImageResource(if (i == visiblePosition) R.drawable.dot_active else R.drawable.dot_inactive)
-                    }
+                val firstVisibleItemPosition = layoutManager.findFirstVisibleItemPosition()
+                val visibleItemCount = layoutManager.childCount
+                val totalItemCount = layoutManager.itemCount
+
+                if (visibleItemCount > 0) {
+                    updateDots(firstVisibleItemPosition)
                 }
             }
         })
     }
+
+    private fun updateDots(currentPosition: Int) {
+        for (i in dots.indices) {
+            dots[i].setImageResource(if (i == currentPosition)
+                R.drawable.dot_indicator_selected
+            else
+                R.drawable.dot_indicator
+            )
+        }
+    }
+
 
 
 

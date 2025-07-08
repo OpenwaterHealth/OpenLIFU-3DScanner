@@ -136,6 +136,9 @@ class MainActivity : AppCompatActivity() {
             val mainScreenTitle=findViewById<TextView>(R.id.mainScreenTitle)
             val mainScreenSubTitle=findViewById<TextView>(R.id.mainScreenSubTitle)
             val imageCountText=findViewById<TextView>(R.id.imageCountText)
+            val faceOutline=findViewById<ImageView>(R.id.faceOutline)
+            val MoveBackText=findViewById<TextView>(R.id.MoveBackText)
+
             minMaxAngleText=findViewById<TextView>(R.id.angleText)
 
 
@@ -197,11 +200,19 @@ class MainActivity : AppCompatActivity() {
             }
 
             confirm_button.setOnClickListener {
+                faceOutline.visibility=View.GONE;
                 confirm_button.visibility=View.GONE;
                 mainScreenSubTitle.text="Review the Planned Camera Poses"
                 intialRenderCamCancel.visibility=View.GONE;
                 BackInStartCapture.visibility=View.VISIBLE
                 startButton.visibility=View.VISIBLE;
+                placeDynamicBulletsAtCameraFocusFlat();
+                distanceLabel.visibility=View.GONE
+                MoveBackText.visibility=View.VISIBLE
+
+
+
+
             }
 
             BackInStartCapture.setOnClickListener {
@@ -314,7 +325,10 @@ class MainActivity : AppCompatActivity() {
                 startButton.setOnClickListener {
                     //LogFileUtil.appendLog("Start button clicked: initializing bullets")
 
-                    placeDynamicBulletsAtCameraFocusFlat() // Place the ring dynamically
+                    distanceLabel.visibility=View.VISIBLE
+                    MoveBackText.visibility=View.GONE
+
+                    // Place the ring dynamically
 
                     minMaxAngleText.visibility= View.VISIBLE;
                     mainScreenTitle.text="Capture"
@@ -331,8 +345,6 @@ class MainActivity : AppCompatActivity() {
                     //LogFileUtil.stopLogcatCapture()
 
 
-
-                    // Show the instruction
                     leftArrowInstruction.visibility = View.VISIBLE
                     findViewById<ImageView>(R.id.targetCircle).visibility = View.VISIBLE
                     // Start the blinking animation
@@ -346,6 +358,10 @@ class MainActivity : AppCompatActivity() {
 
 //
                     }, 3000) // 3000 milliseconds = 3 seconds
+
+
+
+
 
                 }
 
@@ -433,9 +449,9 @@ class MainActivity : AppCompatActivity() {
         // Initially hide start button and targetCircle
 
         findViewById<ImageView>(R.id.targetCircle).visibility = View.GONE
-        distanceLabel.text = "No subject Detected"
-        distanceLabel.setTextColor(ContextCompat.getColor(this, android.R.color.white))
-        distanceLabel.setBackground(ContextCompat.getDrawable(this, R.drawable.round_orange))
+
+
+        updateDistanceLabel("No subject Detected")
 
         arFragment.arSceneView.scene.addOnUpdateListener {
             checkVisibilityOfBullets()
@@ -487,8 +503,10 @@ class MainActivity : AppCompatActivity() {
 
 //            bulletNode.isEnabled = inGoodDistance && isFacing
 
-            if(distance > 0.6f && distance < 0.8f)
+
+            if(distance > 0.5f && distance <0.9f)
             {
+                Log.d("thisIsCorrect","               "+distance)
                 bulletNode.isEnabled = false
             }
             else
@@ -580,6 +598,7 @@ class MainActivity : AppCompatActivity() {
                     ringNodes.add(ringBullets)  // NEW: Add this ring to the grouped list
                 }
             }
+
         } catch (e: Exception) {
             Log.e("BulletPlacement", "Error placing bullets: ${e.message}")
         }
@@ -648,8 +667,10 @@ class MainActivity : AppCompatActivity() {
 
 
                             // Update the distance label based on the distance
+                            Log.d("perfect distance","distance: ${distance}")
                             when {
                                 distance < 0.2f -> {
+
                                     updateDistanceLabel("Too close")
                                 }
 
@@ -808,30 +829,32 @@ class MainActivity : AppCompatActivity() {
                         // Apply logic based on face size + z-depth
                         when {
                             noseZ < -75.0 -> { // Too close (wide and shallow depth)
-                                // if (!isFaceDetected) updateDistanceLabel("Move Away") while initial subject detectiion
+                                Log.d("isFaceDetected","updateDistanceLabel MOVE AWAY"+isFaceDetected)
+                                updateDistanceLabel("Move Away");
 
                             }
                             noseZ > -60.0 -> { // Too far (small face and deeper z)
-                                //   if (!isFaceDetected) updateDistanceLabel("Move Closure") while initial subject detectiion
+                                Log.d("isFaceDetected","updateDistanceLabel MOVE Close"+isFaceDetected)
+                                   updateDistanceLabel("Move Closure")
 
 
                             }
                             else -> {
-                                //isFaceDetected = true
-                                distanceLabel.text = "Subject Detected"
+//                                isFaceDetected = true
+                                Log.d("isFaceDetected","updateDistanceLabel DETECTED"+noseZ)
+                                updateDistanceLabel("Subject Detected")
                                 confirm_button=findViewById<Button>(R.id.confirm_button)
                                 confirm_button.isEnabled=true;
 
-
-                                distanceLabel.setTextColor(ContextCompat.getColor(this, android.R.color.white))
-                                distanceLabel.setBackground(ContextCompat.getDrawable(this, R.drawable.round_green_button_light))
-//                                startButton.visibility = View.VISIBLE
-//                                faceOverlayView.updatePoints(faceMesh.allPoints, bitmap.width, bitmap.height)
                             }
                         }
                     } else {
-//                        if (!isFaceDetected && !isAnyFace) updateDistanceLabel("No subject detected")
+
                         faceOverlayView.updatePoints(emptyList(), bitmap.width, bitmap.height)
+                        Log.d("isFaceDetected","updateDistanceLabel DETECTED"+isFaceDetected)
+                        updateDistanceLabel("No subject detected")
+                        confirm_button=findViewById<Button>(R.id.confirm_button)
+                        confirm_button.isEnabled=false;
                     }
                 }
                 .addOnFailureListener { e ->
@@ -852,16 +875,18 @@ class MainActivity : AppCompatActivity() {
 
 
     private fun updateDistanceLabel(baseText: String) {
-        when (progressCounter) {
-            0 -> distanceLabel.text = "$baseText"
-            1 -> distanceLabel.text = "$baseText."
-            2 -> distanceLabel.text = "$baseText.."
-            3 -> {
-                distanceLabel.text = "$baseText..."
-                progressCounter = -1
-            }
-        }
-        progressCounter++
+//        when (progressCounter) {
+//            0 -> distanceLabel.text = "$baseText"
+//            1 -> distanceLabel.text = "$baseText."
+//            2 -> distanceLabel.text = "$baseText.."
+//            3 -> {
+//                distanceLabel.text = "$baseText..."
+//                progressCounter = -1
+//            }
+//        }
+//        progressCounter++
+
+        distanceLabel.text="$baseText";
 
 
 
@@ -871,20 +896,25 @@ class MainActivity : AppCompatActivity() {
             distanceLabel.setBackground(ContextCompat.getDrawable(this, R.drawable.round_yellow))
         }else{
             when (baseText) {
-                "Too close" -> {
+                "Move Away" -> {
+
                     distanceLabel.setTextColor(ContextCompat.getColor(this, android.R.color.white))
                     distanceLabel.setBackground(ContextCompat.getDrawable(this, R.drawable.round_orange))
                 }
                 "Move to next Position" -> {
+
                     distanceLabel.setTextColor(ContextCompat.getColor(this, android.R.color.white))
                     distanceLabel.setBackground(ContextCompat.getDrawable(this, R.drawable.round_cancel_ok))
                 }
                 "Move Closure" -> {
+
                     distanceLabel.setTextColor(ContextCompat.getColor(this, android.R.color.white))
                     distanceLabel.setBackground(ContextCompat.getDrawable(this, R.drawable.round_orange))
                 }
                 "No subject detected" -> {
+
                     distanceLabel.setTextColor(ContextCompat.getColor(this, android.R.color.white))
+                    distanceLabel.setBackground(ContextCompat.getDrawable(this, R.drawable.round_orange))
                 }
                 "Paused" -> {
                     distanceLabel.setTextColor(ContextCompat.getColor(this, android.R.color.white))
@@ -894,6 +924,16 @@ class MainActivity : AppCompatActivity() {
                 "Adjust angles" -> {
                     distanceLabel.setTextColor(ContextCompat.getColor(this, android.R.color.white))
                     distanceLabel.setBackground(ContextCompat.getDrawable(this, R.drawable.round_yellow))
+                }
+
+                "Subject Detected" -> {
+                    distanceLabel.setTextColor(ContextCompat.getColor(this, android.R.color.white))
+                    distanceLabel.setBackground(ContextCompat.getDrawable(this, R.drawable.round_green_button_light))
+                }
+
+                "Move to Subject`s back" -> {
+                    distanceLabel.setTextColor(ContextCompat.getColor(this, android.R.color.white))
+                    distanceLabel.setBackground(ContextCompat.getDrawable(this, R.drawable.round_cancel_ok))
                 }
 
             }
