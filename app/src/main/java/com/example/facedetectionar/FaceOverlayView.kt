@@ -17,6 +17,8 @@ class FaceOverlayView(context: Context) : View(context) {
         invalidate()
     }
 
+
+
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         if (points.isEmpty()) return

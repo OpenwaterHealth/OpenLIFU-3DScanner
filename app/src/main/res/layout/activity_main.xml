@@ -148,14 +148,14 @@
             android:textAlignment="center"
             android:textSize="12sp" />
 
-        <ImageView
-            android:id="@+id/targetCircle"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_gravity="center"
-            android:layout_marginTop="-120dp"
-            android:src="@drawable/target_with_cross"
-            android:visibility="visible"/>
+<!--        <ImageView-->
+<!--            android:id="@+id/targetCircle"-->
+<!--            android:layout_width="40dp"-->
+<!--            android:layout_height="40dp"-->
+<!--            android:layout_gravity="center"-->
+<!--            android:layout_marginTop="-120dp"-->
+<!--            android:src="@drawable/target_with_cross"-->
+<!--            android:visibility="visible"/>-->
 
         <ImageView
             android:id="@+id/faceRing"

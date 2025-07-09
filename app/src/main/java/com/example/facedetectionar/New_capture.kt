@@ -80,16 +80,32 @@ class New_capture : AppCompatActivity() {
 
 
 
+        // Check required permissions
+        if (!hasAllPermissions()) {
+            requestPermissions()
+        }
+
+        // Check for All Files Access permission on Android 11+
+        checkAllFilesAccessPermission()
+
+        // Check and ensure ARCore availability
+        checkAndInstallARCore()
+
+
+        //make json config file
+        makeRingConfigJsonFile()
+
+        loadsRingConfigFromJson()
 
 
 
+
+
+//recycler setup
         val recyclerView = findViewById<RecyclerView>(R.id.parametersRecyclerView)
         recyclerView.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
         recyclerView.adapter = ArcConfigAdapter(ringPrametersList)
-
-
-
-        // Snap helper to snap items like pages
+          // Snap helper to snap items like pages
         val snapHelper = LinearSnapHelper()
         snapHelper.attachToRecyclerView(recyclerView)
 
@@ -194,22 +210,10 @@ class New_capture : AppCompatActivity() {
         }
 
 
-        // Check required permissions
-        if (!hasAllPermissions()) {
-            requestPermissions()
-        }
-
-        // Check for All Files Access permission on Android 11+
-        checkAllFilesAccessPermission()
-
-        // Check and ensure ARCore availability
-        checkAndInstallARCore()
 
 
-        //make json config file
-        makeRingConfigJsonFile()
 
-        loadsRingConfigFromJson()
+
 
 
 
@@ -434,38 +438,40 @@ class New_capture : AppCompatActivity() {
             val arcsArray = JSONArray().apply {
                 put(JSONObject().apply {
                     put("type", "horizontal")
-                    put("radius", 0.18)
+                    put("radius", 0.19)
                     put("bulletCount", 31)
                     put("upDown", -0.05)
                     put("closeFar", -0.35)
-                    put("minAngle", 20)
+                    put("minAngle", 0)
                     put("maxAngle", 30)
 
 
                 })
                 put(JSONObject().apply {
                     put("type", "horizontal")
-                    put("radius", 0.15)
+                    put("radius", 0.19)
                     put("bulletCount", 21)
                     put("upDown", -0.12)
                     put("closeFar", -0.35)
-                    put("minAngle", 25)
+                    put("minAngle", 0)
                     put("maxAngle", 40)
                 })
 
                 put(JSONObject().apply {
                     put("type", "horizontal")
-                    put("radius", 0.18)
+                    put("radius", 0.19)
                     put("bulletCount", 31)
                     put("upDown", 0.00)
                     put("closeFar", -0.35)
-                    put("minAngle", 20)
+                    put("minAngle", 0)
                     put("maxAngle", 30)
                 })
 
 
-
             }
+
+
+
 
             // Wrap it in a root JSON object
             val rootObject = JSONObject().apply {
