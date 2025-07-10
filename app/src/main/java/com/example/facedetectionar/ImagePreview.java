@@ -139,7 +139,8 @@ public class ImagePreview extends AppCompatActivity {
         Button deleteNoBtn = view.findViewById(R.id.deleteNoBtn);
         TextView deleteWarningText = view.findViewById(R.id.deleteWarningText);
 
-        String text = getString(R.string.deleteText, referenceNumber != null ? referenceNumber : "Scan ID");
+        String text = getString(R.string.deleteText, referenceNumber != null ? referenceNumber.split("_")[0] : "Scan ID");
+
         deleteWarningText.setText(text);
 
         deleteNoBtn.setOnClickListener(v -> dialog.dismiss());

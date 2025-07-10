@@ -475,7 +475,8 @@ class New_capture : AppCompatActivity() {
 
             // Wrap it in a root JSON object
             val rootObject = JSONObject().apply {
-                put("arcs", arcsArray)
+                put("arcs", arcsArray);
+                put("showRingInSequence",true);
             }
 
             // Write to file (pretty print)

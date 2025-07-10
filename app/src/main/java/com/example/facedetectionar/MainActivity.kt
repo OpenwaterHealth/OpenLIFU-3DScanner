@@ -89,9 +89,12 @@ class MainActivity : AppCompatActivity() {
     private val capturedDataList = mutableListOf<Map<String, Any>>()
     private lateinit var grayMaterial: Material
     private lateinit var greenMaterial: Material
-    private lateinit var lightGrayMaterial: Material
+    private lateinit var transparentMaterial: Material
     private val ringNodes = mutableListOf<MutableList<Node>>()
     private var currentRingIndex = 0
+    private var SequenceEnabled: Boolean=false;
+
+
 
 
     private val bulletNodes = mutableListOf<Node>()
@@ -124,6 +127,9 @@ class MainActivity : AppCompatActivity() {
 
             // Load bullet config from JSON
             loadsDataFromJson()
+
+            // checks if we want to show rings in sequence
+            checkSequenceEnabled()
 
             // Initialize UI components
             distanceLabel = findViewById(R.id.distanceLabel)
@@ -187,6 +193,7 @@ class MainActivity : AppCompatActivity() {
                 focusMode = Config.FocusMode.AUTO
                 updateMode = Config.UpdateMode.LATEST_CAMERA_IMAGE
                 depthMode=Config.DepthMode.AUTOMATIC
+                planeFindingMode =Config.PlaneFindingMode.DISABLED
             }
 
             try {
@@ -562,11 +569,12 @@ class MainActivity : AppCompatActivity() {
 
             MaterialFactory.makeTransparentWithColor(
                 this,
-                com.google.ar.sceneform.rendering.Color(android.graphics.Color.argb(128, 128, 128, 128)) // 50% transparent gray
+                com.google.ar.sceneform.rendering.Color(android.graphics.Color.argb(0, 128, 128, 128)) // Alpha = 0 → fully transparent
             ).thenAccept { material ->
-                lightGrayMaterial = material
+                transparentMaterial = material
                 checkMaterialsReady(onComplete)
             }
+
 
         }
         catch (e: Exception)
@@ -584,69 +592,81 @@ class MainActivity : AppCompatActivity() {
 
 
 
-
+    private fun checkSequenceEnabled(){
+        val jsonFile = File(Environment.getExternalStorageDirectory(), "OpenLIFU-Config/ringConfig.json")
+        if (!jsonFile.exists()) return
+       val jsonObject = JSONObject(jsonFile.readText().trim())
+        if (!jsonObject.has("showRingInSequence")) return
+         val isEnabled = jsonObject.getBoolean("showRingInSequence")
+        SequenceEnabled=isEnabled
+    }
 
 
 
 
     private fun placeDynamicBulletsAtCameraFocusFlat() {
-
         try {
 
             val frame: Frame = arFragment.arSceneView.arFrame ?: return
             val cameraPose: Pose = frame.camera.pose
 
-            if (bulletConfigList.isNotEmpty()) {
-                bulletConfigList.forEachIndexed { index, arc ->
-                    val ringBullets = mutableListOf<Node>()  // Changed to Node to freeze position
 
-                    Log.d(
-                        "placeDynamicBulletsAtCameraFocusFlat",
-                        "Bullet Config $index: Count: ${arc.bulletCount}, UpDown: ${arc.upDown}, CloseFar: ${arc.closeFar}"
-                    )
 
-                    val upDownValue = arc.upDown.toFloat()
-                    val closeFarValue = arc.closeFar.toFloat()
-                    val arcRadius = arc.radius.toFloat()
 
-                    val forwardVector = floatArrayOf(upDownValue, 0f, closeFarValue)
-                    val cameraPosition = cameraPose.transformPoint(forwardVector)
-                    val flatOrientation = floatArrayOf(0f, 0f, 0f, 1f)
+                if (bulletConfigList.isNotEmpty()) {
+                    bulletConfigList.forEachIndexed { index, arc ->
+                        val ringBullets = mutableListOf<Node>()
 
-                    val session = arFragment.arSceneView.session ?: return
-                    val anchor = session.createAnchor(Pose(cameraPosition, flatOrientation))
-                    val anchorNode = AnchorNode(anchor)
-                    anchorNode.setParent(arFragment.arSceneView.scene)
+                        val upDownValue = arc.upDown.toFloat()
+                        val closeFarValue = arc.closeFar.toFloat()
+                        val arcRadius = arc.radius.toFloat()
 
-                    val bulletCount = arc.bulletCount
-                    for (i in 0 until bulletCount) {
-                        val angle = 2 * Math.PI * i / bulletCount - Math.PI / -2
-                        val x = (arcRadius * kotlin.math.cos(angle)).toFloat()
-                        val z = (arcRadius * kotlin.math.sin(angle)).toFloat()
-                        val localOffset = Vector3(x, 0f, z)
-                        val worldPos = Vector3(
-                            anchorNode.worldPosition.x + localOffset.x,
-                            anchorNode.worldPosition.y + localOffset.y,
-                            anchorNode.worldPosition.z + localOffset.z
-                        )
+                        val forwardVector = floatArrayOf(upDownValue, 0f, closeFarValue)
+                        val worldCenter = cameraPose.transformPoint(forwardVector)
 
-                        val bulletNode = Node().apply {
-                            setParent(arFragment.arSceneView.scene) // Not parented to anchor to avoid drift
-                            worldPosition = worldPos
-                            renderable = ShapeFactory.makeSphere(0.007f, Vector3.zero(), grayMaterial).apply {
-                                isShadowCaster = false
-                                isShadowReceiver = false
+                        val bulletCount = arc.bulletCount
+                        for (i in 0 until bulletCount) {
+                            val angle = 2 * Math.PI * i / bulletCount - Math.PI / -2
+                            val offsetX = (arcRadius * kotlin.math.cos(angle)).toFloat()
+                            val offsetZ = (arcRadius * kotlin.math.sin(angle)).toFloat()
+
+                            val worldX = worldCenter[0] + offsetX
+                            val worldY = worldCenter[1] // flat on Y-axis
+                            val worldZ = worldCenter[2] + offsetZ
+
+                            val isRingActive=(index == 0);
+
+                            val bulletNode = Node().apply {
+                                setParent(arFragment.arSceneView.scene)
+                                worldPosition = Vector3(worldX, worldY, worldZ)
+                                if (!SequenceEnabled || isRingActive) {
+                                    renderable = ShapeFactory.makeSphere(0.007f, Vector3.zero(), grayMaterial).apply {
+                                        isShadowCaster = false
+                                        isShadowReceiver = false
+                                    }
+                                }
+                                isEnabled = isRingActive
                             }
-                            isEnabled = (index == 0)
+
+                            ringBullets.add(bulletNode)
+                            bulletNodes.add(bulletNode)
                         }
 
-                        ringBullets.add(bulletNode)
-                        bulletNodes.add(bulletNode)
+                        ringNodes.add(ringBullets)
                     }
-
-                    ringNodes.add(ringBullets)
                 }
-            }
+
+
+
+            // 🚫 Fully disable plane tracking & discovery
+            arFragment.arSceneView.planeRenderer.isEnabled = false
+            arFragment.planeDiscoveryController.hide()
+            arFragment.planeDiscoveryController.setInstructionView(null)
+
+
+
+            // 🚫 Optional: Stop ARCore scene updates
+            arFragment.arSceneView.scene.removeOnUpdateListener { /* remove if you have one */ }
 
         } catch (e: Exception) {
             Log.e("BulletPlacement", "Error placing bullets: ${e.message}")
@@ -676,6 +696,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun startBulletTracking() {
         updateDistanceLabel("Move Closer")
+        faceOverlayView.updatePoints(emptyList(), 0, 0)
         var skipFrame = 0
         var moveToNextPosition = false
         var moveToNextPositionCount = 0
@@ -687,7 +708,7 @@ class MainActivity : AppCompatActivity() {
 
 
 
-
+            moveToNextPositionCount++
             // Only track bullets from current active ring
             if (currentRingIndex < ringNodes.size) {
                 val currentRing = ringNodes[currentRingIndex]
@@ -709,6 +730,7 @@ class MainActivity : AppCompatActivity() {
 
 
                 currentRing.forEach { bulletNode ->
+
                     if (!greenBulletList.contains(bulletNode)) {
                         val bulletPosition = bulletNode.worldPosition
                         val distance = calculateDistance(cameraPosition, bulletPosition)
@@ -718,8 +740,8 @@ class MainActivity : AppCompatActivity() {
 
 
                             // Update the distance label based on the distance (like old version)
-                            moveToNextPositionCount++
 
+                            Log.d("moveToNextPositionCount", "moveToNextPositionCount: "+moveToNextPositionCount+",moveToNextPosition: "+moveToNextPosition+" ")
                             when {
                                 distance < 0.18f -> {
                                     updateDistanceLabel("Move Away")
@@ -737,6 +759,7 @@ class MainActivity : AppCompatActivity() {
                                         updateDistanceLabel("Move to next Position")
                                         moveToNextPosition = false
                                     }
+                                    Log.d("moveToNextPositionCount", "moveToNextPositionCount: "+moveToNextPositionCount+",moveToNextPosition: "+moveToNextPosition+" ")
                                 }
                                 distance > 0.30f -> {
                                     updateDistanceLabel("Move Closer")
@@ -1053,6 +1076,61 @@ class MainActivity : AppCompatActivity() {
 
 
 
+    private fun enableOtherRing() {
+        if (SequenceEnabled) {
+            if (currentRingIndex < ringNodes.size) {
+                val currentRing = ringNodes[currentRingIndex]
+                val currentRingComplete = currentRing.all { greenBulletList.contains(it) }
+
+                if (currentRingComplete) {
+                    // Hide all bullets from current completed ring
+                    currentRing.forEach { node ->
+                        node.renderable = null
+                        node.isEnabled = false
+                    }
+
+                    // Move to next ring if available
+                    if (currentRingIndex < ringNodes.size - 1) {
+                        currentRingIndex++
+                        // Enable next ring's bullets
+                        ringNodes[currentRingIndex].forEach {
+                            it.renderable = ShapeFactory.makeSphere(0.007f, Vector3.zero(), grayMaterial).apply {
+                                isShadowCaster = false
+                                isShadowReceiver = false
+                            }
+                            it.isEnabled = true
+                        }
+                        Toast.makeText(this, "Ring ${currentRingIndex + 1} Enabled", Toast.LENGTH_SHORT).show()
+                    } else {
+                        // All rings complete
+                        showCompletionDialog()
+                    }
+                }
+            }
+        } else {
+            // Original non-sequence mode code
+            if (currentRingIndex < ringNodes.size) {
+                val currentRing = ringNodes[currentRingIndex]
+                val currentRingComplete = currentRing.all { greenBulletList.contains(it) }
+
+                if (currentRingComplete) {
+                    // Move to next ring if available
+                    if (currentRingIndex < ringNodes.size - 1) {
+                        currentRingIndex++
+                        // Enable next ring's bullets
+                        ringNodes[currentRingIndex].forEach { it.isEnabled = true }
+                        Toast.makeText(this, "Ring ${currentRingIndex + 1} Enabled", Toast.LENGTH_SHORT).show()
+                    } else {
+                        // All rings complete
+                        showCompletionDialog()
+                    }
+                }
+            }
+        }
+    }
+
+
+
     private fun updateBulletColors(closestNode: Node?) {
         Log.d("Logging","COLORING..............$closestNode")
 
@@ -1086,24 +1164,7 @@ class MainActivity : AppCompatActivity() {
             captureCameraFeedPhoto(arFragment.arSceneView)
 
 
-            // Check if current ring is complete and enable other ring
-            if (currentRingIndex < ringNodes.size) {
-                val currentRing = ringNodes[currentRingIndex]
-                val currentRingComplete = currentRing.all { greenBulletList.contains(it) }
-
-                if (currentRingComplete) {
-                    // Move to next ring if available
-                    if (currentRingIndex < ringNodes.size - 1) {
-                        currentRingIndex++
-                        // Enable next ring's bullets
-                        ringNodes[currentRingIndex].forEach { it.isEnabled = true }
-                        Toast.makeText(this, "Ring  ${currentRingIndex} Enabled", Toast.LENGTH_SHORT).show()
-                    } else {
-                        // All rings complete
-                        showCompletionDialog()
-                    }
-                }
-            }
+            enableOtherRing()
 
 
 
@@ -1487,6 +1548,10 @@ class MainActivity : AppCompatActivity() {
         bulletNode.renderable = ShapeFactory.makeSphere(0.007f, Vector3.zero(), greenMaterial).apply {
             isShadowCaster = false
             isShadowReceiver = false
+        }
+        // In sequence mode, we don't need to disable the node since we'll hide the whole ring later
+        if (!SequenceEnabled) {
+            bulletNode.isEnabled = true
         }
     }
 
