@@ -56,6 +56,7 @@ import android.widget.FrameLayout
 import android.widget.ImageView
 import androidx.annotation.RequiresApi
 import androidx.collection.emptyLongSet
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.exifinterface.media.ExifInterface
 import com.example.facedetectionar.Modals.ArcConfig
 import com.google.ar.core.Config
@@ -113,7 +114,9 @@ class MainActivity : AppCompatActivity() {
     private val rotationMatrix = FloatArray(9)
     private val orientationAngles = FloatArray(3)
     private var angleString = 0
-    private lateinit  var minMaxAngleText: TextView
+
+    private lateinit  var minAngleText: TextView
+    private lateinit  var maxAngleText: TextView
 
 
 
@@ -147,8 +150,11 @@ class MainActivity : AppCompatActivity() {
             val imageCountText=findViewById<TextView>(R.id.imageCountText)
             val faceOutline=findViewById<ImageView>(R.id.faceOutline)
             val MoveBackText=findViewById<TextView>(R.id.MoveBackText)
+            val angleContainer=findViewById<ConstraintLayout>(R.id.angleContainer)
 
-            minMaxAngleText=findViewById<TextView>(R.id.angleText)
+
+            minAngleText=findViewById<TextView>(R.id.minAngleText)
+            maxAngleText=findViewById<TextView>(R.id.maxAngleText)
 
 
 
@@ -367,7 +373,8 @@ class MainActivity : AppCompatActivity() {
 
                     // Place the ring dynamically
 
-                    minMaxAngleText.visibility= View.VISIBLE;
+
+                    angleContainer.visibility=View.VISIBLE;
                     mainScreenTitle.text="Capture"
                     mainScreenSubTitle.visibility= View.GONE
                     imageCountText.visibility= View.VISIBLE
@@ -722,7 +729,8 @@ class MainActivity : AppCompatActivity() {
                     minAngle = arc.minAngle.toInt()
                     maxAngle = arc.maxAngle.toInt()
                 }
-                minMaxAngleText.text = "MinAngle: ${minAngle}, MaxAngle: ${maxAngle}"
+                minAngleText.text = "Min  :${minAngle}"
+                maxAngleText.text="Max :${maxAngle}"
 
                 var closestDistance = Float.MAX_VALUE
                 var closestNode: Node? = null

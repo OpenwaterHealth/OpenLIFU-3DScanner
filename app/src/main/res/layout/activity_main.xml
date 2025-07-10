@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
@@ -16,15 +17,6 @@
         android:gravity="center_vertical"
         android:layout_height="140dp">
 
-        <TextView
-            android:id="@+id/angleText"
-            android:textAlignment="center"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textColor="@color/white"
-            android:visibility="invisible"
-            android:text="MinAngle X and MaxAngle Y"/>
-
         <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
@@ -38,20 +30,6 @@
                 android:textSize="26sp"
                 android:visibility="visible"
                 android:textColor="@color/white"/>
-
-            <TextView
-                android:id="@+id/cameraAngle"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:text="0"
-                android:layout_marginRight="20dp"
-                android:textSize="20sp"
-                android:gravity="end"
-                android:visibility="visible"
-                android:layout_gravity="end"
-                android:textColor="@color/white"
-                />
-
 
 
 
@@ -90,7 +68,116 @@
                 android:visibility="gone"
                 android:textColor="@color/white"/>
 
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/angleContainer"
+                android:layout_width="120dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end"
+                android:background="@drawable/ripple_transparent"
+
+                android:padding="8dp"
+                android:visibility="gone"
+                tools:layout_editor_absoluteX="291dp">
+
+                <!-- Angle Title -->
+                <TextView
+                    android:id="@+id/textView2"
+                    android:layout_width="85dp"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:text="Angle"
+                    android:textColor="@color/white"
+                    android:textSize="14sp"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <!-- Divider Line (Horizontal) -->
+                <View
+                    android:id="@+id/angleDivider"
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginTop="4dp"
+                    android:background="@color/white"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/textView2" />
+
+                <!-- Min/Max Angle Info -->
+                <LinearLayout
+                    android:id="@+id/linearLayout"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:orientation="vertical"
+                    app:layout_constraintEnd_toStartOf="@+id/verticalDivider"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/angleDivider">
+
+                    <TextView
+                        android:id="@+id/minAngleText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:text="Min  :X"
+                        android:textColor="@color/white" />
+
+                    <TextView
+                        android:id="@+id/maxAngleText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:text="Max :Y"
+                        android:textColor="@color/white" />
+                </LinearLayout>
+
+                <!-- Vertical Divider Line -->
+                <View
+                    android:id="@+id/verticalDivider"
+                    android:layout_width="1dp"
+                    android:layout_height="35dp"
+                    android:layout_marginStart="3dp"
+                    android:layout_marginEnd="3dp"
+                    android:background="@color/white"
+                    app:layout_constraintBottom_toBottomOf="@id/linearLayout"
+                    app:layout_constraintEnd_toStartOf="@id/cameraAngle"
+                    app:layout_constraintStart_toEndOf="@id/linearLayout"
+                    app:layout_constraintTop_toTopOf="@id/linearLayout" />
+
+
+                <!-- Angle Value -->
+                <TextView
+                    android:id="@+id/cameraAngle"
+                    android:layout_width="35dp"
+                    android:layout_height="35dp"
+                    android:gravity="center"
+                    android:text="0"
+                    android:textColor="@color/white"
+                    android:textSize="18sp"
+                    app:layout_constraintBottom_toBottomOf="@id/linearLayout"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toEndOf="@id/verticalDivider"
+                    app:layout_constraintTop_toTopOf="@id/linearLayout" />
+
+                <androidx.constraintlayout.widget.Guideline
+                    android:id="@+id/guideline2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    app:layout_constraintGuide_begin="20dp" />
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+
         </FrameLayout>
+
+
+
+
+
+
+
+
 
 
     </LinearLayout>
