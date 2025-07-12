@@ -59,6 +59,7 @@ import androidx.collection.emptyLongSet
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.exifinterface.media.ExifInterface
 import com.example.facedetectionar.Modals.ArcConfig
+import com.example.facedetectionar.Modals.bulletPointConfig
 import com.google.ar.core.Config
 import com.google.ar.core.Session
 import com.google.ar.core.exceptions.NotYetAvailableException
@@ -107,6 +108,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var faceOverlayView: FaceOverlayView
 
     private val bulletConfigList = mutableListOf<ArcConfig>()
+    private val scatterBulletList=mutableListOf<bulletPointConfig>()
 
 
     private lateinit var sensorManager: SensorManager
@@ -223,7 +225,8 @@ class MainActivity : AppCompatActivity() {
                 BackInStartCapture.visibility=View.VISIBLE
                 startButton.visibility=View.VISIBLE;
 
-                placeDynamicBulletsAtCameraFocusFlat();
+//                placeDynamicBulletsAtCameraFocusFlat();
+                placeScatteredBullets()
                 isFaceDetected = true
                 faceOverlayView.visibility=View.GONE;
 
@@ -615,7 +618,7 @@ class MainActivity : AppCompatActivity() {
         try {
 
             val frame: Frame = arFragment.arSceneView.arFrame ?: return
-            val cameraPose: Pose = frame.camera.pose
+                val cameraPose: Pose = frame.camera.pose
 
 
 
@@ -627,6 +630,8 @@ class MainActivity : AppCompatActivity() {
                         val upDownValue = arc.upDown.toFloat()
                         val closeFarValue = arc.closeFar.toFloat()
                         val arcRadius = arc.radius.toFloat()
+
+                        Log.d("upDownValue","upDownValue: $upDownValue, closeFarValue: $closeFarValue, arcRadius: $arcRadius")
 
                         val forwardVector = floatArrayOf(upDownValue, 0f, closeFarValue)
                         val worldCenter = cameraPose.transformPoint(forwardVector)
@@ -679,6 +684,58 @@ class MainActivity : AppCompatActivity() {
             Log.e("BulletPlacement", "Error placing bullets: ${e.message}")
         }
     }
+
+
+
+
+    private fun placeScatteredBullets() {
+        Log.d("ScatteredPoints","Called")
+        try {
+            val frame: Frame = arFragment.arSceneView.arFrame ?: return
+            val cameraPose: Pose = frame.camera.pose
+
+
+            if(scatterBulletList.isNotEmpty()){
+                Log.d("ScatteredPoints","Scattered Points Found")
+                scatterBulletList.forEachIndexed { index,bulletObj ->
+                    val xCoord = bulletObj.xPoint.toFloat();
+                    val yCoord = bulletObj.yPoint.toFloat();
+                    val zCoord = bulletObj.zPoint.toFloat();
+
+                    Log.d("ScatteredPoints","Points are X:${xCoord} y:${yCoord} z:${zCoord}")
+                    Log.d("ScatteredPoints","Object is ${bulletObj.id}")
+
+                    val localOffset = floatArrayOf(xCoord,yCoord,zCoord)
+                    val worldPos = cameraPose.transformPoint(localOffset)
+
+                    val node = Node().apply {
+                        setParent(arFragment.arSceneView.scene)
+                        worldPosition = Vector3(worldPos[0], worldPos[1], worldPos[2])
+                        renderable = ShapeFactory.makeSphere(0.01f, Vector3.zero(), grayMaterial).apply {
+                            isShadowCaster = false
+                            isShadowReceiver = false
+                        }
+                    }
+
+                    // Optional: Store or manipulate this node later
+                    bulletNodes.add(node)
+
+
+
+
+                }
+
+
+
+            }
+
+
+
+        } catch (e: Exception) {
+            Log.e("ScatteredPoints", "Error ScatteredPoints: ${e.message}")
+        }
+    }
+
 
 
 
@@ -1459,9 +1516,11 @@ class MainActivity : AppCompatActivity() {
             val jsonObject = JSONObject(jsonFile.readText().trim())
             if (!jsonObject.has("arcs")) return
 
-            bulletConfigList.clear()
+            bulletConfigList.clear()  //for ring bullets
+            scatterBulletList.clear()   //for scattered bullets
             val arcsArray = jsonObject.getJSONArray("arcs")
-
+            val bulletCoordinatesArr = jsonObject.getJSONArray("bulletCoordinates")
+//          adding rings bullets  to a list
             for (i in 0 until arcsArray.length()) {
                 val arcObject = arcsArray.getJSONObject(i)
                 bulletConfigList.add(ArcConfig(
@@ -1474,6 +1533,20 @@ class MainActivity : AppCompatActivity() {
                     maxAngle = arcObject.getInt("maxAngle"),
 
                     ))
+            }
+
+
+//          adding scattered bullets objects to a list
+            for (i in 0 until bulletCoordinatesArr.length()) {
+                val bulletObj = bulletCoordinatesArr.getJSONObject(i)
+
+
+                scatterBulletList.add(bulletPointConfig(
+                    id = bulletObj.getInt("id"),
+                    xPoint = bulletObj.getDouble("xPoint"),
+                    yPoint = bulletObj.getDouble("yPoint"),
+                    zPoint = bulletObj.getDouble("zPoint"),
+                   ))
             }
 
             // NEW: Sort rings by height (ascending order)

@@ -471,12 +471,51 @@ class New_capture : AppCompatActivity() {
             }
 
 
+            //bullets co-oridinates array
+
+            val bulletCoordinatesArray = JSONArray().apply {
+                put(JSONObject().apply {
+                    put("id", 1)
+                    put("xPoint", -0.12)
+                    put("yPoint", 0)
+                    put("zPoint", -0.35)
+                })
+                put(JSONObject().apply {
+                    put("id", 2)
+                    put("xPoint", -0.14)
+                    put("yPoint", 0)
+                    put("zPoint", -0.35)
+                })
+                put(JSONObject().apply {
+                    put("id", 3)
+                    put("xPoint", -0.17)
+                    put("yPoint", 0)
+                    put("zPoint", -0.30)
+                })
+                put(JSONObject().apply {
+                    put("id", 4)
+                    put("xPoint",-0.15)
+                    put("yPoint", 0)
+                    put("zPoint", -0.35)
+                })
+                put(JSONObject().apply {
+                    put("id", 5)
+                    put("xPoint", -0.25)
+                    put("yPoint", 0)
+                    put("zPoint", -0.35)
+                })
+            }
+
+
+
 
 
             // Wrap it in a root JSON object
             val rootObject = JSONObject().apply {
                 put("arcs", arcsArray);
                 put("showRingInSequence",false);
+                put("showBulletCoordinates",true);
+                put("bulletCoordinates", bulletCoordinatesArray);
             }
 
             // Write to file (pretty print)
