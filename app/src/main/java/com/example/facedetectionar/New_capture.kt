@@ -93,25 +93,32 @@ class New_capture : AppCompatActivity() {
 
 
         //make json config file
-        makeRingConfigJsonFile()
+//        makeRingConfigJsonFile()
 
-        loadsRingConfigFromJson()
+
+
+//        loadsRingConfigFromJson()
+
+        initializeRingConfig()
+
 
 
 
 
 
 //recycler setup
-        val recyclerView = findViewById<RecyclerView>(R.id.parametersRecyclerView)
-        recyclerView.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
-        recyclerView.adapter = ArcConfigAdapter(ringPrametersList)
-          // Snap helper to snap items like pages
-        val snapHelper = LinearSnapHelper()
-        snapHelper.attachToRecyclerView(recyclerView)
+//        val recyclerView = findViewById<RecyclerView>(R.id.parametersRecyclerView)
+//        recyclerView.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
+//        recyclerView.adapter = ArcConfigAdapter(ringPrametersList)
+//          // Snap helper to snap items like pages
+//        val snapHelper = LinearSnapHelper()
+//        snapHelper.attachToRecyclerView(recyclerView)
+//
+//
+//        setupDotsIndicator()
+//        setupRecyclerViewWithDots()
 
-        loadsRingConfigFromJson()
-        setupDotsIndicator()
-        setupRecyclerViewWithDots()
+
 
 
 
@@ -352,6 +359,7 @@ class New_capture : AppCompatActivity() {
         if (requestCode == PERMISSION_REQUEST_CODE) {
             if (grantResults.isNotEmpty() && grantResults.all { it == PackageManager.PERMISSION_GRANTED }) {
                 showToastAndLog("Permissions granted")
+                initializeRingConfig()
             } else {
                 showToastAndLog("Permissions are required to proceed")
             }
@@ -387,6 +395,29 @@ class New_capture : AppCompatActivity() {
         } catch (e: Exception) {
             Log.e("ARCoreCheck", "Error while checking ARCore availability: ${e.message}")
         }
+    }
+
+    private fun initializeRingConfig() {
+        // 1. Make sure config file exists
+        makeRingConfigJsonFile()
+
+        // 2. Load config from file
+        loadsRingConfigFromJson()
+
+        // 3. Setup UI with the loaded config
+        setupRingConfigUI()
+    }
+
+    private fun setupRingConfigUI() {
+        val recyclerView = findViewById<RecyclerView>(R.id.parametersRecyclerView)
+        recyclerView.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
+        recyclerView.adapter = ArcConfigAdapter(ringPrametersList)
+
+        val snapHelper = LinearSnapHelper()
+        snapHelper.attachToRecyclerView(recyclerView)
+
+        setupDotsIndicator()
+        setupRecyclerViewWithDots()
     }
 
 
@@ -438,10 +469,10 @@ class New_capture : AppCompatActivity() {
             val arcsArray = JSONArray().apply {
                 put(JSONObject().apply {
                     put("type", "horizontal")
-                    put("radius", 0.19)
-                    put("bulletCount", 31)
+                    put("radius", 0.20)
+                    put("bulletCount", 30)
                     put("upDown", -0.05)
-                    put("closeFar", -0.35)
+                    put("closeFar", -0.43)
                     put("minAngle", 0)
                     put("maxAngle", 30)
 
@@ -449,61 +480,240 @@ class New_capture : AppCompatActivity() {
                 })
                 put(JSONObject().apply {
                     put("type", "horizontal")
-                    put("radius", 0.19)
-                    put("bulletCount", 21)
+                    put("radius", 0.20)
+                    put("bulletCount", 20)
                     put("upDown", -0.12)
-                    put("closeFar", -0.35)
+                    put("closeFar", -0.43)
                     put("minAngle", 0)
                     put("maxAngle", 40)
                 })
 
                 put(JSONObject().apply {
                     put("type", "horizontal")
-                    put("radius", 0.19)
-                    put("bulletCount", 31)
+                    put("radius", 0.20)
+                    put("bulletCount", 30)
                     put("upDown", 0.00)
-                    put("closeFar", -0.35)
+                    put("closeFar", -0.43)
                     put("minAngle", 0)
                     put("maxAngle", 30)
                 })
-
-
             }
 
 
             //bullets co-oridinates array
-
             val bulletCoordinatesArray = JSONArray().apply {
                 put(JSONObject().apply {
+                    put("id", 0)
+                    put("xPoint", -0.042076137)
+                    put("yPoint", 0.043586373)
+                    put("zPoint", -0.30080715)
+                })
+                put(JSONObject().apply {
                     put("id", 1)
-                    put("xPoint", -0.12)
-                    put("yPoint", 0)
-                    put("zPoint", -0.35)
+                    put("xPoint", -0.18473463)
+                    put("yPoint", 0.043586373)
+                    put("zPoint", -0.4044546)
                 })
                 put(JSONObject().apply {
                     put("id", 2)
-                    put("xPoint", -0.14)
-                    put("yPoint", 0)
-                    put("zPoint", -0.35)
+                    put("xPoint", -0.13024393)
+                    put("yPoint", 0.043586373)
+                    put("zPoint", -0.5721597)
                 })
                 put(JSONObject().apply {
                     put("id", 3)
-                    put("xPoint", -0.17)
-                    put("yPoint", 0)
-                    put("zPoint", -0.30)
+                    put("xPoint", 0.046091657)
+                    put("yPoint", 0.043586373)
+                    put("zPoint", -0.5721597)
                 })
                 put(JSONObject().apply {
                     put("id", 4)
-                    put("xPoint",-0.15)
-                    put("yPoint", 0)
-                    put("zPoint", -0.35)
+                    put("xPoint", 0.10058235)
+                    put("yPoint", 0.043586373)
+                    put("zPoint", -0.4044546)
                 })
                 put(JSONObject().apply {
                     put("id", 5)
-                    put("xPoint", -0.25)
-                    put("yPoint", 0)
-                    put("zPoint", -0.35)
+                    put("xPoint", -0.04024834)
+                    put("yPoint", 0.005404312)
+                    put("zPoint", -0.27902624)
                 })
+                put(JSONObject().apply {
+                    put("id", 6)
+                    put("xPoint", -0.13429397)
+                    put("yPoint", 0.005404312)
+                    put("zPoint", -0.30958351)
+                })
+                put(JSONObject().apply {
+                    put("id", 7)
+                    put("xPoint", -0.19241738)
+                    put("yPoint", 0.005404312)
+                    put("zPoint", -0.38958353)
+                })
+                put(JSONObject().apply {
+                    put("id", 8)
+                    put("xPoint", -0.19241738)
+                    put("yPoint", 0.005404312)
+                    put("zPoint", -0.48846895)
+                })
+                put(JSONObject().apply {
+                    put("id", 9)
+                    put("xPoint", -0.13429397)
+                    put("yPoint", 0.005404312)
+                    put("zPoint", -0.5684689)
+                })
+                put(JSONObject().apply {
+                    put("id", 10)
+                    put("xPoint", -0.04024834)
+                    put("yPoint", 0.005404312)
+                    put("zPoint", -0.5990262)
+                })
+                put(JSONObject().apply {
+                    put("id", 11)
+                    put("xPoint", 0.053797297)
+                    put("yPoint", 0.005404312)
+                    put("zPoint", -0.5684689)
+                })
+                put(JSONObject().apply {
+                    put("id", 12)
+                    put("xPoint", 0.11192069)
+                    put("yPoint", 0.005404312)
+                    put("zPoint", -0.48846895)
+                })
+                put(JSONObject().apply {
+                    put("id", 13)
+                    put("xPoint", 0.11192069)
+                    put("yPoint", 0.005404312)
+                    put("zPoint", -0.38958353)
+                })
+                put(JSONObject().apply {
+                    put("id", 14)
+                    put("xPoint", 0.053797297)
+                    put("yPoint", 0.005404312)
+                    put("zPoint", -0.30958351)
+                })
+                put(JSONObject().apply {
+                    put("id", 15)
+                    put("xPoint", -0.038420543)
+                    put("yPoint", -0.032777756)
+                    put("zPoint", -0.23724538)
+                })
+                put(JSONObject().apply {
+                    put("id", 16)
+                    put("xPoint", -0.15009974)
+                    put("yPoint", -0.032777756)
+                    put("zPoint", -0.27353215)
+                })
+                put(JSONObject().apply {
+                    put("id", 17)
+                    put("xPoint", -0.21912128)
+                    put("yPoint", -0.032777756)
+                    put("zPoint", -0.36853215)
+                })
+                put(JSONObject().apply {
+                    put("id", 18)
+                    put("xPoint", -0.21912128)
+                    put("yPoint", -0.032777756)
+                    put("zPoint", -0.4859586)
+                })
+                put(JSONObject().apply {
+                    put("id", 19)
+                    put("xPoint", -0.15009974)
+                    put("yPoint", -0.032777756)
+                    put("zPoint", -0.5809586)
+                })
+                put(JSONObject().apply {
+                    put("id", 20)
+                    put("xPoint", -0.038420543)
+                    put("yPoint", -0.032777756)
+                    put("zPoint", -0.6172454)
+                })
+                put(JSONObject().apply {
+                    put("id", 21)
+                    put("xPoint", 0.07325865)
+                    put("yPoint", -0.032777756)
+                    put("zPoint", -0.5809586)
+                })
+                put(JSONObject().apply {
+                    put("id", 22)
+                    put("xPoint", 0.14228019)
+                    put("yPoint", -0.032777756)
+                    put("zPoint", -0.4859586)
+                })
+                put(JSONObject().apply {
+                    put("id", 23)
+                    put("xPoint", 0.14228019)
+                    put("yPoint", -0.032777756)
+                    put("zPoint", -0.36853215)
+                })
+                put(JSONObject().apply {
+                    put("id", 24)
+                    put("xPoint", 0.07325865)
+                    put("yPoint", -0.032777756)
+                    put("zPoint", -0.27353215)
+                })
+                put(JSONObject().apply {
+                    put("id", 25)
+                    put("xPoint", -0.03659274)
+                    put("yPoint", -0.07095983)
+                    put("zPoint", -0.22546446)
+                })
+                put(JSONObject().apply {
+                    put("id", 26)
+                    put("xPoint", -0.14827193)
+                    put("yPoint", -0.07095983)
+                    put("zPoint", -0.26175123)
+                })
+                put(JSONObject().apply {
+                    put("id", 27)
+                    put("xPoint", -0.21729347)
+                    put("yPoint", -0.07095983)
+                    put("zPoint", -0.35675123)
+                })
+                put(JSONObject().apply {
+                    put("id", 28)
+                    put("xPoint", -0.21729347)
+                    put("yPoint", -0.07095983)
+                    put("zPoint", -0.4741777)
+                })
+                put(JSONObject().apply {
+                    put("id", 29)
+                    put("xPoint", -0.14827193)
+                    put("yPoint", -0.07095983)
+                    put("zPoint", -0.5691777)
+                })
+                put(JSONObject().apply {
+                    put("id", 30)
+                    put("xPoint", -0.03659274)
+                    put("yPoint", -0.07095983)
+                    put("zPoint", -0.60546446)
+                })
+                put(JSONObject().apply {
+                    put("id", 31)
+                    put("xPoint", 0.07508646)
+                    put("yPoint", -0.07095983)
+                    put("zPoint", -0.5691777)
+                })
+                put(JSONObject().apply {
+                    put("id", 32)
+                    put("xPoint", 0.144108)
+                    put("yPoint", -0.07095983)
+                    put("zPoint", -0.4741777)
+                })
+                put(JSONObject().apply {
+                    put("id", 33)
+                    put("xPoint", 0.144108)
+                    put("yPoint", -0.07095983)
+                    put("zPoint", -0.35675123)
+                })
+                put(JSONObject().apply {
+                    put("id", 34)
+                    put("xPoint", 0.07508646)
+                    put("yPoint", -0.07095983)
+                    put("zPoint", -0.26175123)
+                })
+
+
             }
 
 
@@ -514,7 +724,7 @@ class New_capture : AppCompatActivity() {
             val rootObject = JSONObject().apply {
                 put("arcs", arcsArray);
                 put("showRingInSequence",false);
-                put("showBulletCoordinates",true);
+                put("showBulletCoordinates",false);
                 put("bulletCoordinates", bulletCoordinatesArray);
             }
 
@@ -534,6 +744,7 @@ class New_capture : AppCompatActivity() {
     //this gets data from ringconfig.json file to show on ui
 
     private fun loadsRingConfigFromJson(){
+        Log.d("loadsRingConfigFromJson", "loadsRingConfigFromJson function called")
         val jsonFile = File(Environment.getExternalStorageDirectory(), "OpenLIFU-Config/ringConfig.json")
         if (!jsonFile.exists()) return
 
@@ -545,6 +756,7 @@ class New_capture : AppCompatActivity() {
 
 
         ringPrametersList.clear()
+
         val arcsArray = jsonObject.getJSONArray("arcs")
 
         for (i in 0 until arcsArray.length()) {
@@ -560,6 +772,8 @@ class New_capture : AppCompatActivity() {
 
                 ))
         }
+
+        Log.d("loadsRingConfigFromJson", "added conifg")
 
         ringPrametersList.sortBy { it.upDown }
 
@@ -617,23 +831,6 @@ class New_capture : AppCompatActivity() {
             )
         }
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

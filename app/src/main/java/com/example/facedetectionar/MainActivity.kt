@@ -95,6 +95,7 @@ class MainActivity : AppCompatActivity() {
     private val ringNodes = mutableListOf<MutableList<Node>>()
     private var currentRingIndex = 0
     private var SequenceEnabled: Boolean=false;
+    private var ShowScattered: Boolean=false;
 
 
 
@@ -135,6 +136,8 @@ class MainActivity : AppCompatActivity() {
 
             // checks if we want to show rings in sequence
             checkSequenceEnabled()
+// checks if we want to show bullets in
+            checkShowCoordinates()
 
             // Initialize UI components
             distanceLabel = findViewById(R.id.distanceLabel)
@@ -225,8 +228,13 @@ class MainActivity : AppCompatActivity() {
                 BackInStartCapture.visibility=View.VISIBLE
                 startButton.visibility=View.VISIBLE;
 
-//                placeDynamicBulletsAtCameraFocusFlat();
-                placeScatteredBullets()
+                if(ShowScattered){
+                    placeScatteredBullets()
+                }else{
+                    placeDynamicBulletsAtCameraFocusFlat();
+                }
+
+
                 isFaceDetected = true
                 faceOverlayView.visibility=View.GONE;
 
@@ -377,7 +385,10 @@ class MainActivity : AppCompatActivity() {
                     // Place the ring dynamically
 
 
-                    angleContainer.visibility=View.VISIBLE;
+
+                    if(!ShowScattered){
+                        angleContainer.visibility=View.VISIBLE;
+                    }
                     mainScreenTitle.text="Capture"
                     mainScreenSubTitle.visibility= View.GONE
                     imageCountText.visibility= View.VISIBLE
@@ -400,7 +411,12 @@ class MainActivity : AppCompatActivity() {
                     // Hide it after 3 seconds
                     leftArrowInstruction.postDelayed({
                         leftArrowInstruction.visibility = View.GONE
-                        startBulletTracking() // Start tracking bullets Aryan
+                         // Start tracking bullets Aryan
+                        if(ShowScattered){
+                            startScatteredBulletTracking()
+                        }else{
+                            startBulletTracking()
+                        }
                         initSensorListener() //verify camera alignment using angles
 
 //
@@ -551,9 +567,8 @@ class MainActivity : AppCompatActivity() {
 //            bulletNode.isEnabled = inGoodDistance && isFacing
 
 
-            if(distance > 0.5f && distance < 0.6f)
+            if(distance > 0.5f && distance < 0.7f)
             {
-                Log.d("thisIsCorrect","               "+distance)
                 bulletNode.isEnabled = false
             }
             else
@@ -602,13 +617,65 @@ class MainActivity : AppCompatActivity() {
 
 
 
-    private fun checkSequenceEnabled(){
+    private fun checkShowCoordinates(){
         val jsonFile = File(Environment.getExternalStorageDirectory(), "OpenLIFU-Config/ringConfig.json")
         if (!jsonFile.exists()) return
        val jsonObject = JSONObject(jsonFile.readText().trim())
+        if (!jsonObject.has("showBulletCoordinates")) return
+         val showCoords = jsonObject.getBoolean("showBulletCoordinates")
+        ShowScattered=showCoords
+    }
+
+    private fun checkSequenceEnabled(){
+        val jsonFile = File(Environment.getExternalStorageDirectory(), "OpenLIFU-Config/ringConfig.json")
+        if (!jsonFile.exists()) return
+        val jsonObject = JSONObject(jsonFile.readText().trim())
         if (!jsonObject.has("showRingInSequence")) return
-         val isEnabled = jsonObject.getBoolean("showRingInSequence")
+        val isEnabled = jsonObject.getBoolean("showRingInSequence")
         SequenceEnabled=isEnabled
+    }
+
+
+    private fun addPointsToJson(index:Int,x: Float, y: Float, z: Float){
+        val jsonFile = File(Environment.getExternalStorageDirectory(), "OpenLIFU-Config/ringConfig.json")
+        if (!jsonFile.exists()) return
+        val jsonObject = JSONObject(jsonFile.readText().trim())
+        val bulletCoordinatesArray = jsonObject.optJSONArray("bulletCoordinates") ?: JSONArray()
+        val newObject = JSONObject().apply {
+            put("id", index)
+            put("xPoint", x)
+            put("yPoint", y)
+            put("zPoint", z)
+        }
+        bulletCoordinatesArray.put(newObject)
+        jsonObject.put("bulletCoordinates", bulletCoordinatesArray)
+
+        jsonFile.writeText(jsonObject.toString(4))
+
+    }
+
+    private fun updateScatteredBulletVisibility() {
+        val frame = arFragment.arSceneView.arFrame ?: return
+        val cameraPose = frame.camera.pose
+        val cameraPosition = Vector3(cameraPose.tx(), cameraPose.ty(), cameraPose.tz())
+
+        bulletNodes.forEach { bulletNode ->
+            if (!greenBulletList.contains(bulletNode)) {
+                val bulletPosition = bulletNode.worldPosition
+                val distance = calculateDistance(cameraPosition, bulletPosition)
+
+                bulletNode.isEnabled = when {
+                    distance > 0.5f && distance < 0.6f -> {
+                        Log.d("BulletVisibility", "Hiding bullet ${bulletNode.name} at distance $distance")
+                        false
+                    }
+                    else -> {
+                        Log.d("BulletVisibility", "Showing bullet ${bulletNode.name} at distance $distance")
+                        true
+                    }
+                }
+            }
+        }
     }
 
 
@@ -636,6 +703,7 @@ class MainActivity : AppCompatActivity() {
                         val forwardVector = floatArrayOf(upDownValue, 0f, closeFarValue)
                         val worldCenter = cameraPose.transformPoint(forwardVector)
 
+
                         val bulletCount = arc.bulletCount
                         for (i in 0 until bulletCount) {
                             val angle = 2 * Math.PI * i / bulletCount - Math.PI / -2
@@ -645,6 +713,16 @@ class MainActivity : AppCompatActivity() {
                             val worldX = worldCenter[0] + offsetX
                             val worldY = worldCenter[1] // flat on Y-axis
                             val worldZ = worldCenter[2] + offsetZ
+
+
+
+
+//                            addPointsToJson(i, worldX, worldY, worldZ)
+
+
+
+
+
 
                             val isRingActive=(index == 0);
 
@@ -687,52 +765,116 @@ class MainActivity : AppCompatActivity() {
 
 
 
-
     private fun placeScatteredBullets() {
-        Log.d("ScatteredPoints","Called")
-        try {
-            val frame: Frame = arFragment.arSceneView.arFrame ?: return
-            val cameraPose: Pose = frame.camera.pose
+        val frame: Frame = arFragment.arSceneView.arFrame ?: return
 
+        scatterBulletList.forEachIndexed { index, bulletObj ->
+            val xCoord = bulletObj.xPoint
+            val yCoord = bulletObj.yPoint
+            val zCoord = bulletObj.zPoint
 
-            if(scatterBulletList.isNotEmpty()){
-                Log.d("ScatteredPoints","Scattered Points Found")
-                scatterBulletList.forEachIndexed { index,bulletObj ->
-                    val xCoord = bulletObj.xPoint.toFloat();
-                    val yCoord = bulletObj.yPoint.toFloat();
-                    val zCoord = bulletObj.zPoint.toFloat();
+            val pose = Pose(floatArrayOf(xCoord.toFloat(), yCoord.toFloat(), zCoord.toFloat()), floatArrayOf(0f, 0f, 0f, 1f))
+            val anchor = arFragment.arSceneView.session?.createAnchor(pose)
+            val anchorNode = AnchorNode(anchor)
+            anchorNode.setParent(arFragment.arSceneView.scene)
 
-                    Log.d("ScatteredPoints","Points are X:${xCoord} y:${yCoord} z:${zCoord}")
-                    Log.d("ScatteredPoints","Object is ${bulletObj.id}")
+            val node = Node().apply {
+                name = "bullet_$index"
+                setParent(anchorNode)
+                localPosition = Vector3.zero()
 
-                    val localOffset = floatArrayOf(xCoord,yCoord,zCoord)
-                    val worldPos = cameraPose.transformPoint(localOffset)
-
-                    val node = Node().apply {
-                        setParent(arFragment.arSceneView.scene)
-                        worldPosition = Vector3(worldPos[0], worldPos[1], worldPos[2])
-                        renderable = ShapeFactory.makeSphere(0.01f, Vector3.zero(), grayMaterial).apply {
-                            isShadowCaster = false
-                            isShadowReceiver = false
-                        }
-                    }
-
-                    // Optional: Store or manipulate this node later
-                    bulletNodes.add(node)
-
-
-
-
+                renderable = ShapeFactory.makeSphere(0.007f, Vector3.zero(), grayMaterial).apply {
+                    isShadowCaster = false
+                    isShadowReceiver = false
                 }
-
-
-
+                isEnabled = false
             }
 
+            bulletNodes.add(node)
+        }
+
+        arFragment.arSceneView.scene.addOnUpdateListener {
+            updateScatteredBulletVisibility()
+        }
+    }
 
 
-        } catch (e: Exception) {
-            Log.e("ScatteredPoints", "Error ScatteredPoints: ${e.message}")
+
+
+
+
+
+
+
+    private fun startScatteredBulletTracking() {
+        updateDistanceLabel("Move Closer")
+        var skipFrame = 0
+        var moveToNextPosition = false
+        var moveToNextPositionCount = 0
+
+        arFragment.arSceneView.scene.addOnUpdateListener {
+            val frame: Frame = arFragment.arSceneView.arFrame ?: return@addOnUpdateListener
+            val cameraPose = frame.camera.pose
+            val cameraPosition = Vector3(cameraPose.tx(), cameraPose.ty(), cameraPose.tz())
+
+            moveToNextPositionCount++
+            skipFrame++
+
+            var closestDistance = Float.MAX_VALUE
+            var closestNode: Node? = null
+
+            bulletNodes.forEach { bulletNode ->
+                if (!greenBulletList.contains(bulletNode)) {
+                    val bulletPosition = bulletNode.worldPosition
+                    val distance = calculateDistance(cameraPosition, bulletPosition)
+
+                    if (distance < closestDistance) {
+                        closestDistance = distance
+                        closestNode = bulletNode
+
+                        // Same "Move to next position" logic as in startBulletTracking()
+                        when {
+                            distance < 0.18f -> {
+                                updateDistanceLabel("Move Away")
+                            }
+                            distance > 0.19f && distance < 0.25f -> {
+                                if(moveToNextPosition && moveToNextPositionCount < 10) {
+                                    updateDistanceLabel("Success")
+                                }
+                                else if(moveToNextPosition && moveToNextPositionCount > 10 && moveToNextPositionCount < 120) {
+                                    updateDistanceLabel("Move to next Position")
+                                }
+                                else {
+                                    updateDistanceLabel("Move to next Position")
+                                    moveToNextPosition = false
+                                }
+                            }
+                            distance > 0.30f -> {
+                                updateDistanceLabel("Move Closer")
+                                moveToNextPositionCount = 0
+                            }
+                            distance > 0.18f && distance < 0.19f -> {
+                                if (skipFrame > 20 && IsCaptureStarted) {
+                                    moveToNextPositionCount = 0
+                                    updateDistanceLabel("Success")
+                                    moveToNextPosition = true
+                                    updateBulletColors(closestNode)
+                                    skipFrame = 0
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Update image counter
+            val imageCountText = findViewById<TextView>(R.id.imageCountText)
+            imageCountText.text = "${greenBulletList.size}/${bulletNodes.size}"
+
+            // Check if all bullets are captured
+            if (greenBulletList.size == bulletNodes.size) {
+                showCompletionDialog()
+            }
         }
     }
 
@@ -812,7 +954,7 @@ class MainActivity : AppCompatActivity() {
                                     updateDistanceLabel("Move Away")
                                 }
                                 distance > 0.19f && distance < 0.25f -> {
-                                    if(moveToNextPosition && moveToNextPositionCount < 10)
+                                    if(moveToNextPosition && moveToNextPositionCount < 10)   //"mohan"
                                     {
                                         updateDistanceLabel("Success")
                                     }
@@ -1197,7 +1339,7 @@ class MainActivity : AppCompatActivity() {
 
 
     private fun updateBulletColors(closestNode: Node?) {
-        Log.d("Logging","COLORING..............$closestNode")
+
 
 
         if (closestNode != null && !greenBulletList.contains(closestNode)) {
