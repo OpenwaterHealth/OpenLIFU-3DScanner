@@ -13,7 +13,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
-        android:text="0/80"
+        android:text="0"
         android:textAlignment="center"
         android:textColor="@color/white"
         android:textSize="36sp"

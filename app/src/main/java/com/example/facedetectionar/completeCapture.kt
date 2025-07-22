@@ -230,7 +230,7 @@ class completeCapture : AppCompatActivity() {
     fun getImagesForReference(referenceNumber: String): List<File> {
         val imageList = mutableListOf<File>()
         val totalImages=getTotalImageCountFromJson()
-        val imageFolderName="${referenceNumber}_${totalImages}"
+        val imageFolderName="${referenceNumber}"
         val folder = File(Environment.getExternalStorageDirectory(), "OpenLIFU-3DScanner/$imageFolderName")
 
         if (folder.exists() && folder.isDirectory) {
@@ -252,7 +252,7 @@ class completeCapture : AppCompatActivity() {
         try {
 
             val totalImages=getTotalImageCountFromJson()
-            val imageFolderName="${referenceNumber}_${totalImages}"
+            val imageFolderName="${referenceNumber}"
             val folder = File(Environment.getExternalStorageDirectory(), "OpenLIFU-3DScanner/$imageFolderName")
             if (folder.exists() && folder.isDirectory) {
                 deleteRecursive(folder)

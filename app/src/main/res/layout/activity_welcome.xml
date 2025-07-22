@@ -119,9 +119,11 @@
         android:focusable="true"
         android:gravity="center_vertical"
         android:text="Disclaimer"
-        android:textColor="#0000FF"
+        android:textColor="#925e7a"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/logoClickImage" />
+
+
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guideline"

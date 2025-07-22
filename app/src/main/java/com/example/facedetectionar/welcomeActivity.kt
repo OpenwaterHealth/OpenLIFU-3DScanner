@@ -1,6 +1,7 @@
 package com.example.facedetectionar
 
 import android.app.Dialog
+import android.graphics.Paint
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
@@ -13,6 +14,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import kotlin.jvm.java
@@ -49,6 +51,8 @@ class welcomeActivity : AppCompatActivity() {
         val appVersionText=findViewById<TextView>(R.id.appVersionText)
         val versionName = packageManager.getPackageInfo(packageName, 0).versionName
 appVersionText.text="VER:${versionName}";
+        textViewDisclaimer.paintFlags = textViewDisclaimer.paintFlags or Paint.UNDERLINE_TEXT_FLAG
+
 
 
         newCaptureButton.setOnClickListener {

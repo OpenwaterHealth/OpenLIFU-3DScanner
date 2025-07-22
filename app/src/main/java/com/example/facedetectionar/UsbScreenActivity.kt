@@ -106,7 +106,7 @@ class UsbScreenActivity : AppCompatActivity() {
 
     private fun checkFolderExistance(referenceNumber: String) {
 
-        val imageFolderName="${referenceNumber}_${totalImageCount}"
+        val imageFolderName="${referenceNumber}"
 
         Log.d("FolderIs","imageFolderName"+imageFolderName)
 

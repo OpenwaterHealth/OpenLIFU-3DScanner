@@ -66,14 +66,6 @@ class ReviewCaptures : AppCompatActivity(), reviewListAdapter.OnReviewClickListe
         reviewRecycler.layoutManager = LinearLayoutManager(this)
         reviewRecycler.adapter = adapter
 
-//        if (reviewList.isEmpty()) {
-//            reviewRecycler.visibility = View.GONE
-//            emptyView.visibility = View.VISIBLE
-//        } else {
-//            reviewRecycler.visibility = View.VISIBLE
-//            emptyView.visibility = View.GONE
-//        }
-
         // Load actual data from folders
         loadReviewData()
 
@@ -125,13 +117,6 @@ class ReviewCaptures : AppCompatActivity(), reviewListAdapter.OnReviewClickListe
                 val formattedDate = SimpleDateFormat("MMM d, yyyy", Locale.getDefault()).format(lastModified)
 
 
-//                reviewList.add(
-//                    reviewDataModal(
-//                        date = formattedDate,
-//                        id = folder.name,
-//                        count = imageCount
-//                    )
-//                )
 
                 if (imageCount > 0) {
                     reviewList.add(

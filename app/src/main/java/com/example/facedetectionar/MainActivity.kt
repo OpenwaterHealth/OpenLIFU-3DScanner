@@ -1,6 +1,7 @@
 package com.example.facedetectionar
 
 import android.Manifest
+
 import android.animation.ValueAnimator
 import android.app.Dialog
 import android.content.Context
@@ -8,7 +9,9 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Color
 import android.graphics.ImageFormat
+import android.graphics.Matrix
 import android.graphics.Rect
 import android.graphics.YuvImage
 import android.hardware.Sensor
@@ -24,6 +27,8 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.view.View
 import android.widget.Button
@@ -62,6 +67,7 @@ import com.example.facedetectionar.Modals.ArcConfig
 import com.example.facedetectionar.Modals.bulletPointConfig
 import com.google.ar.core.Config
 import com.google.ar.core.Session
+import com.google.ar.core.TrackingState
 import com.google.ar.core.exceptions.NotYetAvailableException
 import com.google.ar.sceneform.Node
 import com.google.mlkit.vision.common.InputImage
@@ -75,13 +81,28 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.json.JSONArray
 import org.json.JSONObject
+import kotlin.math.cos
+import kotlin.math.log
+import kotlin.math.min
+import kotlin.math.sin
 
 
 class CustomArFragment : ArFragment() {
 
 }
 
+class BulletNode(val minAngle: Int, val maxAngle: Int) : Node()
+
 class MainActivity : AppCompatActivity() {
+
+    // Movmement variable
+    private var previousPosition: Vector3? = null
+    private var previousTime: Long = 0
+    private var lastToastTime: Long = 0
+    private val toastCooldown = 2000L // 2 seconds between toasts
+    private val maxAllowedSpeed = 0.6f // meters/second - adjust as needed
+
+
 
     private lateinit var arFragment: ArFragment
     private lateinit var imageCountText: TextView
@@ -91,7 +112,7 @@ class MainActivity : AppCompatActivity() {
     private val capturedDataList = mutableListOf<Map<String, Any>>()
     private lateinit var grayMaterial: Material
     private lateinit var greenMaterial: Material
-    private lateinit var transparentMaterial: Material
+    private lateinit var yellowMaterial: Material
     private val ringNodes = mutableListOf<MutableList<Node>>()
     private var currentRingIndex = 0
     private var SequenceEnabled: Boolean=false;
@@ -100,7 +121,7 @@ class MainActivity : AppCompatActivity() {
 
 
 
-    private val bulletNodes = mutableListOf<Node>()
+    private val bulletNodes = mutableListOf<BulletNode>()
     private var closestBulletNode: AnchorNode? = null // Track closest bullet node
     private var referenceNumber: String = "DEFAULT_REF" // Default reference number
     private var imageCounter: Int = 1
@@ -156,6 +177,9 @@ class MainActivity : AppCompatActivity() {
             val faceOutline=findViewById<ImageView>(R.id.faceOutline)
             val MoveBackText=findViewById<TextView>(R.id.MoveBackText)
             val angleContainer=findViewById<ConstraintLayout>(R.id.angleContainer)
+
+            faceOutline.scaleX=1.1f
+            faceOutline.scaleY=1.1f
 
 
             minAngleText=findViewById<TextView>(R.id.minAngleText)
@@ -260,6 +284,7 @@ class MainActivity : AppCompatActivity() {
                     confirm_button.isEnabled = false
                 }
                 intialRenderCamCancel.visibility = View.VISIBLE
+                faceOutline.visibility=View.VISIBLE;
 
 
 
@@ -270,6 +295,13 @@ class MainActivity : AppCompatActivity() {
                         bulletNodes.remove(node) // Remove from bulletNodes list if needed
                     }
                 }
+
+                //clear scttred bullet list
+                bulletNodes.forEach { node ->
+                    node.setParent(null) // Remove from scene
+
+                }
+                bulletNodes.clear()
                 ringNodes.clear() // Clear the ringNodes list
                 currentRingIndex = 0 // Reset ring index
 
@@ -280,7 +312,7 @@ class MainActivity : AppCompatActivity() {
 
 
                 // Reset any other relevant state
-                updateDistanceLabel("No subject Detected")
+                updateDistanceLabel("Subject not in Frame")
             }
 
             stopButton.setOnClickListener {
@@ -309,7 +341,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             endCapture_button.setOnClickListener {
-                val dialog = android.app.Dialog(this)
+                val dialog = Dialog(this)
 
                 val view=layoutInflater.inflate(R.layout.modal_capture_end,null)
                 val noButton=view.findViewById<Button>(R.id.endCaptureNoBtn)
@@ -386,9 +418,9 @@ class MainActivity : AppCompatActivity() {
 
 
 
-                    if(!ShowScattered){
-                        angleContainer.visibility=View.VISIBLE;
-                    }
+
+                    angleContainer.visibility=View.VISIBLE;
+
                     mainScreenTitle.text="Capture"
                     mainScreenSubTitle.visibility= View.GONE
                     imageCountText.visibility= View.VISIBLE
@@ -514,7 +546,7 @@ class MainActivity : AppCompatActivity() {
 //        findViewById<ImageView>(R.id.targetCircle).visibility = View.GONE
 
 
-        updateDistanceLabel("No subject Detected")
+        updateDistanceLabel("Subject not in Frame")
 
         arFragment.arSceneView.scene.addOnUpdateListener {
             checkVisibilityOfBullets()
@@ -545,6 +577,7 @@ class MainActivity : AppCompatActivity() {
     }
 
 
+
     //to hide bullets behind head
     private fun checkVisibilityOfBullets() {
         val frame = arFragment.arSceneView.arFrame ?: return
@@ -552,53 +585,51 @@ class MainActivity : AppCompatActivity() {
         val cameraPosition = Vector3(cameraPose.tx(), cameraPose.ty(), cameraPose.tz())
         val cameraForward = Vector3(-cameraPose.zAxis[0], -cameraPose.zAxis[1], -cameraPose.zAxis[2]).normalized()
 
+        // ✅ Use closest bullet as reference
+        val referenceBullet = bulletNodes.minByOrNull { bullet ->
+            Vector3.subtract(bullet.worldPosition, cameraPosition).length()
+        } ?: return
+
+        val refVector = Vector3.subtract(referenceBullet.worldPosition, cameraPosition)
+        val referenceDepth = Vector3.dot(refVector, cameraForward)
+
+        val dynamicMin = 0.6f * referenceDepth
+        val dynamicMax = 1.2f * referenceDepth
+
         for (bulletNode in bulletNodes) {
-            val bulletPosition = bulletNode.worldPosition
-            val vectorToBullet = Vector3.subtract(bulletPosition, cameraPosition)
-            val distance = vectorToBullet.length()
+            val bulletVector = Vector3.subtract(bulletNode.worldPosition, cameraPosition)
+            val depth = Vector3.dot(bulletVector, cameraForward)
+            val directionToBullet = bulletVector.normalized()
+            val dotFacing = Vector3.dot(cameraForward, directionToBullet)
 
-            val directionToBullet = vectorToBullet.normalized()
-            val dot = Vector3.dot(cameraForward, directionToBullet) // 1 = directly facing, -1 = away
-            Log.d("Bullet Distance","Bullet Distance: ${distance}, name: (${bulletNode.name})")
-            // Visibility logic
-            val inGoodDistance = distance in 0.2f..0.4f
-            val isFacing = dot > 0.6f  // Adjust as needed
-
-//            bulletNode.isEnabled = inGoodDistance && isFacing
-
-
-            if(distance > 0.5f && distance < 0.7f)
-            {
-                bulletNode.isEnabled = false
-            }
-            else
-            {
+            if (depth in dynamicMin..dynamicMax && dotFacing > 0.5f) {
                 bulletNode.isEnabled = true
+            } else {
+                bulletNode.isEnabled = false
             }
         }
     }
 
+
     private fun preRenderMaterials(onComplete: () -> Unit) {
         try{
-            MaterialFactory.makeOpaqueWithColor(this, com.google.ar.sceneform.rendering.Color(android.graphics.Color.GRAY))
+            MaterialFactory.makeOpaqueWithColor(this, com.google.ar.sceneform.rendering.Color(Color.GRAY))
                 .thenAccept { material ->
                     grayMaterial = material
                     checkMaterialsReady(onComplete)
                 }
 
-            MaterialFactory.makeOpaqueWithColor(this, com.google.ar.sceneform.rendering.Color(android.graphics.Color.GREEN))
+            MaterialFactory.makeOpaqueWithColor(this, com.google.ar.sceneform.rendering.Color(Color.GREEN))
                 .thenAccept { material ->
                     greenMaterial = material
                     checkMaterialsReady(onComplete)
                 }
 
-            MaterialFactory.makeTransparentWithColor(
-                this,
-                com.google.ar.sceneform.rendering.Color(android.graphics.Color.argb(0, 128, 128, 128)) // Alpha = 0 → fully transparent
-            ).thenAccept { material ->
-                transparentMaterial = material
-                checkMaterialsReady(onComplete)
-            }
+            MaterialFactory.makeOpaqueWithColor(this, com.google.ar.sceneform.rendering.Color(Color.YELLOW))
+                .thenAccept { material ->
+                    yellowMaterial = material
+                    checkMaterialsReady(onComplete)
+                }
 
 
         }
@@ -614,7 +645,36 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // New function to check movement speed
+    private fun checkMovementSpeed(currentPosition: Vector3) {
+        val currentTime = System.currentTimeMillis()
 
+        previousPosition?.let { prevPos ->
+            if (previousTime > 0) {
+                val distance = calculateDistance(prevPos, currentPosition)
+                val timeDelta = (currentTime - previousTime) / 1000f // seconds
+                if (timeDelta > 0) {
+                    val speed = distance / timeDelta
+
+                    if (speed > maxAllowedSpeed && currentTime - lastToastTime > toastCooldown) {
+
+                        runOnUiThread {
+                            Toast.makeText(
+                                this,
+                                "Please move slowly !",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            lastToastTime = currentTime
+                        }
+                    }
+                }
+            }
+        }
+
+        // Update previous values for next frame
+        previousPosition = currentPosition
+        previousTime = currentTime
+    }
 
 
     private fun checkShowCoordinates(){
@@ -641,11 +701,15 @@ class MainActivity : AppCompatActivity() {
         if (!jsonFile.exists()) return
         val jsonObject = JSONObject(jsonFile.readText().trim())
         val bulletCoordinatesArray = jsonObject.optJSONArray("bulletCoordinates") ?: JSONArray()
+        val randomMin = (15..25).random()
+        val randomMax=(30..120).random()
         val newObject = JSONObject().apply {
             put("id", index)
             put("xPoint", x)
             put("yPoint", y)
             put("zPoint", z)
+            put("minAngle", randomMin)
+            put("maxAngle", randomMax)
         }
         bulletCoordinatesArray.put(newObject)
         jsonObject.put("bulletCoordinates", bulletCoordinatesArray)
@@ -654,29 +718,7 @@ class MainActivity : AppCompatActivity() {
 
     }
 
-    private fun updateScatteredBulletVisibility() {
-        val frame = arFragment.arSceneView.arFrame ?: return
-        val cameraPose = frame.camera.pose
-        val cameraPosition = Vector3(cameraPose.tx(), cameraPose.ty(), cameraPose.tz())
 
-        bulletNodes.forEach { bulletNode ->
-            if (!greenBulletList.contains(bulletNode)) {
-                val bulletPosition = bulletNode.worldPosition
-                val distance = calculateDistance(cameraPosition, bulletPosition)
-
-                bulletNode.isEnabled = when {
-                    distance > 0.5f && distance < 0.6f -> {
-                        Log.d("BulletVisibility", "Hiding bullet ${bulletNode.name} at distance $distance")
-                        false
-                    }
-                    else -> {
-                        Log.d("BulletVisibility", "Showing bullet ${bulletNode.name} at distance $distance")
-                        true
-                    }
-                }
-            }
-        }
-    }
 
 
 
@@ -704,11 +746,13 @@ class MainActivity : AppCompatActivity() {
                         val worldCenter = cameraPose.transformPoint(forwardVector)
 
 
+
+
                         val bulletCount = arc.bulletCount
                         for (i in 0 until bulletCount) {
                             val angle = 2 * Math.PI * i / bulletCount - Math.PI / -2
-                            val offsetX = (arcRadius * kotlin.math.cos(angle)).toFloat()
-                            val offsetZ = (arcRadius * kotlin.math.sin(angle)).toFloat()
+                            val offsetX = (arcRadius * cos(angle)).toFloat()
+                            val offsetZ = (arcRadius * sin(angle)).toFloat()
 
                             val worldX = worldCenter[0] + offsetX
                             val worldY = worldCenter[1] // flat on Y-axis
@@ -724,9 +768,14 @@ class MainActivity : AppCompatActivity() {
 
 
 
+
+
                             val isRingActive=(index == 0);
 
-                            val bulletNode = Node().apply {
+                            val bulletNode = BulletNode(
+                                minAngle = 0,
+                                maxAngle = 0
+                            ).apply {
                                 setParent(arFragment.arSceneView.scene)
                                 worldPosition = Vector3(worldX, worldY, worldZ)
                                 if (!SequenceEnabled || isRingActive) {
@@ -766,23 +815,38 @@ class MainActivity : AppCompatActivity() {
 
 
     private fun placeScatteredBullets() {
-        val frame: Frame = arFragment.arSceneView.arFrame ?: return
+        val frame = arFragment.arSceneView.arFrame
+        if (frame == null || frame.camera.trackingState != TrackingState.TRACKING) {
+
+            arFragment.arSceneView.postDelayed({
+                placeScatteredBullets()
+            }, 200)
+            return
+        }
+
+        val cameraPose = frame.camera.displayOrientedPose
+        val cameraPosition = Vector3(cameraPose.tx(), cameraPose.ty(), cameraPose.tz())
+        val forward = Vector3(cameraPose.zAxis[0], cameraPose.zAxis[1], cameraPose.zAxis[2]).negated()
 
         scatterBulletList.forEachIndexed { index, bulletObj ->
-            val xCoord = bulletObj.xPoint
-            val yCoord = bulletObj.yPoint
-            val zCoord = bulletObj.zPoint
+            val xOffset = bulletObj.xPoint
+            val yOffset = bulletObj.yPoint
+            val zOffset = bulletObj.zPoint
+            val minAngle = bulletObj.minAngle
+            val maxAngle = bulletObj.maxAngle
 
-            val pose = Pose(floatArrayOf(xCoord.toFloat(), yCoord.toFloat(), zCoord.toFloat()), floatArrayOf(0f, 0f, 0f, 1f))
+            val offsetVector = Vector3(xOffset.toFloat(), yOffset.toFloat(), zOffset.toFloat())
+            val finalPosition = Vector3.add(cameraPosition, offsetVector)
+
+            val pose = Pose.makeTranslation(finalPosition.x, finalPosition.y, finalPosition.z)
             val anchor = arFragment.arSceneView.session?.createAnchor(pose)
             val anchorNode = AnchorNode(anchor)
             anchorNode.setParent(arFragment.arSceneView.scene)
 
-            val node = Node().apply {
+            val node = BulletNode(minAngle, maxAngle).apply {
                 name = "bullet_$index"
                 setParent(anchorNode)
                 localPosition = Vector3.zero()
-
                 renderable = ShapeFactory.makeSphere(0.007f, Vector3.zero(), grayMaterial).apply {
                     isShadowCaster = false
                     isShadowReceiver = false
@@ -794,7 +858,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         arFragment.arSceneView.scene.addOnUpdateListener {
-            updateScatteredBulletVisibility()
+            checkVisibilityOfBullets()
         }
     }
 
@@ -806,8 +870,10 @@ class MainActivity : AppCompatActivity() {
 
 
 
+
+
     private fun startScatteredBulletTracking() {
-        updateDistanceLabel("Move Closer")
+
         var skipFrame = 0
         var moveToNextPosition = false
         var moveToNextPositionCount = 0
@@ -816,6 +882,7 @@ class MainActivity : AppCompatActivity() {
             val frame: Frame = arFragment.arSceneView.arFrame ?: return@addOnUpdateListener
             val cameraPose = frame.camera.pose
             val cameraPosition = Vector3(cameraPose.tx(), cameraPose.ty(), cameraPose.tz())
+            checkMovementSpeed(cameraPosition)
 
             moveToNextPositionCount++
             skipFrame++
@@ -823,23 +890,57 @@ class MainActivity : AppCompatActivity() {
             var closestDistance = Float.MAX_VALUE
             var closestNode: Node? = null
 
-            bulletNodes.forEach { bulletNode ->
+
+
+            var minBulletAngle: String =""
+            var maxBulletAngle: String=""
+
+
+
+
+
+            bulletNodes.forEachIndexed {index, bulletNode ->
+
+                Log.d("BulletAngles","Bullet MinAngles ${bulletNode.minAngle}, MaxAngles ${bulletNode.maxAngle}")
+
+
+                minBulletAngle=bulletNode.minAngle.toString()
+                maxBulletAngle=bulletNode.maxAngle.toString()
+
+
+
+
                 if (!greenBulletList.contains(bulletNode)) {
                     val bulletPosition = bulletNode.worldPosition
                     val distance = calculateDistance(cameraPosition, bulletPosition)
+
 
                     if (distance < closestDistance) {
                         closestDistance = distance
                         closestNode = bulletNode
 
+
+                        if(distance > 0.180f && distance < 0.185f){
+                            bulletNode.renderable = ShapeFactory.makeSphere(0.007f, Vector3.zero(), yellowMaterial).apply {
+                                isShadowCaster = false
+                                isShadowReceiver = false
+                            }
+                        }else{
+                            bulletNode.renderable = ShapeFactory.makeSphere(0.007f, Vector3.zero(), grayMaterial).apply {
+                                isShadowCaster = false
+                                isShadowReceiver = false
+                            }
+                        }
+
+
                         // Same "Move to next position" logic as in startBulletTracking()
                         when {
                             distance < 0.18f -> {
-                                updateDistanceLabel("Move Away")
+                                updateDistanceLabel("Move Back")
                             }
                             distance > 0.19f && distance < 0.25f -> {
                                 if(moveToNextPosition && moveToNextPositionCount < 10) {
-                                    updateDistanceLabel("Success")
+                                    updateDistanceLabel("Success") //scatter
                                 }
                                 else if(moveToNextPosition && moveToNextPositionCount > 10 && moveToNextPositionCount < 120) {
                                     updateDistanceLabel("Move to next Position")
@@ -853,14 +954,32 @@ class MainActivity : AppCompatActivity() {
                                 updateDistanceLabel("Move Closer")
                                 moveToNextPositionCount = 0
                             }
-                            distance > 0.18f && distance < 0.19f -> {
-                                if (skipFrame > 20 && IsCaptureStarted) {
-                                    moveToNextPositionCount = 0
-                                    updateDistanceLabel("Success")
-                                    moveToNextPosition = true
-                                    updateBulletColors(closestNode)
-                                    skipFrame = 0
+                            distance > 0.18f && distance < 0.185f -> {
+
+                                minAngleText.text="Min $minBulletAngle"
+                                maxAngleText.text="Max $maxBulletAngle"
+
+
+
+                                if (angleString in bulletNode.minAngle..bulletNode.maxAngle){
+                                    if (skipFrame > 20 && IsCaptureStarted) {
+                                        moveToNextPositionCount = 0
+                                        // First show "Hold still" message
+                                        updateDistanceLabel("Hold still")
+
+
+                                        // Delay before showing success and updating bullet
+                                        Handler(Looper.getMainLooper()).postDelayed({
+                                            updateDistanceLabel("Success")
+                                            moveToNextPosition = true
+                                            updateBulletColors(closestNode)
+                                        }, 500) // 500ms delay (adjust as needed)
+                                        skipFrame = 0
+                                    }
+                                }else{
+                                    updateDistanceLabel("Adjust Angles")
                                 }
+
                             }
                         }
                     }
@@ -904,12 +1023,16 @@ class MainActivity : AppCompatActivity() {
         updateDistanceLabel("Move Closer")
         faceOverlayView.updatePoints(emptyList(), 0, 0)
         var skipFrame = 0
+
         var moveToNextPosition = false
         var moveToNextPositionCount = 0
         arFragment.arSceneView.scene.addOnUpdateListener {
             val frame: Frame = arFragment.arSceneView.arFrame ?: return@addOnUpdateListener
             val cameraPose = frame.camera.pose
             val cameraPosition = Vector3(cameraPose.tx(), cameraPose.ty(), cameraPose.tz())
+
+            checkMovementSpeed(cameraPosition)
+
 
 
 
@@ -951,7 +1074,7 @@ class MainActivity : AppCompatActivity() {
                             Log.d("moveToNextPositionCount", "moveToNextPositionCount: "+moveToNextPositionCount+",moveToNextPosition: "+moveToNextPosition+" ")
                             when {
                                 distance < 0.18f -> {
-                                    updateDistanceLabel("Move Away")
+                                    updateDistanceLabel("Move Back")
                                 }
                                 distance > 0.19f && distance < 0.25f -> {
                                     if(moveToNextPosition && moveToNextPositionCount < 10)   //"mohan"
@@ -977,10 +1100,20 @@ class MainActivity : AppCompatActivity() {
                                     if (angleString in minAngle..maxAngle) {
                                         if (skipFrame>20 && IsCaptureStarted) {
                                             moveToNextPositionCount=0
-                                            updateDistanceLabel("Success")
-                                            moveToNextPosition = true
-                                            updateBulletColors(closestNode)
-                                            skipFrame=0;
+
+
+
+                                            // First show "Hold still" message
+                                            updateDistanceLabel("Hold still")
+
+                                            // Delay before showing success and updating bullet
+                                            Handler(Looper.getMainLooper()).postDelayed({
+                                                updateDistanceLabel("Success")
+                                                moveToNextPosition = true
+                                                updateBulletColors(closestNode)
+                                            }, 500) // 500ms delay (adjust as needed)
+
+                                            skipFrame = 0
                                         }
                                     } else {
                                         updateDistanceLabel("Adjust angles")
@@ -998,7 +1131,7 @@ class MainActivity : AppCompatActivity() {
 
 
     private fun initSensorListener() {
-        sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
+        sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
         rotationVectorSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR) ?: return
 
         sensorManager.registerListener(object : SensorEventListener {
@@ -1051,7 +1184,7 @@ class MainActivity : AppCompatActivity() {
         val deviceRotation = windowManager.defaultDisplay.rotation
         var rotationCompensation = ORIENTATIONS.get(deviceRotation)
 
-        val cameraManager = getSystemService(Context.CAMERA_SERVICE) as CameraManager
+        val cameraManager = getSystemService(CAMERA_SERVICE) as CameraManager
         val sensorOrientation = cameraManager
             .getCameraCharacteristics(cameraId)
             .get(CameraCharacteristics.SENSOR_ORIENTATION)!!
@@ -1116,9 +1249,9 @@ class MainActivity : AppCompatActivity() {
                                 noseZ < -75.0 -> { // Too close (wide and shallow depth)
                                     Log.d(
                                         "isFaceDetected",
-                                        "updateDistanceLabel MOVE AWAY" + isFaceDetected
+                                        "updateDistanceLabel Move Back" + isFaceDetected
                                     )
-                                    updateDistanceLabel("Move Away");
+                                    updateDistanceLabel("Move Back");
 
                                 }
 
@@ -1145,7 +1278,7 @@ class MainActivity : AppCompatActivity() {
 
                             faceOverlayView.updatePoints(emptyList(), 0, 0)
                             Log.d("isFaceDetected", "updateDistanceLabel DETECTED" + isFaceDetected)
-                            updateDistanceLabel("No subject detected")
+                            updateDistanceLabel("Subject not in Frame")
                             confirm_button = findViewById<Button>(R.id.confirm_button)
                             confirm_button.isEnabled = false;
                         }
@@ -1196,7 +1329,7 @@ class MainActivity : AppCompatActivity() {
             distanceLabel.setBackground(ContextCompat.getDrawable(this, R.drawable.round_yellow))
         }else{
             when (baseText) {
-                "Move Away" -> {
+                "Move Back" -> {
 
                     distanceLabel.setTextColor(ContextCompat.getColor(this, android.R.color.white))
                     distanceLabel.setBackground(ContextCompat.getDrawable(this, R.drawable.round_orange))
@@ -1211,7 +1344,7 @@ class MainActivity : AppCompatActivity() {
                     distanceLabel.setTextColor(ContextCompat.getColor(this, android.R.color.white))
                     distanceLabel.setBackground(ContextCompat.getDrawable(this, R.drawable.round_orange))
                 }
-                "No subject detected" -> {
+                "Subject not in Frame" -> {
 
                     distanceLabel.setTextColor(ContextCompat.getColor(this, android.R.color.white))
                     distanceLabel.setBackground(ContextCompat.getDrawable(this, R.drawable.round_orange))
@@ -1236,6 +1369,11 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 "Move to Subject`s back" -> {
+                    distanceLabel.setTextColor(ContextCompat.getColor(this, android.R.color.white))
+                    distanceLabel.setBackground(ContextCompat.getDrawable(this, R.drawable.round_cancel_ok))
+                }
+
+                "Hold still" -> {
                     distanceLabel.setTextColor(ContextCompat.getColor(this, android.R.color.white))
                     distanceLabel.setBackground(ContextCompat.getDrawable(this, R.drawable.round_cancel_ok))
                 }
@@ -1492,7 +1630,7 @@ class MainActivity : AppCompatActivity() {
 
             val jsonString = root.toString(4)
             val fileName = "coordinates.json"
-            val imageFolderName="${referenceNumber}_${getTotalImageCountFromJson()}"
+            val imageFolderName="${referenceNumber}"
             val dir = File(Environment.getExternalStorageDirectory(), "OpenLIFU-3DScanner/$imageFolderName")
             if (!dir.exists()) dir.mkdirs()
 
@@ -1621,7 +1759,7 @@ class MainActivity : AppCompatActivity() {
 
             // Define root path directory: /storage/emulated/0/OpenLIFU-3DScanner/{referenceNumber}/
             val totalImages=getTotalImageCountFromJson()
-            val imageFolderName="${referenceNumber}_${totalImages}"
+            val imageFolderName="${referenceNumber}"
             val rootDir = File(Environment.getExternalStorageDirectory(), "OpenLIFU-3DScanner/$imageFolderName")
             if (!rootDir.exists()) rootDir.mkdirs()
 
@@ -1688,6 +1826,8 @@ class MainActivity : AppCompatActivity() {
                     xPoint = bulletObj.getDouble("xPoint"),
                     yPoint = bulletObj.getDouble("yPoint"),
                     zPoint = bulletObj.getDouble("zPoint"),
+                    minAngle=bulletObj.getInt("minAngle"),
+                    maxAngle=bulletObj.getInt("maxAngle")
                    ))
             }
 
@@ -1753,7 +1893,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
     private fun fixImageRotation(bitmap: Bitmap): Bitmap {
-        val matrix = android.graphics.Matrix()
+        val matrix = Matrix()
         matrix.postRotate(90f) // Rotate by 90 degrees to fix the orientation
         return Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
     }

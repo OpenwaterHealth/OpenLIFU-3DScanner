@@ -44,9 +44,8 @@
     <!-- EditText -->
     <EditText
         android:id="@+id/scanIDInputText"
-        android:layout_width="0dp"
-        android:layout_height="55dp"
-        android:layout_marginStart="24dp"
+        android:layout_width="354dp"
+        android:layout_height="45dp"
         android:layout_marginTop="12dp"
         android:layout_marginEnd="8dp"
         android:background="@drawable/rounded_edittext_background"
@@ -56,30 +55,21 @@
         android:paddingHorizontal="20dp"
         android:textColor="@color/white"
         android:textColorHint="@color/white"
-        app:layout_constraintEnd_toStartOf="@+id/qrIconButton"
+
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/labelScanId" />
 
-    <!-- QR Icon -->
-    <ImageButton
-        android:id="@+id/qrIconButton"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:layout_marginEnd="24dp"
-        android:background="@drawable/ripple_transparent"
-        android:contentDescription="QR"
-        android:src="@drawable/qr_icon"
-        app:layout_constraintBottom_toBottomOf="@id/scanIDInputText"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@id/scanIDInputText" />
+
+
 
     <!-- Error Text -->
     <TextView
         android:id="@+id/errorText"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
         android:layout_marginStart="10dp"
+        android:layout_marginTop="4dp"
         android:paddingHorizontal="20dp"
         android:text="Please enter a Scan Id"
         android:textColor="#f72b2a"
@@ -108,8 +98,7 @@
             android:layout_height="wrap_content"
             android:clipToPadding="false"
             android:overScrollMode="never"
-            android:scrollbars="horizontal"
-             />
+            android:scrollbars="horizontal" />
 
         <!-- Add this below your RecyclerView but inside the recyclerContainer -->
         <LinearLayout
@@ -117,12 +106,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
-            android:orientation="horizontal"
             android:layout_marginTop="8dp"
-            android:layout_marginBottom="8dp"/>
-
-
-
+            android:layout_marginBottom="8dp"
+            android:orientation="horizontal" />
 
 
     </LinearLayout>
@@ -164,12 +150,12 @@
         android:id="@+id/startCaptureButton"
         android:layout_width="325dp"
         android:layout_height="wrap_content"
-        app:backgroundTint="@null"
         android:layout_marginHorizontal="40dp"
         android:background="@drawable/round_green_button"
         android:text="Start Capture"
         android:textAllCaps="false"
         android:textColor="@color/white"
+        app:backgroundTint="@null"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -180,7 +166,6 @@
         android:id="@+id/cancelButton"
         android:layout_width="321dp"
         android:layout_height="wrap_content"
-        app:backgroundTint="@null"
         android:layout_marginHorizontal="40dp"
         android:layout_marginTop="12dp"
         android:layout_marginBottom="24dp"
@@ -188,6 +173,7 @@
         android:text="Cancel"
         android:textAllCaps="false"
         android:textColor="@color/white"
+        app:backgroundTint="@null"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"

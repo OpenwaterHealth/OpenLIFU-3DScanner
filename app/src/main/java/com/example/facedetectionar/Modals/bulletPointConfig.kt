@@ -5,4 +5,6 @@ data class bulletPointConfig(
     val xPoint: Double,
     val yPoint: Double,
     val zPoint: Double,
+    val minAngle: Int,
+    val maxAngle: Int,
 )

@@ -61,13 +61,9 @@ public class ImagePreview extends AppCompatActivity {
         recyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
 
         referenceNumber = getIntent().getStringExtra("REFERENCE_ID");
-        String refID = referenceNumber.toLowerCase(); // e.g., "testingname_100"
-        String baseName = refID.substring(0, refID.lastIndexOf("_")); // result: "testingname"
 
 
-        Log.d("ReferenceNumber", "Received reference number in ImagePreview: " + baseName);
-
-        referenceIdText.setText(referenceNumber != null ? baseName : "No Ref");
+        referenceIdText.setText(referenceNumber != null ? referenceNumber : "No Ref");
 
 
         List<File> imageFiles = getImagesForReference(referenceNumber);
@@ -191,10 +187,8 @@ public class ImagePreview extends AppCompatActivity {
         TextView captureCountText = findViewById(R.id.CaptureCountTextOnReview);
         if (adapter != null && captureCountText != null) {
             int imageCount = adapter.getItemCount();
-            File folder = new File(Environment.getExternalStorageDirectory(), "OpenLIFU-3DScanner/" + referenceNumber);
-           String folderName = folder.getName().toLowerCase(); // "testingname_100"
-            String numberString = folderName.substring(folderName.lastIndexOf("_") + 1);
-            captureCountText.setText(imageCount + "/"+numberString);
+
+            captureCountText.setText(String.valueOf(imageCount));
         }
     }
 
