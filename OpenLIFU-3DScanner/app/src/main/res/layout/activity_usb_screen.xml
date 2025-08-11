@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/screen_background"
+    android:padding="16dp">
+
+    <!-- Title -->
+
+    <!-- Connect USB Message -->
+
+    <TextView
+        android:id="@+id/readyForTransferText"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="68dp"
+        android:paddingHorizontal="24dp"
+        android:text="Ready for Transfer Scan ABC123"
+        android:textAlignment="center"
+        android:textColor="@color/white"
+        android:textSize="26sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/connectUsbText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/connectUsbText"
+        android:textColor="@color/white"
+        android:textSize="20sp"
+        android:textAlignment="center"
+        app:layout_constraintTop_toBottomOf="@id/readyForTransferText"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="12dp"
+        android:paddingHorizontal="24dp" />
+
+    <!-- USB Status Icons in FrameLayout -->
+    <FrameLayout
+        android:id="@+id/usbIconFrame"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/connectUsbText"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="50dp">
+
+        <ImageView
+            android:id="@+id/usbConnectedIconImage"
+            android:layout_width="150dp"
+            android:layout_height="250dp"
+            android:src="@drawable/usb_connected_image"
+            android:visibility="gone"
+            android:adjustViewBounds="true" />
+
+        <ImageView
+            android:id="@+id/usbDisConnectedIconImage"
+            android:layout_width="150dp"
+            android:layout_height="250dp"
+            android:src="@drawable/usb_not_connected_image"
+            android:visibility="visible"
+            android:adjustViewBounds="true" />
+    </FrameLayout>
+
+    <!-- USB Status Text -->
+    <TextView
+        android:id="@+id/usbStatusText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Connected"
+        android:textColor="@color/white"
+        android:textSize="20sp"
+        android:textAlignment="center"
+        app:layout_constraintTop_toBottomOf="@id/usbIconFrame"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="16dp"
+        android:paddingHorizontal="24dp" />
+
+    <!-- OK Button fixed at bottom -->
+    <Button
+        android:id="@+id/usbOkButton"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="Ok"
+        android:textAllCaps="false"
+        android:textStyle="bold"
+        android:textColor="@color/white"
+        app:backgroundTint="@null"
+        android:background="@drawable/round_green_button"
+        android:layout_marginHorizontal="20dp"
+        android:layout_marginBottom="20dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

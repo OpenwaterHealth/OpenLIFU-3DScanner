@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/screen_background">
+
+
+
+    <TextView
+        android:id="@+id/CaptureCountTextOnReview"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:text="0"
+        android:textAlignment="center"
+        android:textColor="@color/white"
+        android:textSize="36sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/referenceIdText" />
+
+    <TextView
+        android:id="@+id/referenceIdText"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:text="ABC123"
+        android:textAlignment="center"
+        android:textColor="@color/white"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/titleText" />
+
+    <TextView
+        android:id="@+id/titleText"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="36dp"
+        android:text="Review Capture"
+        android:textAlignment="center"
+        android:textColor="@color/white"
+        android:textSize="24sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageButton
+        android:id="@+id/btnPreviousForReview"
+        android:layout_width="40dp"
+        android:layout_height="50dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="4dp"
+        android:background="@android:color/transparent"
+        android:src="@drawable/show_prev"
+        android:elevation="6dp"
+        app:layout_constraintTop_toTopOf="@id/imageFrame"
+        app:layout_constraintBottom_toBottomOf="@id/imageFrame"
+        app:layout_constraintStart_toStartOf="parent"
+        />
+
+
+    <FrameLayout
+        android:id="@+id/imageFrame"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="20dp"
+        app:layout_constraintBottom_toTopOf="@id/deleteButton"
+        app:layout_constraintEnd_toStartOf="@id/btnNextForReview"
+        app:layout_constraintHeight_percent="0.55"
+        app:layout_constraintStart_toEndOf="@id/btnPreviousForReview"
+        app:layout_constraintTop_toBottomOf="@id/CaptureCountTextOnReview"
+        app:layout_constraintWidth_percent="0.8">
+
+        <ImageView
+            android:id="@+id/imageViewInReview"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:adjustViewBounds="true"
+            android:background="@android:color/darker_gray"
+            android:scaleType="centerCrop"
+            android:src="@drawable/default_image" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerViewImagePreview"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:background="#2c2c2c"
+            android:clipToPadding="false"
+            android:padding="6dp" />
+    </FrameLayout>
+
+
+
+    <ImageButton
+        android:id="@+id/btnNextForReview"
+        android:layout_width="40dp"
+        android:layout_height="50dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="4dp"
+        android:background="@android:color/transparent"
+        android:src="@drawable/show_next"
+        android:elevation="6dp"
+        app:layout_constraintTop_toTopOf="@id/imageFrame"
+        app:layout_constraintBottom_toBottomOf="@id/imageFrame"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+
+    <Button
+        android:id="@+id/deleteButton"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="50dp"
+        android:layout_marginTop="20dp"
+        android:background="@drawable/round_red"
+        android:text="Delete"
+        android:textColor="@android:color/white"
+        app:backgroundTint="@null"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/imageFrame" />
+
+    <Button
+        android:id="@+id/reviewDoneButton"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="50dp"
+        android:layout_marginTop="20dp"
+        android:background="@drawable/round_green_button"
+        android:text="Done"
+        android:textColor="@android:color/white"
+        app:backgroundTint="@null"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.52"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/deleteButton" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

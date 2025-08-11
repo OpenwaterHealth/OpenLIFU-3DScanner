@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/screen_background"
+    android:gravity="center_vertical"
+    tools:context=".welcomeActivity">
+
+    <!--    <ImageButton-->
+    <!--        android:layout_width="wrap_content"-->
+    <!--        android:layout_height="wrap_content"-->
+    <!--        android:background="#00000000"-->
+
+
+    <!--        android:layout_gravity="end"-->
+    <!--        android:layout_marginEnd="20dp"-->
+    <!--        android:src="@drawable/settings_icon"/>-->
+
+
+    <!-- Spacer view for gap -->
+
+    <ImageView
+        android:id="@+id/imageView"
+        android:layout_width="wrap_content"
+
+        android:layout_height="wrap_content"
+        android:layout_marginTop="152dp"
+        android:src="@drawable/logo_lifu"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="216dp"
+        android:layout_height="54dp"
+        android:layout_marginTop="264dp"
+        android:text="AR Photogrammetry Image Capture"
+
+        android:textAlignment="center"
+        android:textColor="@color/white"
+        android:textSize="20sp"
+        app:layout_constraintBottom_toTopOf="@+id/newCaptureButton"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.497"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.0" />
+
+    <Button
+        android:id="@+id/newCaptureButton"
+        android:layout_width="331dp"
+        android:layout_height="wrap_content"
+
+        android:background="@drawable/round_green_button"
+        android:text="New Capture"
+        android:textColor="@color/white"
+        app:backgroundTint="@null"
+        app:layout_constraintBottom_toTopOf="@+id/reviewButton"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.625"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.944" />
+
+    <Button
+        android:id="@+id/reviewButton"
+        android:layout_width="331dp"
+        android:layout_height="wrap_content"
+
+        android:layout_marginTop="408dp"
+        android:background="@drawable/round_green_button_light"
+        android:text="Review Capture"
+        android:textColor="@color/white"
+        app:backgroundTint="@null"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.625"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageButton
+        android:id="@+id/logoClickImage"
+        android:layout_width="184dp"
+        android:layout_height="64dp"
+        android:background="@drawable/ripple_transparent"
+        android:contentDescription="logo"
+        android:src="@drawable/logo_water"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.568"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.887" />
+
+    <TextView
+        android:id="@+id/appVersionText"
+        android:layout_width="109dp"
+        android:layout_height="30dp"
+        android:layout_marginTop="36dp"
+        android:gravity="center_vertical"
+        android:text="VER 1.0.1"
+        android:textColor="@color/white"
+        app:layout_constraintEnd_toStartOf="@+id/textViewDisclaimer"
+        app:layout_constraintHorizontal_bias="0.708"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/logoClickImage" />
+
+    <TextView
+        android:id="@+id/textViewDisclaimer"
+        android:layout_width="93dp"
+        android:layout_height="30dp"
+
+        android:layout_marginTop="36dp"
+        android:layout_marginEnd="64dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:gravity="center_vertical"
+        android:text="Disclaimer"
+        android:textColor="#925e7a"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/logoClickImage" />
+
+
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guideline"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_begin="-48dp" />
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>

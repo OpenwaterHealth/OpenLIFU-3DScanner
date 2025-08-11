@@ -1,0 +1,455 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+
+    android:background="@drawable/screen_background"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+
+<!--first half-->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:orientation="vertical"
+        android:paddingVertical="10dp"
+        android:gravity="center_vertical"
+        android:layout_height="140dp">
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:id="@+id/mainScreenTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Start Capture"
+                android:textAlignment="center"
+                android:textSize="26sp"
+                android:visibility="visible"
+                android:textColor="@color/white"/>
+
+
+
+
+
+        </FrameLayout>
+
+
+
+        <FrameLayout
+            android:layout_width="match_parent"
+
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:id="@+id/mainScreenSubTitle"
+                android:layout_width="match_parent"
+                android:layout_marginTop="10dp"
+                android:layout_height="wrap_content"
+                android:text="Position the Subject in the Frame"
+                android:textAlignment="center"
+                android:textSize="18sp"
+                android:visibility="visible"
+                android:textColor="@color/white"/>
+
+
+
+            <TextView
+                android:id="@+id/imageCountText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textStyle="bold"
+                android:text="0/80"
+                android:textAlignment="center"
+                android:textSize="40sp"
+                android:visibility="gone"
+                android:textColor="@color/white"/>
+
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/angleContainer"
+                android:layout_width="120dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end"
+                android:background="@drawable/ripple_transparent"
+
+                android:padding="8dp"
+                android:visibility="gone"
+                tools:layout_editor_absoluteX="291dp">
+
+                <!-- Angle Title -->
+                <TextView
+                    android:id="@+id/textView2"
+                    android:layout_width="85dp"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:text="Angle"
+                    android:textColor="@color/white"
+                    android:textSize="14sp"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <!-- Divider Line (Horizontal) -->
+                <View
+                    android:id="@+id/angleDivider"
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginTop="4dp"
+                    android:background="@color/white"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/textView2" />
+
+                <!-- Min/Max Angle Info -->
+                <LinearLayout
+                    android:id="@+id/linearLayout"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:orientation="vertical"
+                    app:layout_constraintEnd_toStartOf="@+id/verticalDivider"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/angleDivider">
+
+                    <TextView
+                        android:id="@+id/minAngleText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:text="Ring  :X"
+                        android:textColor="@color/white" />
+
+                    <TextView
+                        android:id="@+id/maxAngleText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:text="Angle :Y"
+                        android:textColor="@color/white" />
+                </LinearLayout>
+
+                <!-- Vertical Divider Line -->
+                <View
+                    android:id="@+id/verticalDivider"
+                    android:layout_width="1dp"
+                    android:layout_height="35dp"
+                    android:layout_marginStart="3dp"
+                    android:layout_marginEnd="3dp"
+                    android:background="@color/white"
+                    app:layout_constraintBottom_toBottomOf="@id/linearLayout"
+                    app:layout_constraintEnd_toStartOf="@id/cameraAngle"
+                    app:layout_constraintStart_toEndOf="@id/linearLayout"
+                    app:layout_constraintTop_toTopOf="@id/linearLayout" />
+
+
+                <!-- Angle Value -->
+                <TextView
+                    android:id="@+id/cameraAngle"
+                    android:layout_width="35dp"
+                    android:layout_height="35dp"
+                    android:gravity="center"
+                    android:text="0"
+                    android:textColor="@color/white"
+                    android:textSize="18sp"
+                    app:layout_constraintBottom_toBottomOf="@id/linearLayout"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toEndOf="@id/verticalDivider"
+                    app:layout_constraintTop_toTopOf="@id/linearLayout" />
+
+                <androidx.constraintlayout.widget.Guideline
+                    android:id="@+id/guideline2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    app:layout_constraintGuide_begin="20dp" />
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+        </FrameLayout>
+
+
+
+
+
+
+
+
+
+
+    </LinearLayout>
+
+
+
+
+
+
+
+
+
+<!--    second half-->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:background="@color/white"
+        android:layout_weight="1"
+        android:layout_height="0dp">
+
+
+
+        <!-- AR Fragment -->
+<io.github.sceneview.ar.ARSceneView
+            android:id="@+id/arSceneView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+
+
+        <ProgressBar
+            android:id="@+id/progressBar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:visibility="gone"/>
+
+        <TextView
+            android:id="@+id/distanceLabel"
+            android:layout_width="200dp"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="15dp"
+            android:layout_marginStart="15dp"
+            android:background="@drawable/textview_background"
+            android:padding="4dp"
+            android:layout_gravity="center_horizontal"
+            android:text="Status"
+            android:textColor="#000000"
+            android:textAlignment="center"
+            android:textSize="12sp" />
+
+        <TextView
+            android:id="@+id/MoveBackText"
+            android:layout_width="200dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="15dp"
+            android:layout_marginLeft="15dp"
+            android:background="@drawable/round_cancel_ok"
+            android:padding="4dp"
+            android:layout_gravity="center_horizontal"
+            android:text="Move Back to Subject"
+            android:textColor="@color/white"
+            android:visibility="gone"
+            android:textAlignment="center"
+            android:textSize="12sp" />
+
+
+
+        <ImageView
+            android:id="@+id/faceRing"
+            android:layout_width="250dp"
+            android:layout_height="250dp"
+            android:layout_gravity="center"
+            android:layout_margin="20dp"
+            android:background="@drawable/circle_ring"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/debugText"
+            android:layout_margin="20dp"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:text=""
+            android:visibility="visible"
+            android:gravity="bottom"
+            android:textColor="@color/red"/>
+
+        <ImageView
+            android:id="@+id/faceOutline"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:src="@drawable/face_outline"
+            android:layout_marginTop="40dp"
+            android:visibility="visible"
+            android:layout_gravity="center_horizontal"
+
+/>
+
+
+
+
+
+
+        <!-- Left Arrow-->
+        <TextView
+            android:id="@+id/leftArrowInstruction"
+            android:layout_width="wrap_content"
+
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginTop="0dp"
+            android:drawableStart="@drawable/ic_left_arrow"
+            android:drawablePadding="8dp"
+            android:gravity="center"
+            android:padding="8dp"
+            android:text="Start Moving Left"
+            android:textColor="#FFFF"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:visibility="gone"/>
+
+
+        <FrameLayout
+            android:id="@+id/overlayContainer"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clickable="false"
+            android:focusable="false"
+            android:background="@android:color/transparent" >
+
+            <View
+                android:id="@+id/captureOverlay"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:alpha="0.0"
+
+                android:background="#40FFFFFF"
+                android:elevation="100dp"
+                android:visibility="invisible" />
+        </FrameLayout>
+
+
+    </FrameLayout>
+
+
+
+<!--    third half-->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:orientation="vertical"
+        android:layout_gravity="bottom"
+        android:layout_height="140dp">
+
+        <Button
+            android:id="@+id/confirmButtonInMain"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Confirm"
+            android:textAllCaps="false"
+            android:enabled="false"
+            android:textStyle="bold"
+            app:backgroundTint="@null"
+            android:background="@drawable/round_green_button"
+            android:layout_marginHorizontal="40dp"
+            android:layout_marginVertical="10dp"
+            android:visibility="visible"
+            android:textColor="@color/disable_button_text"/>
+
+        <Button
+            android:id="@+id/initialRenderCancelButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Cancel"
+            android:textStyle="bold"
+            android:textAllCaps="false"
+            app:backgroundTint="@null"
+            android:background="@drawable/round_cancel_ok"
+            android:layout_marginHorizontal="40dp"
+            android:layout_marginVertical="10dp"
+            android:visibility="visible"
+            android:textColor="@color/white"/>
+
+
+        <Button
+            android:id="@+id/startButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Start"
+            android:textStyle="bold"
+            android:textAllCaps="false"
+            app:backgroundTint="@null"
+            android:background="@drawable/round_green_button"
+            android:layout_marginHorizontal="40dp"
+            android:layout_marginVertical="10dp"
+            android:visibility="gone"
+            android:textColor="@color/white"/>
+
+        <Button
+            android:id="@+id/stopButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Stop"
+            android:textStyle="bold"
+            android:textAllCaps="false"
+            app:backgroundTint="@null"
+            android:background="@drawable/round_green_button"
+            android:layout_marginHorizontal="40dp"
+            android:layout_marginVertical="10dp"
+            android:visibility="gone"
+            android:textColor="@color/white"/>
+
+        <Button
+            android:id="@+id/BackInStartCapture"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Back"
+            android:textAllCaps="false"
+            android:textStyle="bold"
+            app:backgroundTint="@null"
+            android:background="@drawable/round_cancel_ok"
+            android:layout_marginHorizontal="40dp"
+            android:layout_marginVertical="10dp"
+            android:visibility="gone"
+            android:textColor="@color/white"/>
+
+        <Button
+            android:id="@+id/endCapture_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="End Capture"
+            android:textAllCaps="false"
+            android:textStyle="bold"
+            app:backgroundTint="@null"
+            android:background="@drawable/round_cancel_ok"
+            android:layout_marginHorizontal="40dp"
+            android:layout_marginVertical="10dp"
+            android:visibility="gone"
+            android:textColor="@color/white"/>
+
+        <Button
+            android:id="@+id/resumeCapture_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Resume"
+            android:textAllCaps="false"
+            android:textStyle="bold"
+            app:backgroundTint="@null"
+            android:background="@drawable/round_cancel_ok"
+            android:layout_marginHorizontal="40dp"
+            android:layout_marginVertical="10dp"
+            android:visibility="gone"
+            android:textColor="@color/white"/>
+
+    </LinearLayout>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</LinearLayout>
