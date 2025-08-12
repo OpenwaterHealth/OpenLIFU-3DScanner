@@ -40,6 +40,7 @@ import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.animation.core.animate
+import androidx.compose.ui.platform.LocalGraphicsContext
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -101,6 +102,7 @@ class MainActivity : AppCompatActivity() {
     val nonCapturedModelList = mutableListOf<ModelNode>()
     private val faceCircleUri = "models/circle.glb"
     private val faceCubeUri = "models/cube.glb"
+    private var activeRing:ModelNode?=null
 
     // camera movement speed variables
     private var previousPosition: Vector3? = null
@@ -313,8 +315,11 @@ class MainActivity : AppCompatActivity() {
                             node.scale.y * ringSize, // Scale Y
                             node.scale.z         // Keep Z as is
                         )
-
+                        activeRing=node;
                     }
+
+
+
 
 
                 }
@@ -656,6 +661,7 @@ class MainActivity : AppCompatActivity() {
     private fun captureAndNextRing(){
         val imageCountText = findViewById<TextView>(R.id.imageCountText)
 
+
         showCaptureBlinkEffect()  //gives capture effect
         captureCameraFeedPhoto(sceneView) //clicks pictures
 
@@ -664,11 +670,12 @@ class MainActivity : AppCompatActivity() {
          // again reduces the size of captured node and make it red
 
         nonCapturedModelList.forEachIndexed {index, node ->
+            Log.d("reducingSize","index is$index and seq is ${node.name}")
             if(node.name==currentRingIndex.toString()){
 
                 node.scaleToUnitCube(0.05f)
 
-
+                Log.d("reducingSize"," satisfied with index is$index and seq is $node.name")
                 node.model.instance.materialInstances.forEach { materialInstance ->
                     materialInstance.setColor(
                         name = "baseColorFactor",
@@ -683,13 +690,17 @@ class MainActivity : AppCompatActivity() {
 
         }
 
+
+
  capturedModelList.add(nonCapturedModelList[currentRingIndex])// Add the captured ring node to the captured list
         imageCountText.setText("${capturedModelList.size}/${nonCapturedModelList.size}")//update image capture count in UI
         currentRingIndex++;
         // Show next ring
-        if (currentRingIndex < nonCapturedModelList.size) {
+
+        if (currentRingIndex < nonCapturedModelList.size) {  //20
             ringSize=3.5f;
-            Log.d("TestingWith","UPDATED NEW =${currentRingIndex}")
+
+
             nonCapturedModelList.forEachIndexed {index, node ->
                 if(node.name==currentRingIndex.toString()){
 
@@ -697,9 +708,7 @@ class MainActivity : AppCompatActivity() {
                         node.scale.x * ringSize, // Scale X
                         node.scale.y * ringSize, // Scale Y
                         node.scale.z         // Keep Z as is
-                    )
-
-                }
+                    ) }
 
 
 
@@ -708,6 +717,7 @@ class MainActivity : AppCompatActivity() {
         }
         //showing dialog on capture complete
         if (capturedModelList.size == nonCapturedModelList.size) {
+            Log.d("showCompletionDialog","showCompletionDialog will show dialog box")
             showCompletionDialog()
         }
     }
@@ -1090,30 +1100,36 @@ class MainActivity : AppCompatActivity() {
 
 
     private fun startTrackingRings() {
-        Log.d("startTrackingRings","called")
+
         if (nonCapturedModelList.isEmpty()) return
 
 
 
-        sceneView.onSessionUpdated = { _, frame ->
+        sceneView.onSessionUpdated = onSessionUpdated@{ _, frame ->
+
+
             val cameraPose = frame.camera.pose
             val cameraPosition = Vector3(cameraPose.tx(), cameraPose.ty(), cameraPose.tz())
             checkMovementSpeed(cameraPosition)
             checkVisibilityOfBullets()
 
             if(currentRingIndex<nonCapturedModelList.size){
-                val activeRing = nonCapturedModelList[currentRingIndex]
-                Log.d("TestingWith","currentRingIndex =${currentRingIndex}")
+
+
+                nonCapturedModelList.forEachIndexed {index, node ->
+                    if(node.name==currentRingIndex.toString()){
+                        activeRing = node
+                    }
+                }
 
 
 
-                val ringAngle=arrowList[currentRingIndex].verticalAngle;
-                Log.d("ActiveRing","startTrackingRings logs activeNode ${activeRing.name} with index $currentRingIndex")
-                val activeRingPosition = activeRing.worldPosition.toVector3()
+                val activeRingPosition = (activeRing!!).worldPosition.toVector3()
 
                 val distance =calculateDistance(cameraPosition,activeRingPosition)
+                val ringAngle=arrowList[currentRingIndex].verticalAngle;
 
-                Log.d("RotationAngles","Ringle Angle:${ringAngle}  Camera:${angleString}")
+
 
 
 
@@ -1136,10 +1152,12 @@ class MainActivity : AppCompatActivity() {
 
 
                     }
+
                     distance > 0.40-> {
                         updateDistanceLabel("Move Closure")
                         faceRing.setBackgroundResource(R.drawable.circle_ring)
                     }
+
                     distance <0.33 -> {
                         updateDistanceLabel("Move Away")
                         faceRing.setBackgroundResource(R.drawable.circle_ring)
@@ -1152,7 +1170,7 @@ class MainActivity : AppCompatActivity() {
                 Log.d("startTrackingRings", "Distance from ring ${currentRingIndex}: $distance")
                 val debugText=findViewById<TextView>(R.id.debugText)
                 debugText.setText("Distance:${distance}")
-                minAngleText.setText("Ring  :${arrowList[currentRingIndex].seqID}")
+                minAngleText.setText("Ring  :${currentRingIndex}")
                 maxAngleText.setText("Angle  :${ringAngle}")
             }
 
@@ -1523,6 +1541,9 @@ class MainActivity : AppCompatActivity() {
     }
 
 
+
+
+
     private fun showCompletionDialog() {
         val dialog = Dialog(this).apply {
             setContentView(layoutInflater.inflate(R.layout.modal_capture_complete, null))
@@ -1531,10 +1552,11 @@ class MainActivity : AppCompatActivity() {
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
             )
+
             setCancelable(false)
 
-            findViewById<TextView>(R.id.captureDoneModalText).text =
-                getString(R.string.captureDoneModalText, referenceNumber, "0")
+            findViewById<TextView>(R.id.captureDoneModalText).text = getString(R.string.captureDoneModalText, referenceNumber,capturedModelList.size.toString())
+
 
             findViewById<Button>(R.id.captureOkButton).setOnClickListener {
                 navigateToCaptureCompleteScreen()
@@ -1549,8 +1571,8 @@ class MainActivity : AppCompatActivity() {
         //LogFileUtil.appendLog("Transferring to Image transfer screen, connect usb")
         val intent = Intent(this, completeCapture::class.java)
         intent.putExtra("REFERENCE_NUMBER", referenceNumber)
-        intent.putExtra("IMAGE_COUNT", "0")
-        intent.putExtra("TOTAL_IMAGE_COUNT", "0")
+        intent.putExtra("IMAGE_COUNT", capturedModelList.size.toString())
+        intent.putExtra("TOTAL_IMAGE_COUNT", nonCapturedModelList.size.toString())
 
         startActivity(intent)
         finish() // Optional: finish the current activity
