@@ -737,36 +737,7 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-    private fun clearAllNodes() {
-        // Remove all child nodes from anchorNode
-        anchorNode.let{ node ->
-            anchorNode.removeChildNode(node)
-            sceneView.removeChildNode(node)
-        }
 
-        // Clear the lists
-        nonCapturedModelList.clear()
-        capturedModelList.clear()
-
-        // Remove and detach the anchorNode
-        sceneView.removeChildNode(anchorNode)
-        anchorNode.anchor?.detach()
-
-        // Reset cube reference
-        cubeNode = null
-
-        // Reset tracking state
-        isFaceDetected = false
-    }
-
-    private fun resetARSession() {
-        // Pause and resume session to clear AR state
-        sceneView.session?.pause()
-        sceneView.session?.resume()
-
-        // Reset frame processing
-        frameCounter = 0
-    }
 
 
 
@@ -950,11 +921,6 @@ class MainActivity : AppCompatActivity() {
 
 
 
-
-
-
-
-
     private fun addPointsToJson(index: Int, x: Float, y: Float, z: Float) {
         val jsonFile =
             File(Environment.getExternalStorageDirectory(), "OpenLIFU-Config/ringConfig.json")
@@ -1135,7 +1101,7 @@ class MainActivity : AppCompatActivity() {
 
 
                 when {
-                    distance > 0.33f && distance<0.40f-> {
+                    distance > 0.32f && distance<0.34f-> {
 
                         if(ringAngle==angleString+1 || ringAngle==angleString-1){
 
@@ -1153,12 +1119,12 @@ class MainActivity : AppCompatActivity() {
 
                     }
 
-                    distance > 0.40-> {
+                    distance > 0.34-> {
                         updateDistanceLabel("Move Closure")
                         faceRing.setBackgroundResource(R.drawable.circle_ring)
                     }
 
-                    distance <0.33 -> {
+                    distance <0.32 -> {
                         updateDistanceLabel("Move Away")
                         faceRing.setBackgroundResource(R.drawable.circle_ring)
 
