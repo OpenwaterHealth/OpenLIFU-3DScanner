@@ -98,21 +98,16 @@ class MainActivity : AppCompatActivity() {
     private lateinit var anchorNode: AnchorNode;
     private var latestNosePosition: Float3? = null
     private var ringSize: Float= 0.05f;
-     val capturedModelList = mutableSetOf<Node>()
+    val capturedModelList = mutableSetOf<Node>()
     val nonCapturedModelList = mutableListOf<ModelNode>()
     private val faceCircleUri = "models/circle.glb"
     private val faceCubeUri = "models/cube.glb"
     private var activeRing:ModelNode?=null
-
-    // camera movement speed variables
     private var previousPosition: Vector3? = null
     private var previousTime: Long = 0
     private var lastToastTime: Long = 0
-    private val toastCooldown = 2000L // 2 seconds between toasts
-    private val maxAllowedSpeed = 0.6f // meters/second - adjust as needed
-
-
-    private lateinit var imageCountText: TextView
+    private val toastCooldown = 2000L
+    private val maxAllowedSpeed = 0.6f
     private lateinit var startButton: Button
     private lateinit var confirmButton: Button
     private lateinit var BackInStartCapture: Button
@@ -159,10 +154,6 @@ class MainActivity : AppCompatActivity() {
             startButton = findViewById(R.id.startButton)
             confirmButton = findViewById<Button>(R.id.confirmButtonInMain)
 
-
-
-
-
             val initialCancelButton = findViewById<Button>(R.id.initialRenderCancelButton)
             val leftArrowInstruction = findViewById<TextView>(R.id.leftArrowInstruction)
             val stopButton = findViewById<Button>(R.id.stopButton)
@@ -176,26 +167,12 @@ class MainActivity : AppCompatActivity() {
             val angleContainer = findViewById<ConstraintLayout>(R.id.angleContainer)
             faceRing=findViewById<ImageView>(R.id.faceRing)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
             faceOutline.scaleX = 1.1f
             faceOutline.scaleY = 1.1f
             minAngleText = findViewById<TextView>(R.id.minAngleText)
             maxAngleText = findViewById<TextView>(R.id.maxAngleText)
-            referenceNumber = intent.getStringExtra("REFERENCE_NUMBER") ?: "DEFAULT_REF" // Set the reference number from the previous screen
-            //LogFileUtil.appendLog("Reference number set: $referenceNumber")
+            referenceNumber = intent.getStringExtra("REFERENCE_NUMBER") ?: "DEFAULT_REF"
+
 
 
 
@@ -244,17 +221,12 @@ class MainActivity : AppCompatActivity() {
 
 
             initialCancelButton.setOnClickListener {
-                Log.d("CancelButton", "Cancel button clicked")
                 try {
                     val intent = Intent(this, New_capture::class.java).apply {
                         flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
                     }
                     startActivity(intent)
                     finish()
-
-
-
-                    Log.d("CancelButton", "Activity started successfully")
                 } catch (e: Exception) {
                     Log.e("CancelButton", "Error starting activity", e)
                     Toast.makeText(this, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
@@ -263,10 +235,7 @@ class MainActivity : AppCompatActivity() {
 
 
             BackInStartCapture.setOnClickListener {
-
-
-
-                // Hide UI elements
+                 // Hide UI elements
                 BackInStartCapture.visibility = View.GONE
                 mainScreenSubTitle.text = "Position the Subject in the Frame"
                 startButton.visibility = View.GONE
@@ -311,32 +280,14 @@ class MainActivity : AppCompatActivity() {
                     if(node.name=="0"){
 
                         node.scale=Float3(
-                            node.scale.x * ringSize, // Scale X
-                            node.scale.y * ringSize, // Scale Y
-                            node.scale.z         // Keep Z as is
+                            node.scale.x * ringSize,
+                            node.scale.y * ringSize,
+                            node.scale.z
                         )
                         activeRing=node;
-                    }
+                    } }
 
-
-
-
-
-                }
-
-
-
-                LogFileUtil.appendLog("Start button clicked: initializing bullets")
-
-                Log.d("StartButtonLogs", "Start button clicked")
-                Toast.makeText(this, "Start button clicked!", Toast.LENGTH_SHORT).show()
-
-
-
-                faceRing.visibility=View.VISIBLE
-
-
-
+                 faceRing.visibility=View.VISIBLE
                 distanceLabel.visibility = View.VISIBLE
                 moveBackText.visibility = View.GONE
                 angleContainer.visibility = View.VISIBLE;
@@ -344,37 +295,20 @@ class MainActivity : AppCompatActivity() {
                 mainScreenSubTitle.visibility = View.GONE
                 imageCountText.visibility = View.VISIBLE
                 imageCountText.setText("${capturedModelList.size}/${nonCapturedModelList.size}")
-                startButton.visibility = View.GONE // Hide button after placement
+                startButton.visibility = View.GONE
                 BackInStartCapture.visibility = View.GONE
                 stopButton.visibility = View.VISIBLE
-
-
-                //LogFileUtil.appendLog("Logcat Capture stopped")
-                // Stop capturing Logcat output
-                //LogFileUtil.stopLogcatCapture()
-
-
                 leftArrowInstruction.visibility = View.VISIBLE
-                // Start the blinking animation
                 startBlinkingAnimation(leftArrowInstruction)
-
-                // Hide it after 3 seconds
                 leftArrowInstruction.postDelayed({
                     leftArrowInstruction.visibility = View.GONE
-
-                    startTrackingRings(); // start tracking after sometime
-                    initSensorListener() //verify camera alignment using angles
-
-
-                }, 3000) // 3000 milliseconds = 3 seconds
-
-
-            }
+                     startTrackingRings();
+                    initSensorListener()}, 3000)
+}
 
             stopButton.setOnClickListener {
                 stopButton.visibility = View.GONE
                 if (IsCaptureStarted) {
-                    //stops capturing
                     IsCaptureStarted = false
                     updateDistanceLabel("Paused");
 
@@ -423,7 +357,6 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 yesButton.setOnClickListener {
-
                     if (capturedModelList.size== 0) {
                         val intent = Intent(this, New_capture::class.java)
                         startActivity(intent)
@@ -446,7 +379,6 @@ class MainActivity : AppCompatActivity() {
                 val screenWidth = metrics.widthPixels
                 val marginInPx = (20 * metrics.density).toInt()
                 val dialogWidth = screenWidth - (marginInPx * 2)
-
                 dialog.window?.setLayout(dialogWidth, ViewGroup.LayoutParams.WRAP_CONTENT)
                 dialog.show()
             }
@@ -462,20 +394,20 @@ class MainActivity : AppCompatActivity() {
                     Manifest.permission.CAMERA
                 ) != PackageManager.PERMISSION_GRANTED
             ) {
-                //LogFileUtil.appendLog("Camera permission not granted: requesting permissions")
+
                 ActivityCompat.requestPermissions(
                     this,
                     arrayOf(Manifest.permission.CAMERA),
                     CAMERA_PERMISSION_CODE
                 )
             } else {
-                //LogFileUtil.appendLog("Camera permission already granted")
+
             }
 
 
-            //LogFileUtil.appendLog("AR screen setup completed successfully")
+
         } catch (e: Exception) {
-            //LogFileUtil.appendLog("Exception in onCreate: ${e.message}")
+
             e.printStackTrace()
             Log.d("onCreate", "onCreate Error  " + e.message.toString())
         }
@@ -495,7 +427,6 @@ class MainActivity : AppCompatActivity() {
         onError: (String) -> Unit
     ) {
         val frame = sceneView.session?.frame
-
         if (frame == null) {
             onError("Camera frame not available")
             return
@@ -541,6 +472,10 @@ class MainActivity : AppCompatActivity() {
     }
 
 
+
+//This function sets up the AR scene by checking if the
+// device supports ARCore, configuring features like depth,
+// lighting, and plane detection, and hiding plane visuals.
 
 
     private fun initializeARScene() {
@@ -598,6 +533,10 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+
+
+
+    //Function to track camera movement speed to warn user to move slowly
     private fun checkMovementSpeed(currentPosition: Vector3) {
         val currentTime = System.currentTimeMillis()
 
@@ -639,7 +578,7 @@ class MainActivity : AppCompatActivity() {
 
 
 
- // Add this function to create quaternions from axis-angle representation
+ // Function to create quaternions from axis-angle representation
     private fun createQuaternionFromAxisAngle(axis: Vector3, angleDegrees: Float): Quaternion {
         val angleRad = Math.toRadians(angleDegrees.toDouble()).toFloat()
         val halfAngle = angleRad / 2f
@@ -657,18 +596,17 @@ class MainActivity : AppCompatActivity() {
 
 
 
-    //capture and activate other ring
+    //Function which captures the image and activates the next ring to be captured.
     private fun captureAndNextRing(){
         val imageCountText = findViewById<TextView>(R.id.imageCountText)
 
 
-        showCaptureBlinkEffect()  //gives capture effect
-        captureCameraFeedPhoto(sceneView) //clicks pictures
+        showCaptureBlinkEffect()
+        captureCameraFeedPhoto(sceneView)
 
 
 
-         // again reduces the size of captured node and make it red
-
+        //Again reducing the size of ring which has been captured .
         nonCapturedModelList.forEachIndexed {index, node ->
             Log.d("reducingSize","index is$index and seq is ${node.name}")
             if(node.name==currentRingIndex.toString()){
@@ -722,7 +660,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-
+//function to show capture blink effect while image is captured
     private fun startBlinkingAnimation(textView: TextView) {
         val animator =
             ValueAnimator.ofFloat(1f, 0f, 1f) // From fully visible to invisible to visible
@@ -741,7 +679,7 @@ class MainActivity : AppCompatActivity() {
 
 
 
-    //to hide bullets behind head
+    //Function which only shows the front facing bullets and hides the rest
     private fun checkVisibilityOfBullets() {
         val frame = sceneView.frame ?: return
         val cameraPose = frame.camera.pose
@@ -773,7 +711,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-
+   //Function which starts the face detection process,it captures every 5th frame of AR frame
     private fun startFaceDetection() {
         updateDistanceLabel("Subject not in Frame")
 
@@ -796,21 +734,16 @@ class MainActivity : AppCompatActivity() {
 
 
 
-
+   // Function to place the cube model on head
     private fun placeCube() {
         val frame = sceneView.session?.frame
-
-
-
-
         try {
-
             val session = sceneView.session ?: return
             val cameraPose = frame?.camera?.pose?:return
             val cameraPosition = Vector3(cameraPose.tx(), cameraPose.ty(), cameraPose.tz())
 
 
-            // ✅ Create only one anchor at camera position
+            // Create only one anchor at camera position
             val anchorPose = Pose(
                 floatArrayOf(cameraPosition.x, cameraPosition.y, cameraPosition.z),
                 floatArrayOf(0f, 0f, 0f, 1f) // No initial rotation on anchor
@@ -818,7 +751,7 @@ class MainActivity : AppCompatActivity() {
 
             val anchor = session.createAnchor(anchorPose)
 
-            // ✅ Attach anchor to scene
+            // Attach anchor to scene
             anchorNode = AnchorNode(sceneView.engine, anchor).apply {
                 isEditable = true
 
@@ -826,7 +759,7 @@ class MainActivity : AppCompatActivity() {
             sceneView.addChildNode(anchorNode)
 
 
-            // 🔁 Place each arrow model relative to anchor
+            //Place each arrow model relative to anchor
 
             val xPoint = 0.051244376  // Shift cube slightly to the right
             val yPoint =  -0.200656703 // Raise cube slightly upward
@@ -905,10 +838,9 @@ class MainActivity : AppCompatActivity() {
 
 
 
-
+// Converts  the captured frame in bitmap format so that it can be saved in the device using the function [processBitmapForFaceDetection]
     private fun processFrameForFaceDetection(frame: Frame?) {
-        Log.d("processFrameForFaceDetection", "processFrameForFaceDetection called")
-        try {
+       try {
             val image = frame?.acquireCameraImage() ?: return
             val bitmap = convertImageToBitmap(image)
             image.close()
@@ -919,47 +851,17 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    
 
-
-    private fun addPointsToJson(index: Int, x: Float, y: Float, z: Float) {
-        val jsonFile =
-            File(Environment.getExternalStorageDirectory(), "OpenLIFU-Config/ringConfig.json")
-        if (!jsonFile.exists()) return
-        val jsonObject = JSONObject(jsonFile.readText().trim())
-        val arrowCoordinatesArray = jsonObject.optJSONArray("bulletCoordinates") ?: JSONArray()
-        val randomMin = (15..25).random()
-        val randomMax = (30..120).random()
-        val newObject = JSONObject().apply {
-            put("id", index)
-            put("xPoint", x)
-            put("yPoint", y)
-            put("zPoint", z)
-            put("minAngle", randomMin)
-            put("maxAngle", randomMax)
-        }
-        arrowCoordinatesArray.put(newObject)
-        jsonObject.put("bulletCoordinates", arrowCoordinatesArray)
-
-        jsonFile.writeText(jsonObject.toString(4))
-
-    }
-
-
+// The function responsible for placing the circles around the face .It loops arrowList which contains all the circles configurations and places them accordingly
     private fun placeCirclesAroundFace() {
         val frame = sceneView.session?.frame
-
-
-
-
         try {
 
             val session = sceneView.session ?: return
-
             val cameraPose = frame?.camera?.pose?:return
             val cameraPosition = Vector3(cameraPose.tx(), cameraPose.ty(), cameraPose.tz())
-
-
-            // ✅ Create only one anchor at camera position
+            // Create only one anchor at camera position
             val anchorPose = Pose(
                 floatArrayOf(cameraPosition.x, cameraPosition.y, cameraPosition.z),
                 floatArrayOf(0f, 0f, 0f, 1f) // No initial rotation on anchor
@@ -967,28 +869,14 @@ class MainActivity : AppCompatActivity() {
 
             val anchor = session.createAnchor(anchorPose)
 
-            // ✅ Attach anchor to scene
+            // Attach anchor to scene
             anchorNode = AnchorNode(sceneView.engine, anchor).apply {
                 isEditable = true
             }
             sceneView.addChildNode(anchorNode)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-            arrowList.forEachIndexed { index, bulletObj ->
- // 🟡 Position offset for this circle
+ arrowList.forEachIndexed { index, bulletObj ->
+ // Position offset for this circle
                 val offsetVector = Vector3(
                     bulletObj.xPoint.toFloat(),
                     bulletObj.yPoint.toFloat(),
@@ -1001,7 +889,7 @@ class MainActivity : AppCompatActivity() {
 
 
 
-                // 🟡 Rotation logic — replace with actual angles when needed
+                // Rotation logic — replace with actual angles when needed
                 val rotationX = createQuaternionFromAxisAngle(Vector3(1f, 0f, 0f), verticalAngle);
                 val rotationY = createQuaternionFromAxisAngle(Vector3(0f, 1f, 0f),horizontalAngle)
                 val rotationZ = createQuaternionFromAxisAngle(Vector3(0f, 0f, 1f), 0f)
@@ -1012,10 +900,10 @@ class MainActivity : AppCompatActivity() {
 
 
 
-                // 🟢 Load and place model asynchronously
+                // Load and place model asynchronously 
                 lifecycleScope.launch {
                     try {
-                        val modelNode = makeArrowModel()
+                        val modelNode = makeCircleModel()
                         modelNode?.let {
                             it.transform(position = offsetFloat3, rotation = combinedRotation3)
                             anchorNode.addChildNode(it)
@@ -1030,11 +918,7 @@ class MainActivity : AppCompatActivity() {
                         Log.e("ArrowLoad", "Error loading arrow: ${e.message}", e)
                     }
                 }
-
-
-
-
-            }
+}
 
 
 
@@ -1064,25 +948,18 @@ class MainActivity : AppCompatActivity() {
 
 
 
-
+//Function to start tracking the circles around face which helps the  user to capture image according to his desired position
     private fun startTrackingRings() {
 
         if (nonCapturedModelList.isEmpty()) return
-
-
-
-        sceneView.onSessionUpdated = onSessionUpdated@{ _, frame ->
-
-
+            sceneView.onSessionUpdated = onSessionUpdated@{ _, frame ->
             val cameraPose = frame.camera.pose
             val cameraPosition = Vector3(cameraPose.tx(), cameraPose.ty(), cameraPose.tz())
             checkMovementSpeed(cameraPosition)
             checkVisibilityOfBullets()
 
             if(currentRingIndex<nonCapturedModelList.size){
-
-
-                nonCapturedModelList.forEachIndexed {index, node ->
+                 nonCapturedModelList.forEachIndexed {index, node ->
                     if(node.name==currentRingIndex.toString()){
                         activeRing = node
                     }
@@ -1091,16 +968,9 @@ class MainActivity : AppCompatActivity() {
 
 
                 val activeRingPosition = (activeRing!!).worldPosition.toVector3()
-
                 val distance =calculateDistance(cameraPosition,activeRingPosition)
                 val ringAngle=arrowList[currentRingIndex].verticalAngle;
-
-
-
-
-
-
-                when {
+                 when {
                     distance > 0.32f && distance<0.34f-> {
 
                         if(ringAngle==angleString+1 || ringAngle==angleString-1){
@@ -1109,8 +979,6 @@ class MainActivity : AppCompatActivity() {
                             if(IsCaptureStarted){
                                 captureAndNextRing()
                             }
-
-
                         }else{
                             updateDistanceLabel("Adjust angle")
                             faceRing.setBackgroundResource(R.drawable.circle_ring)
@@ -1132,8 +1000,7 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
 
-                // Log for debugging
-                Log.d("startTrackingRings", "Distance from ring ${currentRingIndex}: $distance")
+
                 val debugText=findViewById<TextView>(R.id.debugText)
                 debugText.setText("Distance:${distance}")
                 minAngleText.setText("Ring  :${currentRingIndex}")
@@ -1157,8 +1024,8 @@ class MainActivity : AppCompatActivity() {
 
 
 
-
-    private suspend fun makeArrowModel(): ModelNode? {
+//Function which creates the circle model to render .The model file is already saved in assets>models folder of project directory in .glb extension file
+    private suspend fun makeCircleModel(): ModelNode? {
         return try {
             sceneView.modelLoader.loadModelInstance(faceCircleUri)?.let { modelInstance ->
                 ModelNode(
@@ -1177,7 +1044,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-
+//This function listens to the device’s rotation sensor and calculates the phone’s orientation (yaw, pitch, roll).
     private fun initSensorListener() {
         sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
         rotationVectorSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR) ?: return
@@ -1245,11 +1112,12 @@ class MainActivity : AppCompatActivity() {
         return rotationCompensation
     }
 
-    var progressCounter = 0
-    var isAnyFace = false
-    private fun processBitmapForFaceDetection(bitmap: Bitmap) {
-        Log.d("processBitmapForFaceDetection", "processBitmapForFaceDetection called")
 
+    var isAnyFace = false
+
+
+    // Function detects the face and updates the face mesh points on face .It also helps user to detect the distance between camera and face
+    private fun processBitmapForFaceDetection(bitmap: Bitmap) {
         try {
             if (isFaceDetected == false) {
                 val cameraId = "0" // or "1" for front camera; adjust based on use
@@ -1269,30 +1137,10 @@ class MainActivity : AppCompatActivity() {
                             val boundingBox = faceMesh.boundingBox
 
                             val allPoints = faceMesh.allPoints
-
                             val noseZ = allPoints.get(1)?.position?.z ?: 0f
-                            val noseX = allPoints.get(1)?.position?.x ?: 0f
-                            val noseY = allPoints.get(1)?.position?.y ?: 0f
-                            //val foreheadZ = allPoints.get(10)?.position?.z ?: 0f
-                            //val chinZ = allPoints.get(152)?.position?.z ?: 0f
-                            //val avgZ = (noseZ + foreheadZ + chinZ) / 3f
-
-
-                            Log.d("NoseCoordinates", "X: $noseX, Y: $noseY, Z: $noseZ")
-
-
-
-
-
-
-
-
-
-
-                            // Store the latest nose position (point 1 is typically the nose tip)
                             allPoints.get(1)?.position?.let { nosePos ->
                                 latestNosePosition = Float3(nosePos.x, nosePos.y, nosePos.z)
-                                Log.d("NoseCoordinates", "Updated nose position: $latestNosePosition")
+
                             }
                             faceOverlayView.updatePoints(
                                 faceMesh.allPoints,
@@ -1306,7 +1154,7 @@ class MainActivity : AppCompatActivity() {
 
                             // Apply logic based on face size + z-depth
                             when {
-                                noseZ < -75.0 -> { // Too close (wide and shallow depth)
+                                noseZ < -75.0 -> {
                                     Log.d(
                                         "isFaceDetected",
                                         "updateDistanceLabel Move Back" + isFaceDetected
@@ -1315,7 +1163,7 @@ class MainActivity : AppCompatActivity() {
 
                                 }
 
-                                noseZ > -60.0 -> { // Too far (small face and deeper z)
+                                noseZ > -60.0 -> {
                                     Log.d(
                                         "isFaceDetected",
                                         "updateDistanceLabel MOVE Close" + isFaceDetected
@@ -1352,7 +1200,7 @@ class MainActivity : AppCompatActivity() {
                             )
                         )
                         startButton.visibility = View.GONE
-                        // findViewById<ImageView>(R.id.targetCircle).visibility = View.GONE
+
                     }
             }
         } catch (e: Exception) {
@@ -1368,9 +1216,8 @@ class MainActivity : AppCompatActivity() {
 
     }
 
-
+// Updates the visual label of distance between camera and face.And helps the user to keep phone close or far
     private fun updateDistanceLabel(baseText: String) {
-
         distanceLabel.text = "$baseText";
         if (!IsCaptureStarted) {
             distanceLabel.text = "Paused";
@@ -1534,7 +1381,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun navigateToCaptureCompleteScreen() {
 
-        //LogFileUtil.appendLog("Transferring to Image transfer screen, connect usb")
+
         val intent = Intent(this, completeCapture::class.java)
         intent.putExtra("REFERENCE_NUMBER", referenceNumber)
         intent.putExtra("IMAGE_COUNT", capturedModelList.size.toString())
@@ -1544,7 +1391,7 @@ class MainActivity : AppCompatActivity() {
         finish() // Optional: finish the current activity
     }
 
-
+//  The actual function responsible for capturing the camera feed photo and saving it to device .
     private fun captureCameraFeedPhoto(arSceneView: ARSceneView) {
         Log.d("captureCameraFeedPhoto","captureCameraFeedPhoto called")
         faceRing.setBackgroundResource(R.drawable.green_circle)
@@ -1560,9 +1407,9 @@ class MainActivity : AppCompatActivity() {
             // Save Bitmap to Storage
             val savedUri = saveBitmapToStorage(bitmap)
 
-            //LogFileUtil.appendLog("AR screen: step 10: Photo saved")
+
             Log.d("CapturePhoto", "Photo saved at: $savedUri")
-            //Toast.makeText(arSceneView.context, "Photo saved at: $savedUri", Toast.LENGTH_SHORT).show()
+
             Toast.makeText(this, "Capture Successful", Toast.LENGTH_SHORT).show()
 
 
@@ -1587,12 +1434,12 @@ class MainActivity : AppCompatActivity() {
             saveCoordinatesJsonToStorage()
 
         } catch (e: Exception) {
-            //LogFileUtil.appendLog("AR screen: Failed to capture photo: ${e.message}")
+
             Log.e("CapturePhoto", "Failed to capture photo: ${e.message}")
         }
     }
 
-
+//    It saves the world co-ordinates from where the image has been captured to the storage
     private fun saveCoordinatesJsonToStorage() {
         try {
             val root = JSONObject()
@@ -1627,6 +1474,10 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+
+
+
+    // An util function which calculates the distance between two points in world coordinates
     private fun calculateDistance(point1: Vector3, point2: Vector3): Float {
         val dx = point1.x - point2.x
         val dy = point1.y - point2.y
@@ -1634,7 +1485,7 @@ class MainActivity : AppCompatActivity() {
         return sqrt(dx * dx + dy * dy + dz * dz)
     }
 
-
+//function turns a raw camera frame into a Bitmap
     private fun convertImageToBitmap(image: Image): Bitmap {
         val width = image.width
         val height = image.height
@@ -1684,7 +1535,7 @@ class MainActivity : AppCompatActivity() {
         return BitmapFactory.decodeByteArray(jpegBytes, 0, jpegBytes.size)
     }
 
-
+//function saves that bitmap as a proper image file on the device.
     private fun saveBitmapToStorage(bitmap: Bitmap) {
         try {
             val fixedBitmap = fixImageRotation(bitmap)
@@ -1722,6 +1573,10 @@ class MainActivity : AppCompatActivity() {
     }
 
 
+
+
+
+    //The data from config json file is loaded to the app and stored in a list which is iterated to show models in scene
     private fun loadsDataFromJson() {
         try {
             val jsonFile =
@@ -1737,14 +1592,10 @@ class MainActivity : AppCompatActivity() {
             val arrowCoordinatesArr = jsonObject.getJSONArray("bulletCoordinates")
 
 
-//          adding scattered bullets objects to a list
+           //adding scattered bullets objects to a list
             for (i in 0 until arrowCoordinatesArr.length()) {
                 val bulletObj = arrowCoordinatesArr.getJSONObject(i)
-
-
-
-
-                arrowList.add(
+               arrowList.add(
                     bulletPointConfig(
                         seqID = bulletObj.getInt("seqID"),
                         xPoint = bulletObj.getDouble("xPoint"),
@@ -1764,7 +1615,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-
+//it tags the saved image with basic camera info so that apps reading it (e.g., gallery, photo viewers) see it as if it came from a real camera.
     private fun addExifDataForFile(file: File) {
         try {
             val exif = ExifInterface(file)
@@ -1778,7 +1629,7 @@ class MainActivity : AppCompatActivity() {
                 ExifInterface.ORIENTATION_NORMAL.toString()
             )
             exif.saveAttributes()
-            //LogFileUtil.appendLog("AR screen: step 11")
+
             Log.d("ExifData", "EXIF data saved successfully to ${file.absolutePath}")
         } catch (e: Exception) {
             Log.e("ExifData", "Failed to save EXIF data for file: ${e.message}")

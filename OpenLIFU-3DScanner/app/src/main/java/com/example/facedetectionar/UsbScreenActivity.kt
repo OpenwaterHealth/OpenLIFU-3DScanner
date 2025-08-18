@@ -28,6 +28,9 @@ class UsbScreenActivity : AppCompatActivity() {
     private var referenceNumber: String = "REFNO"
     private var totalImageCount: String = "00"
 
+
+
+    // detects when usb is connected or disconnected
     private val powerReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             when (intent?.action) {
@@ -48,9 +51,7 @@ class UsbScreenActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_usb_screen)
-
         val readyForTransferText = findViewById<TextView>(R.id.readyForTransferText)
-//        imageCountTextView = findViewById(R.id.imageCountTextView) // Add this TextView in layout
         val usbOkButton = findViewById<Button>(R.id.usbOkButton)
 
         usbOkButton.setOnClickListener {
@@ -61,10 +62,7 @@ class UsbScreenActivity : AppCompatActivity() {
 
         referenceNumber = intent.getStringExtra("REFERENCE_NUMBER") ?: "REFNO"
         totalImageCount = intent.getStringExtra("TOTAL_IMAGE_COUNT") ?: "00"
-
-        Log.d("totalImageCount",totalImageCount)
         readyForTransferText.text = "Ready for Transfer Scan $referenceNumber"
-
         val filter = IntentFilter().apply {
             addAction(Intent.ACTION_POWER_CONNECTED)
             addAction(Intent.ACTION_POWER_DISCONNECTED)
@@ -101,20 +99,17 @@ class UsbScreenActivity : AppCompatActivity() {
         val state = Environment.getExternalStorageState()
         isStorageMounted = state == Environment.MEDIA_MOUNTED
 
-        Log.d("isUsbConnected", "USB: $isUsbConnected | Storage Mounted: $isStorageMounted")
+
     }
 
+
+
+    //function checks weather image folder exists or not
     private fun checkFolderExistance(referenceNumber: String) {
-
-        val imageFolderName="${referenceNumber}"
-
-        Log.d("FolderIs","imageFolderName"+imageFolderName)
-
-        val folder = File(Environment.getExternalStorageDirectory(), "OpenLIFU-3DScanner/$imageFolderName")
-
-        if (!folder.exists()) {
-            Log.d("fileCalled","Congratulations !!!!!!!!!!")
-            val usbStatusText = findViewById<TextView>(R.id.usbStatusText)
+         val imageFolderName="${referenceNumber}"
+         val folder = File(Environment.getExternalStorageDirectory(), "OpenLIFU-3DScanner/$imageFolderName")
+         if (!folder.exists()) {
+             val usbStatusText = findViewById<TextView>(R.id.usbStatusText)
             usbStatusText.text = "Capture has been transferred successfully !"
 
         }

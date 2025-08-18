@@ -1,5 +1,4 @@
 package com.example.facedetectionar
-
 import android.Manifest
 import android.app.Dialog
 import android.content.Intent
@@ -8,53 +7,33 @@ import android.net.Uri
 import java.io.File
 import android.os.Build
 import android.os.Bundle
-
 import android.os.Environment
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
 import android.text.Editable
 import android.util.Log
-import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.CheckBox
-import android.widget.CompoundButton
 import android.widget.EditText
-import android.widget.ImageButton
-import android.widget.ImageView
-import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import android.widget.VideoView
 import androidx.activity.enableEdgeToEdge
-import androidx.annotation.DrawableRes
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.marginBottom
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.LinearSnapHelper
-import androidx.recyclerview.widget.RecyclerView
-import com.example.facedetectionar.Adapters.ArcConfigAdapter
-import com.example.facedetectionar.Modals.ArcConfig
-import com.example.facedetectionar.Modals.RingParameter
-import com.google.ar.core.ArCoreApk
+import androidx.core.view.WindowInsetsCompat import com.google.ar.core.ArCoreApk
 import com.google.ar.core.exceptions.UnavailableDeviceNotCompatibleException
 import org.json.JSONArray
 import org.json.JSONObject
 
 
 class New_capture : AppCompatActivity() {
-    val ringPrametersList=mutableListOf<ArcConfig>()
-    private lateinit var dotsContainer: LinearLayout
-    private lateinit var dots: ArrayList<ImageView>
-    private var showDynamicPoints: Boolean=false;
-
     private val REQUIRED_PERMISSIONS = when {
         Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU -> arrayOf(
             android.Manifest.permission.CAMERA,
@@ -236,7 +215,7 @@ class New_capture : AppCompatActivity() {
 
 
     }
-//    here on create ends
+
 
     // Check if all permissions are granted
     private fun hasAllPermissions(): Boolean {
@@ -420,7 +399,7 @@ class New_capture : AppCompatActivity() {
     }
 
 
-    // ring config json
+    // Creates the by default config file for the ring placement
     private fun makeRingConfigJsonFile() {
         Log.d("makeRingConfigJsonFile", "makeRingConfigJsonFile called")
 
@@ -431,7 +410,7 @@ class New_capture : AppCompatActivity() {
 
             val savedFile = File(rootDir, filename)
 
-            // ✅ Check if file already exists → don't recreate
+            //Check if file already exists → don't recreate
             if (savedFile.exists()) {
                 Log.d("makeRingConfigJsonFile", "File already exists. Skipping creation.")
                 return
@@ -626,25 +605,6 @@ class New_capture : AppCompatActivity() {
             Log.e("makeRingConfigJsonFile", "Error creating JSON file: ${e.message}")
         }
     }
-
-
-
-
-
-    private fun loadsRingConfigFromJson(){
-
-return
-
-    }
-
-
-
-
-
-
-
-
-
 
 
 }
