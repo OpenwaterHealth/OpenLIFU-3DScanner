@@ -25,6 +25,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.util.SparseIntArray
 import android.view.Surface
@@ -336,7 +337,7 @@ class MainActivity : AppCompatActivity() {
                 val view = layoutInflater.inflate(R.layout.modal_capture_end, null)
                 val noButton = view.findViewById<Button>(R.id.endCaptureNoBtn)
 
-                val imageCount = capturedModelList.size // adding image count to modal
+                val imageCount = capturedModelList.size // addding image count to modal
                 val text = getString(R.string.endcaptureText, imageCount)
                 val endText = view.findViewById<TextView>(R.id.endCaptureTextLabel)
 
@@ -856,7 +857,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    
+
 
 // The function responsible for placing the circles around the face .It loops arrowList which contains all the circles configurations and places them accordingly
     private fun placeCirclesAroundFace() {
@@ -905,7 +906,7 @@ class MainActivity : AppCompatActivity() {
 
 
 
-                // Load and place model asynchronously 
+                // Load and place model asynchronously
                 lifecycleScope.launch {
                     try {
                         val modelNode = makeCircleModel()
@@ -1007,7 +1008,7 @@ class MainActivity : AppCompatActivity() {
 
 
                 val debugText=findViewById<TextView>(R.id.debugText)
-                debugText.setText("Distance:${distance}")
+//                debugText.setText("Distance:${distance}")
                 minAngleText.setText("Ring  :${currentRingIndex}")
                 maxAngleText.setText("Angle  :${ringAngle}")
             }
@@ -1198,12 +1199,16 @@ class MainActivity : AppCompatActivity() {
                                     updateDistanceLabel("Subject Detected")
                                     confirmButton.isEnabled = true
 
-                                    Handler().postDelayed({
-                                        if (!hasResetForCurrentFace) {
+
+
+
+                                    Handler(Looper.getMainLooper()).postDelayed({
+
+                                        if (!hasResetForCurrentFace) {  // double check after delay
                                             resetARSession()
                                             hasResetForCurrentFace = true
                                         }
-                                    }, 2000)
+                                    }, 1500)
                                 }
                             }
                         } else {
