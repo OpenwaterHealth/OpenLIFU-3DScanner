@@ -25,7 +25,6 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.os.Handler
-import android.os.Looper
 import android.util.Log
 import android.util.SparseIntArray
 import android.view.Surface
@@ -39,14 +38,11 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.animation.core.animate
-import androidx.compose.ui.platform.LocalGraphicsContext
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.exifinterface.media.ExifInterface
 import androidx.lifecycle.lifecycleScope
-import com.example.facedetectionar.Modals.ArcConfig
 import com.example.facedetectionar.Modals.bulletPointConfig
 import com.google.android.filament.Colors
 import com.google.ar.core.ArCoreApk
@@ -56,41 +52,32 @@ import com.google.ar.core.Pose
 import com.google.ar.core.TrackingState
 import com.google.ar.core.exceptions.UnavailableException
 import com.google.mlkit.vision.common.InputImage
-import com.google.mlkit.vision.face.FaceLandmark
 import com.google.mlkit.vision.facemesh.FaceMeshDetection
 import com.google.mlkit.vision.facemesh.FaceMeshDetectorOptions
 import dev.romainguy.kotlin.math.Float3
-import dev.romainguy.kotlin.math.Float4
 import dev.romainguy.kotlin.math.Quaternion
 import io.github.sceneview.ar.ARSceneView
 import io.github.sceneview.ar.node.AnchorNode
 import io.github.sceneview.collision.Vector3
-import io.github.sceneview.material.setBaseColorFactor
-import io.github.sceneview.material.setBaseColorMap
 import io.github.sceneview.material.setColor
-import io.github.sceneview.math.Color
 import io.github.sceneview.math.Position
-import io.github.sceneview.math.colorOf
 import io.github.sceneview.math.toVector3
 import io.github.sceneview.node.ModelNode
 import io.github.sceneview.node.Node
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
-import kotlin.collections.subtract
-import kotlin.compareTo
 import kotlin.math.sqrt
 import androidx.core.graphics.toColorInt
-import dev.romainguy.kotlin.math.x
 
 
 class MainActivity : AppCompatActivity() {
     private companion object {
         private const val CAMERA_PERMISSION_CODE = 1
+        const val EXTRA_ALREADY_RESET = "EXTRA_ALREADY_RESET"
 
     }
     private var cubeNode: ModelNode? = null
@@ -129,6 +116,11 @@ class MainActivity : AppCompatActivity() {
     private lateinit var faceRing: ImageView
     private var frameCounter = 0
     private var isFaceDetected = false
+    private var hasResetForCurrentFace = false
+
+
+
+
 
 
 
@@ -142,6 +134,14 @@ class MainActivity : AppCompatActivity() {
 
             //initialize session
              initializeARScene()
+
+
+            val alreadyReset = intent.getBooleanExtra(EXTRA_ALREADY_RESET, false)
+
+            // If we already reset once, mark face as detected
+            if (alreadyReset) {
+                hasResetForCurrentFace = true
+            }
 
 
            // Initialize UI components
@@ -244,7 +244,7 @@ class MainActivity : AppCompatActivity() {
 
                 // Clear face detection state
                 isFaceDetected = false
-                faceOverlayView.updatePoints(emptyList(), 0, 0)
+                faceOverlayView.updatePoints(emptyList(), 0, 0,null)
                 if (!isFaceDetected) {
                     confirmButton.isEnabled = false
                 }
@@ -275,7 +275,7 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 //activating the first ring 0
-                ringSize=3.5f;
+                ringSize=3.2f;
                 nonCapturedModelList.forEachIndexed {index, node ->
                     if(node.name=="0"){
 
@@ -336,7 +336,7 @@ class MainActivity : AppCompatActivity() {
                 val view = layoutInflater.inflate(R.layout.modal_capture_end, null)
                 val noButton = view.findViewById<Button>(R.id.endCaptureNoBtn)
 
-                val imageCount = capturedModelList.size // addding image count to modal
+                val imageCount = capturedModelList.size // adding image count to modal
                 val text = getString(R.string.endcaptureText, imageCount)
                 val endText = view.findViewById<TextView>(R.id.endCaptureTextLabel)
 
@@ -438,9 +438,14 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
+
+
         try {
             // Create anchor once and reuse
             val session = sceneView.session ?: return onError("AR session not available")
+
+
+
             val cameraPose = frame.camera.pose
             val anchorPose = Pose(
                 floatArrayOf(cameraPose.tx(), cameraPose.ty(), cameraPose.tz()),
@@ -636,7 +641,7 @@ class MainActivity : AppCompatActivity() {
         // Show next ring
 
         if (currentRingIndex < nonCapturedModelList.size) {  //20
-            ringSize=3.5f;
+            ringSize=3.2f;
 
 
             nonCapturedModelList.forEachIndexed {index, node ->
@@ -876,7 +881,7 @@ class MainActivity : AppCompatActivity() {
             sceneView.addChildNode(anchorNode)
 
  arrowList.forEachIndexed { index, bulletObj ->
- // Position offset for this circle
+                // Position offset for this circle
                 val offsetVector = Vector3(
                     bulletObj.xPoint.toFloat(),
                     bulletObj.yPoint.toFloat(),
@@ -1024,6 +1029,11 @@ class MainActivity : AppCompatActivity() {
 
 
 
+
+
+
+
+
 //Function which creates the circle model to render .The model file is already saved in assets>models folder of project directory in .glb extension file
     private suspend fun makeCircleModel(): ModelNode? {
         return try {
@@ -1116,6 +1126,20 @@ class MainActivity : AppCompatActivity() {
     var isAnyFace = false
 
 
+    private fun resetARSession() {
+        try {
+            val restartIntent = intent
+            restartIntent.putExtra(EXTRA_ALREADY_RESET, true) // mark that we reset
+            finish()
+            startActivity(restartIntent)
+
+        } catch (e: Exception) {
+            Log.e("ARSession", "Failed to reset AR session: ${e.message}")
+        }
+    }
+
+
+
     // Function detects the face and updates the face mesh points on face .It also helps user to detect the distance between camera and face
     private fun processBitmapForFaceDetection(bitmap: Bitmap) {
         try {
@@ -1140,17 +1164,16 @@ class MainActivity : AppCompatActivity() {
                             val noseZ = allPoints.get(1)?.position?.z ?: 0f
                             allPoints.get(1)?.position?.let { nosePos ->
                                 latestNosePosition = Float3(nosePos.x, nosePos.y, nosePos.z)
-
                             }
-                            faceOverlayView.updatePoints(
-                                faceMesh.allPoints,
+
+                            // Update the face overlay with mesh information
+                            faceOverlayView.updateFaceMesh(
+                                faceMesh,
                                 bitmap.width,
                                 bitmap.height
                             )
 
                             isAnyFace = true
-
-
 
                             // Apply logic based on face size + z-depth
                             when {
@@ -1159,8 +1182,7 @@ class MainActivity : AppCompatActivity() {
                                         "isFaceDetected",
                                         "updateDistanceLabel Move Back" + isFaceDetected
                                     )
-                                    updateDistanceLabel("Move Back");
-
+                                    updateDistanceLabel("Move Back")
                                 }
 
                                 noseZ > -60.0 -> {
@@ -1169,25 +1191,27 @@ class MainActivity : AppCompatActivity() {
                                         "updateDistanceLabel MOVE Close" + isFaceDetected
                                     )
                                     updateDistanceLabel("Move Closer")
-
-
                                 }
 
                                 else -> {
-                                     Log.d("isFaceDetected", "updateDistanceLabel DETECTED" + noseZ)
-                                     updateDistanceLabel("Subject Detected")
-                                     confirmButton.isEnabled = true;
+                                    Log.d("isFaceDetected", "updateDistanceLabel DETECTED" + noseZ)
+                                    updateDistanceLabel("Subject Detected")
+                                    confirmButton.isEnabled = true
 
-
+                                    Handler().postDelayed({
+                                        if (!hasResetForCurrentFace) {
+                                            resetARSession()
+                                            hasResetForCurrentFace = true
+                                        }
+                                    }, 2000)
                                 }
                             }
                         } else {
-
-                            faceOverlayView.updatePoints(emptyList(), 0, 0)
+                            faceOverlayView.updatePoints(emptyList(), 0, 0, null)
                             Log.d("isFaceDetected", "updateDistanceLabel DETECTED" + isFaceDetected)
                             updateDistanceLabel("Subject not in Frame")
-
-                            confirmButton.isEnabled = false;
+                            confirmButton.isEnabled = false
+                            hasResetForCurrentFace = false
                         }
                     }
                     .addOnFailureListener { e ->
@@ -1200,7 +1224,6 @@ class MainActivity : AppCompatActivity() {
                             )
                         )
                         startButton.visibility = View.GONE
-
                     }
             }
         } catch (e: Exception) {
@@ -1211,9 +1234,7 @@ class MainActivity : AppCompatActivity() {
             distanceLabel.text = "Detecting Face..."
             distanceLabel.setTextColor(ContextCompat.getColor(this, android.R.color.black))
             startButton.visibility = View.GONE
-//            findViewById<ImageView>(R.id.targetCircle).visibility = View.GONE
         }
-
     }
 
 // Updates the visual label of distance between camera and face.And helps the user to keep phone close or far
@@ -1328,6 +1349,10 @@ class MainActivity : AppCompatActivity() {
             confirmButton.isEnabled = false;
         }
     }
+
+
+
+
 
     // Extension function to show the blink effect
     private fun showCaptureBlinkEffect() {
@@ -1647,3 +1672,4 @@ class MainActivity : AppCompatActivity() {
 
 
 }
+
