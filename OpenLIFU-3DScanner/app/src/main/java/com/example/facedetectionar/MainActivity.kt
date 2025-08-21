@@ -134,7 +134,7 @@ class MainActivity : AppCompatActivity() {
             loadsDataFromJson()
 
             //initialize session
-             initializeARScene()
+            initializeARScene()
 
 
             val alreadyReset = intent.getBooleanExtra(EXTRA_ALREADY_RESET, false)
@@ -145,7 +145,7 @@ class MainActivity : AppCompatActivity() {
             }
 
 
-           // Initialize UI components
+            // Initialize UI components
             val overlayContainer = findViewById<FrameLayout>(R.id.overlayContainer)
             faceOverlayView = FaceOverlayView(this)
             overlayContainer.addView(faceOverlayView)
@@ -236,7 +236,7 @@ class MainActivity : AppCompatActivity() {
 
 
             BackInStartCapture.setOnClickListener {
-                 // Hide UI elements
+                // Hide UI elements
                 BackInStartCapture.visibility = View.GONE
                 mainScreenSubTitle.text = "Position the Subject in the Frame"
                 startButton.visibility = View.GONE
@@ -288,7 +288,7 @@ class MainActivity : AppCompatActivity() {
                         activeRing=node;
                     } }
 
-                 faceRing.visibility=View.VISIBLE
+                faceRing.visibility=View.VISIBLE
                 distanceLabel.visibility = View.VISIBLE
                 moveBackText.visibility = View.GONE
                 angleContainer.visibility = View.VISIBLE;
@@ -303,9 +303,9 @@ class MainActivity : AppCompatActivity() {
                 startBlinkingAnimation(leftArrowInstruction)
                 leftArrowInstruction.postDelayed({
                     leftArrowInstruction.visibility = View.GONE
-                     startTrackingRings();
+                    startTrackingRings();
                     initSensorListener()}, 3000)
-}
+            }
 
             stopButton.setOnClickListener {
                 stopButton.visibility = View.GONE
@@ -337,7 +337,7 @@ class MainActivity : AppCompatActivity() {
                 val view = layoutInflater.inflate(R.layout.modal_capture_end, null)
                 val noButton = view.findViewById<Button>(R.id.endCaptureNoBtn)
 
-                val imageCount = capturedModelList.size // addding image count to modal
+                val imageCount = capturedModelList.size // adding image count to modal
                 val text = getString(R.string.endcaptureText, imageCount)
                 val endText = view.findViewById<TextView>(R.id.endCaptureTextLabel)
 
@@ -584,7 +584,7 @@ class MainActivity : AppCompatActivity() {
 
 
 
- // Function to create quaternions from axis-angle representation
+    // Function to create quaternions from axis-angle representation
     private fun createQuaternionFromAxisAngle(axis: Vector3, angleDegrees: Float): Quaternion {
         val angleRad = Math.toRadians(angleDegrees.toDouble()).toFloat()
         val halfAngle = angleRad / 2f
@@ -636,7 +636,7 @@ class MainActivity : AppCompatActivity() {
 
 
 
- capturedModelList.add(nonCapturedModelList[currentRingIndex])// Add the captured ring node to the captured list
+        capturedModelList.add(nonCapturedModelList[currentRingIndex])// Add the captured ring node to the captured list
         imageCountText.setText("${capturedModelList.size}/${nonCapturedModelList.size}")//update image capture count in UI
         currentRingIndex++;
         // Show next ring
@@ -666,7 +666,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-//function to show capture blink effect while image is captured
+    //function to show capture blink effect while image is captured
     private fun startBlinkingAnimation(textView: TextView) {
         val animator =
             ValueAnimator.ofFloat(1f, 0f, 1f) // From fully visible to invisible to visible
@@ -717,7 +717,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-   //Function which starts the face detection process,it captures every 5th frame of AR frame
+    //Function which starts the face detection process,it captures every 5th frame of AR frame
     private fun startFaceDetection() {
         updateDistanceLabel("Subject not in Frame")
 
@@ -740,7 +740,7 @@ class MainActivity : AppCompatActivity() {
 
 
 
-   // Function to place the cube model on head
+    // Function to place the cube model on head
     private fun placeCube() {
         val frame = sceneView.session?.frame
         try {
@@ -767,9 +767,9 @@ class MainActivity : AppCompatActivity() {
 
             //Place each arrow model relative to anchor
 
-            val xPoint = 0.051244376  // Shift cube slightly to the right
+            val xPoint = 0.061244376  // Shift cube slightly to the right
             val yPoint =  -0.200656703 // Raise cube slightly upward
-            val zPoint = -0.56133946   // Push cube slightly further back to match ring depth
+            val zPoint = -0.46133946   // Push cube slightly further back to match ring depth
 
 
 
@@ -777,18 +777,18 @@ class MainActivity : AppCompatActivity() {
 
 
             // 🟡 Position offset for this circle
-                val offsetVector = Vector3(
-                    xPoint.toFloat(),
-                   yPoint.toFloat(),
-                   zPoint.toFloat()
-                )
-                val offsetFloat3 = Float3(offsetVector.x, offsetVector.y, offsetVector.z)
+            val offsetVector = Vector3(
+                xPoint.toFloat(),
+                yPoint.toFloat(),
+                zPoint.toFloat()
+            )
+            val offsetFloat3 = Float3(offsetVector.x, offsetVector.y, offsetVector.z)
 
-                // 🟡 Rotation logic — replace with actual angles when needed
-                val rotationX = createQuaternionFromAxisAngle(Vector3(1f, 0f, 0f), 0f) //vertical
-                val rotationY = createQuaternionFromAxisAngle(Vector3(0f, 1f, 0f),0f) // horizontal
-                val rotationZ = createQuaternionFromAxisAngle(Vector3(0f, 0f, 1f), 0f)
-                val combinedRotation = rotationZ * rotationY * rotationX
+            // 🟡 Rotation logic — replace with actual angles when needed
+            val rotationX = createQuaternionFromAxisAngle(Vector3(1f, 0f, 0f), 0f) //vertical
+            val rotationY = createQuaternionFromAxisAngle(Vector3(0f, 1f, 0f),0f) // horizontal
+            val rotationZ = createQuaternionFromAxisAngle(Vector3(0f, 0f, 1f), 0f)
+            val combinedRotation = rotationZ * rotationY * rotationX
 
 
 
@@ -806,7 +806,7 @@ class MainActivity : AppCompatActivity() {
 //                                color = android.graphics.Color.parseColor("#0000E7"), // HEX to Int
 //                                type = Colors.RgbaType.SRGB
 //                            )
- }
+                        }
                         cubeNode = ModelNode(
                             modelInstance = modelInstance,
                             scaleToUnits = 0.27f
@@ -844,9 +844,9 @@ class MainActivity : AppCompatActivity() {
 
 
 
-// Converts  the captured frame in bitmap format so that it can be saved in the device using the function [processBitmapForFaceDetection]
+    // Converts  the captured frame in bitmap format so that it can be saved in the device using the function [processBitmapForFaceDetection]
     private fun processFrameForFaceDetection(frame: Frame?) {
-       try {
+        try {
             val image = frame?.acquireCameraImage() ?: return
             val bitmap = convertImageToBitmap(image)
             image.close()
@@ -859,7 +859,7 @@ class MainActivity : AppCompatActivity() {
 
 
 
-// The function responsible for placing the circles around the face .It loops arrowList which contains all the circles configurations and places them accordingly
+    // The function responsible for placing the circles around the face .It loops arrowList which contains all the circles configurations and places them accordingly
     private fun placeCirclesAroundFace() {
         val frame = sceneView.session?.frame
         try {
@@ -881,7 +881,7 @@ class MainActivity : AppCompatActivity() {
             }
             sceneView.addChildNode(anchorNode)
 
- arrowList.forEachIndexed { index, bulletObj ->
+            arrowList.forEachIndexed { index, bulletObj ->
                 // Position offset for this circle
                 val offsetVector = Vector3(
                     bulletObj.xPoint.toFloat(),
@@ -913,7 +913,7 @@ class MainActivity : AppCompatActivity() {
                         modelNode?.let {
                             it.transform(position = offsetFloat3, rotation = combinedRotation3)
                             anchorNode.addChildNode(it)
-                             //adding model node to a mutable list
+                            //adding model node to a mutable list
                             it.isEditable=false;
                             it.isPositionEditable=false
                             it.name="${bulletObj.seqID}"
@@ -924,11 +924,11 @@ class MainActivity : AppCompatActivity() {
                         Log.e("ArrowLoad", "Error loading arrow: ${e.message}", e)
                     }
                 }
-}
+            }
 
 
 
-            } catch (e: Exception) {
+        } catch (e: Exception) {
             Log.e("placeCirclesAroundFace", "Error: ${e.message}", e)
             showToast("Something Went wrong. Try again !")
         }
@@ -954,18 +954,18 @@ class MainActivity : AppCompatActivity() {
 
 
 
-//Function to start tracking the circles around face which helps the  user to capture image according to his desired position
+    //Function to start tracking the circles around face which helps the  user to capture image according to his desired position
     private fun startTrackingRings() {
 
         if (nonCapturedModelList.isEmpty()) return
-            sceneView.onSessionUpdated = onSessionUpdated@{ _, frame ->
+        sceneView.onSessionUpdated = onSessionUpdated@{ _, frame ->
             val cameraPose = frame.camera.pose
             val cameraPosition = Vector3(cameraPose.tx(), cameraPose.ty(), cameraPose.tz())
             checkMovementSpeed(cameraPosition)
             checkVisibilityOfBullets()
 
             if(currentRingIndex<nonCapturedModelList.size){
-                 nonCapturedModelList.forEachIndexed {index, node ->
+                nonCapturedModelList.forEachIndexed {index, node ->
                     if(node.name==currentRingIndex.toString()){
                         activeRing = node
                     }
@@ -976,7 +976,7 @@ class MainActivity : AppCompatActivity() {
                 val activeRingPosition = (activeRing!!).worldPosition.toVector3()
                 val distance =calculateDistance(cameraPosition,activeRingPosition)
                 val ringAngle=arrowList[currentRingIndex].verticalAngle;
-                 when {
+                when {
                     distance > 0.32f && distance<0.34f-> {
 
                         if(ringAngle==angleString+1 || ringAngle==angleString-1){
@@ -1035,7 +1035,7 @@ class MainActivity : AppCompatActivity() {
 
 
 
-//Function which creates the circle model to render .The model file is already saved in assets>models folder of project directory in .glb extension file
+    //Function which creates the circle model to render .The model file is already saved in assets>models folder of project directory in .glb extension file
     private suspend fun makeCircleModel(): ModelNode? {
         return try {
             sceneView.modelLoader.loadModelInstance(faceCircleUri)?.let { modelInstance ->
@@ -1055,7 +1055,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-//This function listens to the device’s rotation sensor and calculates the phone’s orientation (yaw, pitch, roll).
+    //This function listens to the device’s rotation sensor and calculates the phone’s orientation (yaw, pitch, roll).
     private fun initSensorListener() {
         sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
         rotationVectorSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR) ?: return
@@ -1242,7 +1242,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-// Updates the visual label of distance between camera and face.And helps the user to keep phone close or far
+    // Updates the visual label of distance between camera and face.And helps the user to keep phone close or far
     private fun updateDistanceLabel(baseText: String) {
         distanceLabel.text = "$baseText";
         if (!IsCaptureStarted) {
@@ -1421,7 +1421,7 @@ class MainActivity : AppCompatActivity() {
         finish() // Optional: finish the current activity
     }
 
-//  The actual function responsible for capturing the camera feed photo and saving it to device .
+    //  The actual function responsible for capturing the camera feed photo and saving it to device .
     private fun captureCameraFeedPhoto(arSceneView: ARSceneView) {
         Log.d("captureCameraFeedPhoto","captureCameraFeedPhoto called")
         faceRing.setBackgroundResource(R.drawable.green_circle)
@@ -1469,7 +1469,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-//    It saves the world co-ordinates from where the image has been captured to the storage
+    //    It saves the world co-ordinates from where the image has been captured to the storage
     private fun saveCoordinatesJsonToStorage() {
         try {
             val root = JSONObject()
@@ -1515,7 +1515,7 @@ class MainActivity : AppCompatActivity() {
         return sqrt(dx * dx + dy * dy + dz * dz)
     }
 
-//function turns a raw camera frame into a Bitmap
+    //function turns a raw camera frame into a Bitmap
     private fun convertImageToBitmap(image: Image): Bitmap {
         val width = image.width
         val height = image.height
@@ -1565,7 +1565,7 @@ class MainActivity : AppCompatActivity() {
         return BitmapFactory.decodeByteArray(jpegBytes, 0, jpegBytes.size)
     }
 
-//function saves that bitmap as a proper image file on the device.
+    //function saves that bitmap as a proper image file on the device.
     private fun saveBitmapToStorage(bitmap: Bitmap) {
         try {
             val fixedBitmap = fixImageRotation(bitmap)
@@ -1622,10 +1622,10 @@ class MainActivity : AppCompatActivity() {
             val arrowCoordinatesArr = jsonObject.getJSONArray("bulletCoordinates")
 
 
-           //adding scattered bullets objects to a list
+            //adding scattered bullets objects to a list
             for (i in 0 until arrowCoordinatesArr.length()) {
                 val bulletObj = arrowCoordinatesArr.getJSONObject(i)
-               arrowList.add(
+                arrowList.add(
                     bulletPointConfig(
                         seqID = bulletObj.getInt("seqID"),
                         xPoint = bulletObj.getDouble("xPoint"),
@@ -1645,7 +1645,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-//it tags the saved image with basic camera info so that apps reading it (e.g., gallery, photo viewers) see it as if it came from a real camera.
+    //it tags the saved image with basic camera info so that apps reading it (e.g., gallery, photo viewers) see it as if it came from a real camera.
     private fun addExifDataForFile(file: File) {
         try {
             val exif = ExifInterface(file)
