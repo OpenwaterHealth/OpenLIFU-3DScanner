@@ -1,4 +1,5 @@
 package com.example.facedetectionar
+
 import android.Manifest
 import android.app.Dialog
 import android.content.Intent
@@ -27,7 +28,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat import com.google.ar.core.ArCoreApk
+import androidx.core.view.WindowInsetsCompat
+import com.google.ar.core.ArCoreApk
 import com.google.ar.core.exceptions.UnavailableDeviceNotCompatibleException
 import org.json.JSONArray
 import org.json.JSONObject
@@ -40,6 +42,7 @@ class New_capture : AppCompatActivity() {
             android.Manifest.permission.READ_MEDIA_IMAGES,
             android.Manifest.permission.READ_MEDIA_VIDEO
         )
+
         else -> arrayOf(
             android.Manifest.permission.CAMERA,
             android.Manifest.permission.READ_EXTERNAL_STORAGE,
@@ -47,7 +50,7 @@ class New_capture : AppCompatActivity() {
         )
     }
     private val PERMISSION_REQUEST_CODE = 100
-    private lateinit var   newCaptureCheckbox: CheckBox
+    private lateinit var newCaptureCheckbox: CheckBox
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -57,7 +60,6 @@ class New_capture : AppCompatActivity() {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
-
 
 
         // Check required permissions
@@ -77,37 +79,23 @@ class New_capture : AppCompatActivity() {
         initializeRingConfig()
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //        val linearLayout=findViewById<LinearLayout>(R.id.linerLayoutOfParameters)
-        val errorText=findViewById<TextView>(R.id.errorText)
-        val cancelButton=findViewById<Button>(R.id.cancelButton);
+        val errorText = findViewById<TextView>(R.id.errorText)
+        val cancelButton = findViewById<Button>(R.id.cancelButton);
 //        val qrIconButton=findViewById<ImageButton>(R.id.qrIconButton);
-        val startCaptureButton=findViewById<Button>(R.id.startCaptureButton);
-        newCaptureCheckbox=findViewById<CheckBox>(R.id.newCaptureCheckbox)
+        val startCaptureButton = findViewById<Button>(R.id.startCaptureButton);
+        newCaptureCheckbox = findViewById<CheckBox>(R.id.newCaptureCheckbox)
         val referenceNumberEditText = findViewById<EditText>(R.id.scanIDInputText)
 
-        val fetchedQRText=intent.getStringExtra("QR_TEXT")
+        val fetchedQRText = intent.getStringExtra("QR_TEXT")
         val prefs = getSharedPreferences("app_prefs", MODE_PRIVATE)
         val doNotShowInfoPref = prefs.getBoolean("do_not_show_info", false)
 
 
 
 
-        if(doNotShowInfoPref){
-            newCaptureCheckbox.isChecked=false;
+        if (doNotShowInfoPref) {
+            newCaptureCheckbox.isChecked = false;
         }
 
 
@@ -118,7 +106,7 @@ class New_capture : AppCompatActivity() {
 
 
 
-        Log.d("IDDDDD","Launched ${fetchedQRText}")
+        Log.d("IDDDDD", "Launched ${fetchedQRText}")
         if (!fetchedQRText.isNullOrEmpty()) {
             referenceNumberEditText.setText(fetchedQRText)
 
@@ -156,10 +144,7 @@ class New_capture : AppCompatActivity() {
         }
 
 
-
-
-
-        val dialog= Dialog(this);
+        val dialog = Dialog(this);
 
 
 
@@ -173,7 +158,7 @@ class New_capture : AppCompatActivity() {
 
 
         cancelButton.setOnClickListener {
-            val intent= Intent(this, welcomeActivity::class.java)
+            val intent = Intent(this, welcomeActivity::class.java)
             startActivity(intent);
 
         }
@@ -185,20 +170,13 @@ class New_capture : AppCompatActivity() {
 //        }
 
 
-
-
-
-
-
-
-
         // Handle submit button click
         startCaptureButton.setOnClickListener {
             val referenceNumber = referenceNumberEditText.text.toString().trim()
 
             if (referenceNumber.isEmpty()) {
 
-                errorText.visibility=View.VISIBLE
+                errorText.visibility = View.VISIBLE
                 referenceNumberEditText.setBackgroundResource(R.drawable.input_border_red)
             } else if (hasAllPermissions()) {
                 //LogFileUtil.appendLog("Moving to face detection screen")
@@ -209,9 +187,6 @@ class New_capture : AppCompatActivity() {
                 requestPermissions()
             }
         }
-
-
-
 
 
     }
@@ -232,11 +207,11 @@ class New_capture : AppCompatActivity() {
     // Navigate to the FaceDetectionActivity
     private fun navigateToFaceDetection(referenceNumber: String) {
 
-        val view=layoutInflater.inflate(R.layout.instructions,null)
-        val dialog= Dialog(this)
-        val okInInstructions=view.findViewById<Button>(R.id.instructionModalOK)
+        val view = layoutInflater.inflate(R.layout.instructions, null)
+        val dialog = Dialog(this)
+        val okInInstructions = view.findViewById<Button>(R.id.instructionModalOK)
 
-        val checkInfo=view.findViewById<CheckBox>(R.id.checkBoxInfo)
+        val checkInfo = view.findViewById<CheckBox>(R.id.checkBoxInfo)
         val prefs = getSharedPreferences("app_prefs", MODE_PRIVATE)
 
         // Handle OK button click
@@ -244,11 +219,11 @@ class New_capture : AppCompatActivity() {
 
             if (checkInfo.isChecked) {
                 prefs.edit().putBoolean("do_not_show_info", true).apply()
-                Log.d("Preferene","dont show modal now")
+                Log.d("Preferene", "dont show modal now")
 
             } else {
                 prefs.edit().putBoolean("do_not_show_info", false).apply()
-                Log.d("Preferene","Will show modal now")
+                Log.d("Preferene", "Will show modal now")
             }
 
             val intent = Intent(this, MainActivity::class.java)
@@ -260,7 +235,7 @@ class New_capture : AppCompatActivity() {
         }
 
 
-        if(newCaptureCheckbox.isChecked){
+        if (newCaptureCheckbox.isChecked) {
 
             // Set the inflated view as content
 
@@ -273,7 +248,7 @@ class New_capture : AppCompatActivity() {
             val dialogWidth = screenWidth - (marginInPx * 2)
 
             dialog.window?.setLayout(dialogWidth, ViewGroup.LayoutParams.WRAP_CONTENT)
-                dialog.setCancelable(false)
+            dialog.setCancelable(false)
 
             // Initialize VideoView from the inflated view
             val instructionVideo = view.findViewById<VideoView>(R.id.instructionVideo)
@@ -290,7 +265,7 @@ class New_capture : AppCompatActivity() {
 
             dialog.show()
 
-        }else{
+        } else {
             val intent = Intent(this, MainActivity::class.java)
             intent.putExtra("REFERENCE_NUMBER", referenceNumber)
             startActivity(intent)
@@ -343,23 +318,31 @@ class New_capture : AppCompatActivity() {
                     Log.d("ARCoreCheck", "ARCore is supported but not installed. Prompting user.")
                     showARCoreInstallPrompt() // Show the install prompt
                 }
+
                 availability.isTransient -> {
                     // Retry if status is transient
                     Log.d("ARCoreCheck", "ARCore availability is transient. Retrying in 2 seconds.")
                     Handler(Looper.getMainLooper()).postDelayed({ checkAndInstallARCore() }, 2000)
                 }
+
                 availability.isSupported -> {
                     Log.d("ARCoreCheck", "ARCore is supported and installed.")
                     return // ARCore is supported and ready to use
                 }
+
                 else -> {
                     Log.d("ARCoreCheck", "ARCore is not supported on this device.")
-                    Toast.makeText(this, "Your device does not support AR features.", Toast.LENGTH_LONG).show()
+                    Toast.makeText(
+                        this,
+                        "Your device does not support AR features.",
+                        Toast.LENGTH_LONG
+                    ).show()
                 }
             }
         } catch (e: UnavailableDeviceNotCompatibleException) {
             Log.e("ARCoreCheck", "This device is not compatible with ARCore: ${e.message}")
-            Toast.makeText(this, "Your device does not support AR features.", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "Your device does not support AR features.", Toast.LENGTH_LONG)
+                .show()
         } catch (e: Exception) {
             Log.e("ARCoreCheck", "Error while checking ARCore availability: ${e.message}")
         }
@@ -370,7 +353,6 @@ class New_capture : AppCompatActivity() {
 
 
     }
-
 
 
     private fun showARCoreInstallPrompt() {
@@ -389,12 +371,19 @@ class New_capture : AppCompatActivity() {
 
     private fun redirectToARCorePlayStore() {
         try {
-            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=com.google.ar.core"))
+            val intent = Intent(
+                Intent.ACTION_VIEW,
+                Uri.parse("https://play.google.com/store/apps/details?id=com.google.ar.core")
+            )
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             startActivity(intent)
         } catch (e: Exception) {
             Log.e("ARCoreCheck", "Failed to open Play Store: ${e.message}")
-            Toast.makeText(this, "Please install Google Play Services for AR manually.", Toast.LENGTH_LONG).show()
+            Toast.makeText(
+                this,
+                "Please install Google Play Services for AR manually.",
+                Toast.LENGTH_LONG
+            ).show()
         }
     }
 
@@ -415,10 +404,6 @@ class New_capture : AppCompatActivity() {
                 Log.d("makeRingConfigJsonFile", "File already exists. Skipping creation.")
                 return
             }
-
-
-
-
 
 
             val arrowCoordinatesArray = JSONArray().apply {
@@ -585,14 +570,9 @@ class New_capture : AppCompatActivity() {
             }
 
 
-
-
-
-
-
             // Wrap it in a root JSON object
             val rootObject = JSONObject().apply {
-           put("bulletCoordinates", arrowCoordinatesArray);
+                put("bulletCoordinates", arrowCoordinatesArray);
             }
 
             // Write to file (pretty print)
