@@ -206,14 +206,35 @@
             android:layout_height="match_parent"/>
 
 
-        <ProgressBar
-            android:id="@+id/progressBar"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:visibility="gone"/>
+    <!-- Loading Overlay -->
+    <LinearLayout
+        android:id="@+id/loadingOverlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:background="#80000000"
+    android:visibility="gone">
 
-        <TextView
+    <ProgressBar
+        android:id="@+id/loadingProgress"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:indeterminate="true" />
+
+    <TextView
+        android:id="@+id/loadingMessage"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Initializing..."
+        android:textSize="16sp"
+        android:layout_marginTop="12dp"
+        android:textColor="@android:color/white" />
+
+</LinearLayout>
+
+
+<TextView
             android:id="@+id/distanceLabel"
             android:layout_width="200dp"
             android:layout_height="wrap_content"

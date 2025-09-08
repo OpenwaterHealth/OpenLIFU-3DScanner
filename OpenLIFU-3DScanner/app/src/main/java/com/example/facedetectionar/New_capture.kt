@@ -573,6 +573,36 @@ class New_capture : AppCompatActivity() {
             // Wrap it in a root JSON object
             val rootObject = JSONObject().apply {
                 put("bulletCoordinates", arrowCoordinatesArray);
+                // Add cameraDistanceConfig object
+                put("cameraDistanceForCapture", JSONObject().apply {
+                    put("maxDistance", 0.34)
+                    put("minDistance", 0.32)
+                })
+
+                // Add cameraDistanceConfig object
+                put("cameraDistanceForFaceDetection", JSONObject().apply {
+                    put("maxDistance",-60.0)
+                    put("minDistance", -75.0)
+                })
+
+
+                // Add cube configurations
+                put("cubeConfig", JSONObject().apply {
+
+                    put("zPosition", -0.46133946)
+                    put("cubeSize",0.27)
+                })
+
+
+                put("ringAroundFaceConfig", JSONObject().apply {
+                    put("initialRingSize",0.05)
+                    put("ringScaleFactor",3.2)
+
+                })
+
+                put("ringWithCamera", JSONObject().apply {
+                    put("ringSize",250)
+                })
             }
 
             // Write to file (pretty print)

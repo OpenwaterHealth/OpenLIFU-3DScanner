@@ -39,6 +39,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
+import androidx.collection.ObjectLongMap
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -81,11 +82,13 @@ class MainActivity : AppCompatActivity() {
         const val EXTRA_ALREADY_RESET = "EXTRA_ALREADY_RESET"
 
     }
+
+
     private var cubeNode: ModelNode? = null
     private lateinit var sceneView: ARSceneView
     private lateinit var anchorNode: AnchorNode;
     private var latestNosePosition: Float3? = null
-    private var ringSize: Float= 0.05f;
+
     val capturedModelList = mutableSetOf<Node>()
     val nonCapturedModelList = mutableListOf<ModelNode>()
     private val faceCircleUri = "models/circle.glb"
@@ -120,6 +123,55 @@ class MainActivity : AppCompatActivity() {
     private var hasResetForCurrentFace = false
 
 
+    data class CameraConfig(
+        val minDistance: Float,
+        val maxDistance: Float
+    )
+
+    data class CubeConfig(
+        val zPosition: Float,
+        val cubeSize: Float,
+    )
+
+    data class FaceRingConfig(
+        val initialRingSize: Float,
+        val ringScaleFactor: Float,
+    )
+
+    data class CameraRingConfig(
+        val ringSize: Int,
+
+        )
+
+
+    private lateinit var cameraConfigCapture: CameraConfig
+    private lateinit var cameraConfigDetection: CameraConfig
+    private lateinit var cubeConfig: CubeConfig
+    private lateinit var faceRingConfig: FaceRingConfig
+    private lateinit var cameraRingConfig: CameraRingConfig
+
+
+
+    private lateinit var loadingOverlay: View
+    private lateinit var loadingMessage: TextView
+
+
+
+    private fun showLoading(message: String = "Initializing...") {
+        runOnUiThread {
+            loadingMessage.text = message
+            loadingOverlay.visibility = View.VISIBLE
+        }
+    }
+
+    private fun hideLoading() {
+        runOnUiThread {
+            loadingOverlay.visibility = View.GONE
+        }
+    }
+
+
+
 
 
 
@@ -132,6 +184,10 @@ class MainActivity : AppCompatActivity() {
             setContentView(R.layout.activity_main)
             // Load arrow data from JSON
             loadsDataFromJson()
+
+            loadsCameraConfigFromJson();
+
+            Log.d("AllConfigs","$cameraConfigCapture,$cameraConfigDetection,$cubeConfig ,$faceRingConfig,$cameraRingConfig")
 
             //initialize session
             initializeARScene()
@@ -154,6 +210,12 @@ class MainActivity : AppCompatActivity() {
             BackInStartCapture = findViewById<Button>(R.id.BackInStartCapture)
             startButton = findViewById(R.id.startButton)
             confirmButton = findViewById<Button>(R.id.confirmButtonInMain)
+            loadingOverlay = findViewById(R.id.loadingOverlay)
+            loadingMessage = findViewById(R.id.loadingMessage)
+
+
+
+
 
             val initialCancelButton = findViewById<Button>(R.id.initialRenderCancelButton)
             val leftArrowInstruction = findViewById<TextView>(R.id.leftArrowInstruction)
@@ -168,11 +230,27 @@ class MainActivity : AppCompatActivity() {
             val angleContainer = findViewById<ConstraintLayout>(R.id.angleContainer)
             faceRing=findViewById<ImageView>(R.id.faceRing)
 
+            fun Int.toPx(): Int {
+                val scale = resources.displayMetrics.density
+                return (this * scale + 0.5f).toInt()
+            }
+
+            val params = faceRing.layoutParams
+            params.width = cameraRingConfig.ringSize.toPx()
+            params.height = cameraRingConfig.ringSize.toPx()
+            faceRing.layoutParams = params
+
             faceOutline.scaleX = 1.1f
             faceOutline.scaleY = 1.1f
             minAngleText = findViewById<TextView>(R.id.minAngleText)
             maxAngleText = findViewById<TextView>(R.id.maxAngleText)
             referenceNumber = intent.getStringExtra("REFERENCE_NUMBER") ?: "DEFAULT_REF"
+
+
+
+
+
+
 
 
 
@@ -185,12 +263,12 @@ class MainActivity : AppCompatActivity() {
                     initialCancelButton.visibility = View.GONE;
                     BackInStartCapture.visibility = View.VISIBLE
                     startButton.visibility = View.VISIBLE;
-                    val progressBar=findViewById<ProgressBar>(R.id.progressBar)
+
                     // Add callback for completion
                     placeWhenTracking(
                         onSuccess = {
                             runOnUiThread {
-                                progressBar.visibility = View.GONE
+
                                 isFaceDetected = true
                                 faceOverlayView.visibility = View.GONE
                                 distanceLabel.visibility = View.GONE
@@ -200,7 +278,7 @@ class MainActivity : AppCompatActivity() {
                         },
                         onError = { error ->
                             runOnUiThread {
-                                progressBar.visibility = View.GONE
+
                                 confirmButton.isEnabled = true
                                 confirmButton.visibility = View.VISIBLE
                                 Toast.makeText(this, "Failed: $error. Try again.", Toast.LENGTH_LONG).show()
@@ -259,10 +337,7 @@ class MainActivity : AppCompatActivity() {
                 // Reset any other relevant state
                 updateDistanceLabel("Subject not in Frame")
 
-                finish()
-                overridePendingTransition(0, 0)
-                startActivity(intent)
-                overridePendingTransition(0, 0)
+                resetARSession()
 
             }
 
@@ -276,13 +351,13 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 //activating the first ring 0
-                ringSize=3.2f;
+
                 nonCapturedModelList.forEachIndexed {index, node ->
                     if(node.name=="0"){
 
                         node.scale=Float3(
-                            node.scale.x * ringSize,
-                            node.scale.y * ringSize,
+                            node.scale.x * faceRingConfig.ringScaleFactor,
+                            node.scale.y * faceRingConfig.ringScaleFactor,
                             node.scale.z
                         )
                         activeRing=node;
@@ -617,7 +692,7 @@ class MainActivity : AppCompatActivity() {
             Log.d("reducingSize","index is$index and seq is ${node.name}")
             if(node.name==currentRingIndex.toString()){
 
-                node.scaleToUnitCube(0.05f)
+                node.scaleToUnitCube(faceRingConfig.initialRingSize)
 
                 Log.d("reducingSize"," satisfied with index is$index and seq is $node.name")
                 node.model.instance.materialInstances.forEach { materialInstance ->
@@ -642,15 +717,15 @@ class MainActivity : AppCompatActivity() {
         // Show next ring
 
         if (currentRingIndex < nonCapturedModelList.size) {  //20
-            ringSize=3.2f;
+
 
 
             nonCapturedModelList.forEachIndexed {index, node ->
                 if(node.name==currentRingIndex.toString()){
 
                     node.scale=Float3(
-                        node.scale.x * ringSize, // Scale X
-                        node.scale.y * ringSize, // Scale Y
+                        node.scale.x * faceRingConfig.ringScaleFactor, // Scale X
+                        node.scale.y *  faceRingConfig.ringScaleFactor, // Scale Y
                         node.scale.z         // Keep Z as is
                     ) }
 
@@ -767,9 +842,10 @@ class MainActivity : AppCompatActivity() {
 
             //Place each arrow model relative to anchor
 
-            val xPoint = 0.061244376  // Shift cube slightly to the right
-            val yPoint =  -0.200656703 // Raise cube slightly upward
-            val zPoint = -0.46133946   // Push cube slightly further back to match ring depth
+            val xPoint = 0.061244376 // Shift cube slightly to the right
+            val yPoint = -0.200656703// Raise cube slightly upward
+            val zPoint =
+                cubeConfig.zPosition   // Push cube slightly further back to match ring depth
 
 
 
@@ -801,17 +877,13 @@ class MainActivity : AppCompatActivity() {
                     sceneView.modelLoader.loadModelInstance(faceCubeUri)?.let { modelInstance ->
 
                         modelInstance.materialInstances.forEach { materialInstance ->
-//                             materialInstance.setColor(
-//                                name = "baseColorFactor",
-//                                color = android.graphics.Color.parseColor("#0000E7"), // HEX to Int
-//                                type = Colors.RgbaType.SRGB
-//                            )
                         }
                         cubeNode = ModelNode(
                             modelInstance = modelInstance,
-                            scaleToUnits = 0.27f
+                            scaleToUnits = cubeConfig.cubeSize
                         ).apply {
                             isPositionEditable = false
+                            isTouchable=false
                             transform(position = offsetFloat3, rotation = combinedRotation3)
 
                         }
@@ -977,7 +1049,7 @@ class MainActivity : AppCompatActivity() {
                 val distance =calculateDistance(cameraPosition,activeRingPosition)
                 val ringAngle=arrowList[currentRingIndex].verticalAngle;
                 when {
-                    distance > 0.32f && distance<0.34f-> {
+                    distance >= cameraConfigCapture.minDistance && distance<=cameraConfigCapture.maxDistance -> {
 
                         if(ringAngle==angleString+1 || ringAngle==angleString-1){
 
@@ -988,17 +1060,19 @@ class MainActivity : AppCompatActivity() {
                         }else{
                             updateDistanceLabel("Adjust angle")
                             faceRing.setBackgroundResource(R.drawable.circle_ring)
+
+
                         }
 
 
                     }
 
-                    distance > 0.34-> {
+                    distance >cameraConfigCapture.maxDistance-> {
                         updateDistanceLabel("Move Closure")
                         faceRing.setBackgroundResource(R.drawable.circle_ring)
                     }
 
-                    distance <0.32 -> {
+                    distance <cameraConfigCapture.minDistance -> {
                         updateDistanceLabel("Move Away")
                         faceRing.setBackgroundResource(R.drawable.circle_ring)
 
@@ -1041,12 +1115,14 @@ class MainActivity : AppCompatActivity() {
             sceneView.modelLoader.loadModelInstance(faceCircleUri)?.let { modelInstance ->
                 ModelNode(
                     modelInstance = modelInstance,
-                    scaleToUnits = ringSize,
+                    scaleToUnits = faceRingConfig.initialRingSize,
 
                     autoAnimate = true,
                     centerOrigin = null
                 ).apply {
                     isEditable = true
+                    isTouchable=false
+
                 }
             }
         } catch (e: Exception) {
@@ -1129,10 +1205,13 @@ class MainActivity : AppCompatActivity() {
 
     private fun resetARSession() {
         try {
+            showLoading("Repositioning models...")
+
             val restartIntent = intent
             restartIntent.putExtra(EXTRA_ALREADY_RESET, true) // mark that we reset
             finish()
             startActivity(restartIntent)
+//            hideLoading()
 
         } catch (e: Exception) {
             Log.e("ARSession", "Failed to reset AR session: ${e.message}")
@@ -1178,7 +1257,7 @@ class MainActivity : AppCompatActivity() {
 
                             // Apply logic based on face size + z-depth
                             when {
-                                noseZ < -75.0 -> {
+                                noseZ < cameraConfigDetection.minDistance -> {
                                     Log.d(
                                         "isFaceDetected",
                                         "updateDistanceLabel Move Back" + isFaceDetected
@@ -1186,7 +1265,7 @@ class MainActivity : AppCompatActivity() {
                                     updateDistanceLabel("Move Back")
                                 }
 
-                                noseZ > -60.0 -> {
+                                noseZ > cameraConfigDetection.maxDistance -> {
                                     Log.d(
                                         "isFaceDetected",
                                         "updateDistanceLabel MOVE Close" + isFaceDetected
@@ -1644,6 +1723,72 @@ class MainActivity : AppCompatActivity() {
             Log.e("loadsDataFromJson", "Error: ${e.message}")
         }
     }
+
+
+
+    //The data from config json file is loaded to the app and define where camera will be positiooned
+    private fun loadsCameraConfigFromJson() {
+        try {
+            val configFile = File(
+                Environment.getExternalStorageDirectory(),
+                "OpenLIFU-Config/ringConfig.json"
+            )
+            if (!configFile.exists()) {
+                Log.e("RingConfig", "Config file not found")
+                Toast.makeText(this, "Config file not found!", Toast.LENGTH_LONG).show()
+                return
+            }
+
+            val root = JSONObject(configFile.readText())
+
+            // Load cameraDistanceForCapture
+            root.optJSONObject("cameraDistanceForCapture")?.let { obj ->
+                cameraConfigCapture = CameraConfig(
+                    minDistance = obj.optDouble("minDistance", 0.32).toFloat(),
+                    maxDistance = obj.optDouble("maxDistance",0.34).toFloat()
+                )
+            }
+
+            // Load cameraDistanceForFaceDetection
+            root.optJSONObject("cameraDistanceForFaceDetection")?.let { obj ->
+                cameraConfigDetection = CameraConfig(
+                    minDistance = obj.optDouble("minDistance", -75.0).toFloat(),
+                    maxDistance = obj.optDouble("maxDistance", -60.0).toFloat()
+                )
+            }
+
+            // Load cubeConfig
+            root.optJSONObject("cubeConfig")?.let { obj ->
+                cubeConfig = CubeConfig(
+                    zPosition = obj.optDouble("zPosition", -0.46133946).toFloat(),
+                    cubeSize = obj.optDouble("cubeSize", 0.27).toFloat()
+                )
+            }
+
+            // Load faceRingConfig
+            root.optJSONObject("ringAroundFaceConfig")?.let { obj ->
+                faceRingConfig = FaceRingConfig(
+                    initialRingSize = obj.optDouble("initialRingSize", 0.05).toFloat(),
+                    ringScaleFactor = obj.optDouble("ringScaleFactor", 3.2).toFloat()
+                )
+            }
+
+            // Load cameraRingConfig (safe)
+            root.optJSONObject("ringWithCamera")?.let { obj ->
+                cameraRingConfig = CameraRingConfig(
+                    ringSize = obj.optInt("ringSize", 250)
+                )
+            }
+
+            Log.d("RingConfig", "Configs loaded successfully")
+
+        } catch (e: Exception) {
+            Log.e("RingConfig", "Error loading config: ${e.message}")
+        }
+    }
+
+
+
 
     //it tags the saved image with basic camera info so that apps reading it (e.g., gallery, photo viewers) see it as if it came from a real camera.
     private fun addExifDataForFile(file: File) {

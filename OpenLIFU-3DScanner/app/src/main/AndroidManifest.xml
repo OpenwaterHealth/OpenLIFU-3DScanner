@@ -42,6 +42,7 @@
         android:theme="@style/AppTheme">
         <activity
             android:name=".MainActivity"
+            android:theme="@style/AppTheme.NoFlicker"
             android:exported="false" />
 
         <activity
