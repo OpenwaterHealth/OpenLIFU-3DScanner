@@ -420,7 +420,7 @@ class New_capture : AppCompatActivity() {
                     put("xPoint", -0.06811607)
                     put("yPoint", 0.030656703)
                     put("zPoint", -0.17293154)
-                    put("verticalAngle", 45)
+                    put("verticalAngle", 36)
                     put("horizontalAngle", 18)
                 })
                 put(JSONObject().apply {
@@ -436,7 +436,7 @@ class New_capture : AppCompatActivity() {
                     put("xPoint", -0.16811607)
                     put("yPoint", 0.030656703)
                     put("zPoint", -0.2455858)
-                    put("verticalAngle", 48)
+                    put("verticalAngle", 34)
                     put("horizontalAngle", 54)
                 })
                 put(JSONObject().apply {
@@ -603,7 +603,16 @@ class New_capture : AppCompatActivity() {
                 put("ringWithCamera", JSONObject().apply {
                     put("ringSize",250)
                 })
+
+                put("cameraCaptureDelayAndSpeed", JSONObject().apply {
+                    put("maxAllowedSpeed",0.6)
+                    put("captureDelayTime",2000)
+                })
+
+
             }
+
+
 
             // Write to file (pretty print)
             savedFile.writeText(rootObject.toString(4))

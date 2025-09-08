@@ -98,7 +98,8 @@ class MainActivity : AppCompatActivity() {
     private var previousTime: Long = 0
     private var lastToastTime: Long = 0
     private val toastCooldown = 2000L
-    private val maxAllowedSpeed = 0.6f
+    private var maxAllowedSpeed = 0.6f
+    private var delayCaptureBy = 2000
     private lateinit var startButton: Button
     private lateinit var confirmButton: Button
     private lateinit var BackInStartCapture: Button
@@ -149,6 +150,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var cubeConfig: CubeConfig
     private lateinit var faceRingConfig: FaceRingConfig
     private lateinit var cameraRingConfig: CameraRingConfig
+    private var isCaptureInProgress = false
 
 
 
@@ -1054,8 +1056,14 @@ class MainActivity : AppCompatActivity() {
                         if(ringAngle==angleString+1 || ringAngle==angleString-1){
 
                             updateDistanceLabel("Hold Still")
-                            if(IsCaptureStarted){
-                                captureAndNextRing()
+                            if (IsCaptureStarted && !isCaptureInProgress) {
+                                isCaptureInProgress = true
+
+                                // Delay capture by 4 seconds
+                                Handler(Looper.getMainLooper()).postDelayed({
+                                    captureAndNextRing()
+                                    isCaptureInProgress = false // Reset flag after capture
+                                }, delayCaptureBy.toLong())
                             }
                         }else{
                             updateDistanceLabel("Adjust angle")
@@ -1727,6 +1735,7 @@ class MainActivity : AppCompatActivity() {
 
 
     //The data from config json file is loaded to the app and define where camera will be positiooned
+    //The data from config json file is loaded to the app and define where camera will be positiooned
     private fun loadsCameraConfigFromJson() {
         try {
             val configFile = File(
@@ -1780,6 +1789,12 @@ class MainActivity : AppCompatActivity() {
                 )
             }
 
+            root.optJSONObject("cameraCaptureDelayAndSpeed")?.let { obj ->
+                maxAllowedSpeed =obj.optDouble("maxAllowedSpeed", 0.6).toFloat()
+                delayCaptureBy=obj.optInt("captureDelayTime",2000)
+
+            }
+
             Log.d("RingConfig", "Configs loaded successfully")
 
         } catch (e: Exception) {
@@ -1822,4 +1837,3 @@ class MainActivity : AppCompatActivity() {
 
 
 }
-
