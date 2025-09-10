@@ -1070,8 +1070,8 @@ class MainActivity : AppCompatActivity() {
                                 captureTimer = object : CountDownTimer(delayCaptureBy.toLong(), 1000) {
                                     override fun onTick(millisUntilFinished: Long) {
                                         val secondsLeft = millisUntilFinished / 1000
-                                        val debugText = findViewById<TextView>(R.id.debugText)
-                                        debugText.text = "Timer:${secondsLeft}"
+//                                        val debugText = findViewById<TextView>(R.id.debugText)
+//                                        debugText.text = "Timer:${secondsLeft}"
                                     }
 
                                     override fun onFinish() {
