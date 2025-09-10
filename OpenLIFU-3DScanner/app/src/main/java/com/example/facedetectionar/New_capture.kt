@@ -412,7 +412,7 @@ class New_capture : AppCompatActivity() {
                     put("xPoint", -0.006312673)
                     put("yPoint", 0.030656703)
                     put("zPoint", -0.16314285)
-                    put("verticalAngle", 35)
+                    put("verticalAngle", 30)
                     put("horizontalAngle", 0)
                 })
                 put(JSONObject().apply {
@@ -420,7 +420,7 @@ class New_capture : AppCompatActivity() {
                     put("xPoint", -0.06811607)
                     put("yPoint", 0.030656703)
                     put("zPoint", -0.17293154)
-                    put("verticalAngle", 36)
+                    put("verticalAngle", 26)
                     put("horizontalAngle", 18)
                 })
                 put(JSONObject().apply {
@@ -428,7 +428,7 @@ class New_capture : AppCompatActivity() {
                     put("xPoint", -0.12386973)
                     put("yPoint", 0.030656703)
                     put("zPoint", -0.20133946)
-                    put("verticalAngle", 37)
+                    put("verticalAngle", 27)
                     put("horizontalAngle", 36)
                 })
                 put(JSONObject().apply {
@@ -436,7 +436,7 @@ class New_capture : AppCompatActivity() {
                     put("xPoint", -0.16811607)
                     put("yPoint", 0.030656703)
                     put("zPoint", -0.2455858)
-                    put("verticalAngle", 34)
+                    put("verticalAngle", 24)
                     put("horizontalAngle", 54)
                 })
                 put(JSONObject().apply {
@@ -444,7 +444,7 @@ class New_capture : AppCompatActivity() {
                     put("xPoint", -0.19652398)
                     put("yPoint", 0.030656703)
                     put("zPoint", -0.30133945)
-                    put("verticalAngle", 44)
+                    put("verticalAngle",28)
                     put("horizontalAngle", 72)
                 })
                 put(JSONObject().apply {
@@ -606,7 +606,7 @@ class New_capture : AppCompatActivity() {
 
                 put("cameraCaptureDelayAndSpeed", JSONObject().apply {
                     put("maxAllowedSpeed",0.6)
-                    put("captureDelayTime",2000)
+                    put("captureDelayTime",6000)
                 })
 
 

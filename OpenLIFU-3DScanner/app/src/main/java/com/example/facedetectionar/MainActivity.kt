@@ -23,6 +23,7 @@ import android.media.Image
 import android.media.MediaScannerConnection
 import android.os.Build
 import android.os.Bundle
+import android.os.CountDownTimer
 import android.os.Environment
 import android.os.Handler
 import android.os.Looper
@@ -88,6 +89,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var sceneView: ARSceneView
     private lateinit var anchorNode: AnchorNode;
     private var latestNosePosition: Float3? = null
+    private var captureHandler = Handler(Looper.getMainLooper())
+    private var captureRunnable: Runnable? = null
 
     val capturedModelList = mutableSetOf<Node>()
     val nonCapturedModelList = mutableListOf<ModelNode>()
@@ -156,7 +159,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var loadingOverlay: View
     private lateinit var loadingMessage: TextView
-
+    private var captureTimer: CountDownTimer? = null
 
 
     private fun showLoading(message: String = "Initializing...") {
@@ -679,6 +682,9 @@ class MainActivity : AppCompatActivity() {
 
 
 
+
+
+
     //Function which captures the image and activates the next ring to be captured.
     private fun captureAndNextRing(){
         val imageCountText = findViewById<TextView>(R.id.imageCountText)
@@ -1030,7 +1036,6 @@ class MainActivity : AppCompatActivity() {
 
     //Function to start tracking the circles around face which helps the  user to capture image according to his desired position
     private fun startTrackingRings() {
-
         if (nonCapturedModelList.isEmpty()) return
         sceneView.onSessionUpdated = onSessionUpdated@{ _, frame ->
             val cameraPose = frame.camera.pose
@@ -1038,66 +1043,79 @@ class MainActivity : AppCompatActivity() {
             checkMovementSpeed(cameraPosition)
             checkVisibilityOfBullets()
 
-            if(currentRingIndex<nonCapturedModelList.size){
-                nonCapturedModelList.forEachIndexed {index, node ->
-                    if(node.name==currentRingIndex.toString()){
+            if (currentRingIndex < nonCapturedModelList.size) {
+                nonCapturedModelList.forEachIndexed { index, node ->
+                    if (node.name == currentRingIndex.toString()) {
                         activeRing = node
                     }
                 }
 
-
-
                 val activeRingPosition = (activeRing!!).worldPosition.toVector3()
-                val distance =calculateDistance(cameraPosition,activeRingPosition)
-                val ringAngle=arrowList[currentRingIndex].verticalAngle;
+                val distance = calculateDistance(cameraPosition, activeRingPosition)
+                val ringAngle = arrowList[currentRingIndex].verticalAngle
+
                 when {
-                    distance >= cameraConfigCapture.minDistance && distance<=cameraConfigCapture.maxDistance -> {
+                    distance >= cameraConfigCapture.minDistance &&
+                            distance <= cameraConfigCapture.maxDistance -> {
 
-                        if(ringAngle==angleString+1 || ringAngle==angleString-1){
-
+                        if (angleString>=ringAngle-1 && angleString<=ringAngle+1)
+                        {
                             updateDistanceLabel("Hold Still")
+
+
                             if (IsCaptureStarted && !isCaptureInProgress) {
                                 isCaptureInProgress = true
 
-                                // Delay capture by 4 seconds
-                                Handler(Looper.getMainLooper()).postDelayed({
-                                    captureAndNextRing()
-                                    isCaptureInProgress = false // Reset flag after capture
-                                }, delayCaptureBy.toLong())
+                                // Start a countdown timer before capture
+                                captureTimer = object : CountDownTimer(delayCaptureBy.toLong(), 1000) {
+                                    override fun onTick(millisUntilFinished: Long) {
+                                        val secondsLeft = millisUntilFinished / 1000
+                                        val debugText = findViewById<TextView>(R.id.debugText)
+                                        debugText.text = "Timer:${secondsLeft}"
+                                    }
+
+                                    override fun onFinish() {
+                                        Log.d("CaptureTimer", "Timer finished -> Capturing now")
+                                        captureAndNextRing()
+                                        isCaptureInProgress = false
+                                        captureTimer = null
+                                    }
+                                }.start()
                             }
-                        }else{
+
+                        } else {
+                            cancelScheduledCapture()
                             updateDistanceLabel("Adjust angle")
                             faceRing.setBackgroundResource(R.drawable.circle_ring)
-
-
                         }
 
-
                     }
 
-                    distance >cameraConfigCapture.maxDistance-> {
-                        updateDistanceLabel("Move Closure")
+                    distance > cameraConfigCapture.maxDistance -> {
+                        cancelScheduledCapture()
+                        updateDistanceLabel("Move Closer")
                         faceRing.setBackgroundResource(R.drawable.circle_ring)
                     }
 
-                    distance <cameraConfigCapture.minDistance -> {
+                    distance < cameraConfigCapture.minDistance -> {
+                        cancelScheduledCapture()
                         updateDistanceLabel("Move Away")
                         faceRing.setBackgroundResource(R.drawable.circle_ring)
-
-
                     }
                 }
 
-
-                val debugText=findViewById<TextView>(R.id.debugText)
-//                debugText.setText("Distance:${distance}")
-                minAngleText.setText("Ring  :${currentRingIndex}")
-                maxAngleText.setText("Angle  :${ringAngle}")
+                val debugText = findViewById<TextView>(R.id.debugText)
+                minAngleText.text = "Ring  :${currentRingIndex}"
+                maxAngleText.text = "Angle  :${ringAngle}"
             }
-
         }
+    }
 
-
+    private fun cancelScheduledCapture() {
+        captureTimer?.cancel()
+        captureTimer = null
+        isCaptureInProgress = false
+        Log.d("CaptureTimer", "Timer cancelled due to movement/condition break")
     }
 
 
