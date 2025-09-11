@@ -75,6 +75,7 @@ import java.io.File
 import java.io.FileOutputStream
 import kotlin.math.sqrt
 import androidx.core.graphics.toColorInt
+import com.google.ar.core.Session
 
 
 class MainActivity : AppCompatActivity() {
@@ -89,8 +90,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var sceneView: ARSceneView
     private lateinit var anchorNode: AnchorNode;
     private var latestNosePosition: Float3? = null
-    private var captureHandler = Handler(Looper.getMainLooper())
-    private var captureRunnable: Runnable? = null
+
+
+
 
     val capturedModelList = mutableSetOf<Node>()
     val nonCapturedModelList = mutableListOf<ModelNode>()
@@ -160,6 +162,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var loadingOverlay: View
     private lateinit var loadingMessage: TextView
     private var captureTimer: CountDownTimer? = null
+    private var initialCameraPose: Pose? = null
 
 
     private fun showLoading(message: String = "Initializing...") {
@@ -192,6 +195,8 @@ class MainActivity : AppCompatActivity() {
 
             loadsCameraConfigFromJson();
 
+
+
             Log.d("AllConfigs","$cameraConfigCapture,$cameraConfigDetection,$cubeConfig ,$faceRingConfig,$cameraRingConfig")
 
             //initialize session
@@ -204,6 +209,8 @@ class MainActivity : AppCompatActivity() {
             if (alreadyReset) {
                 hasResetForCurrentFace = true
             }
+
+
 
 
             // Initialize UI components
@@ -519,21 +526,11 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-
-
         try {
-            // Create anchor once and reuse
+            // Use the current session, not the stored one
             val session = sceneView.session ?: return onError("AR session not available")
-
-
-
-            val cameraPose = frame.camera.pose
-            val anchorPose = Pose(
-                floatArrayOf(cameraPose.tx(), cameraPose.ty(), cameraPose.tz()),
-                floatArrayOf(0f, 0f, 0f, 1f)
-            )
-
-            val anchor = session.createAnchor(anchorPose)
+            val cameraPose = initialCameraPose ?: frame.camera.pose
+            val anchor = session.createAnchor(cameraPose)
             anchorNode = AnchorNode(sceneView.engine, anchor).apply {
                 isEditable = true
             }
@@ -547,13 +544,13 @@ class MainActivity : AppCompatActivity() {
                     onSuccess()
                 } catch (e: Exception) {
                     onError(e.message ?: "Unknown error placing models")
-                    Log.d("ConfirmButtonLogs","Error lifecycleScope.launch"+e.message.toString())
+                    Log.d("ConfirmButtonLogs","Error lifecycleScope.launch: ${e.message}")
                 }
             }
 
         } catch (e: Exception) {
             onError(e.message ?: "Failed to create anchor")
-            Log.d("ConfirmButtonLogs","Error in function"+e.message.toString())
+            Log.d("ConfirmButtonLogs","Error in function: ${e.message}")
         }
     }
 
@@ -576,7 +573,6 @@ class MainActivity : AppCompatActivity() {
                             showToast("ARCore not supported !")
                             finish()
                         }
-
                         else -> {}
                     }
 
@@ -588,8 +584,6 @@ class MainActivity : AppCompatActivity() {
                     config.focusMode = Config.FocusMode.AUTO
                     config.updateMode = Config.UpdateMode.LATEST_CAMERA_IMAGE
 
-
-
                 } catch (e: UnavailableException) {
                     showToast("ARCore init failed: ${e.message}")
                     Log.e("ARCore", "Init failed", e)
@@ -597,17 +591,11 @@ class MainActivity : AppCompatActivity() {
                 }
             }
 
-            planeRenderer.isVisible = false;
-
-            onSessionUpdated = { _, frame ->
-
-
-            }
+            planeRenderer.isVisible = false
 
             onSessionCreated = { session ->
                 lifecycleScope.launch {
-
-
+                    // Start face detection immediately
                     startFaceDetection()
                 }
             }
@@ -801,12 +789,18 @@ class MainActivity : AppCompatActivity() {
     }
 
     //Function which starts the face detection process,it captures every 5th frame of AR frame
+    var loggedInitialCamera = false
     private fun startFaceDetection() {
         updateDistanceLabel("Subject not in Frame")
 
         // Set up frame processing
         sceneView.onSessionUpdated = { session, frame ->
-            // Process every 5th frame for performance
+            // Capture initial camera position when tracking starts
+             if (!loggedInitialCamera) {
+                initialCameraPose = frame.camera.pose
+                loggedInitialCamera = true
+            }
+
             checkVisibilityOfBullets()
             frameCounter++
             if (frameCounter % 5 == 0 && !isFaceDetected) {
@@ -826,19 +820,18 @@ class MainActivity : AppCompatActivity() {
     // Function to place the cube model on head
     private fun placeCube() {
         val frame = sceneView.session?.frame
+        if (frame == null) {
+            showToast("Camera frame not available")
+            return
+        }
         try {
             val session = sceneView.session ?: return
-            val cameraPose = frame?.camera?.pose?:return
-            val cameraPosition = Vector3(cameraPose.tx(), cameraPose.ty(), cameraPose.tz())
+            val cameraPose = initialCameraPose ?: frame.camera.pose
+             val cameraShiftXPose = frame.camera.pose?.extractTranslation()?.tx()
 
 
-            // Create only one anchor at camera position
-            val anchorPose = Pose(
-                floatArrayOf(cameraPosition.x, cameraPosition.y, cameraPosition.z),
-                floatArrayOf(0f, 0f, 0f, 1f) // No initial rotation on anchor
-            )
-
-            val anchor = session.createAnchor(anchorPose)
+            Log.d("cameraShiftXPose","$cameraShiftXPose")
+            val anchor = session.createAnchor(cameraPose)
 
             // Attach anchor to scene
             anchorNode = AnchorNode(sceneView.engine, anchor).apply {
@@ -850,7 +843,7 @@ class MainActivity : AppCompatActivity() {
 
             //Place each arrow model relative to anchor
 
-            val xPoint = 0.061244376 // Shift cube slightly to the right
+            val xPoint = 0.061244376-cameraShiftXPose!!.toFloat()// Shift cube slightly to the right
             val yPoint = -0.200656703// Raise cube slightly upward
             val zPoint =
                 cubeConfig.zPosition   // Push cube slightly further back to match ring depth
@@ -942,10 +935,15 @@ class MainActivity : AppCompatActivity() {
     // The function responsible for placing the circles around the face .It loops arrowList which contains all the circles configurations and places them accordingly
     private fun placeCirclesAroundFace() {
         val frame = sceneView.session?.frame
+        if (frame == null) {
+            showToast("Camera frame not available")
+            return
+        }
         try {
 
             val session = sceneView.session ?: return
-            val cameraPose = frame?.camera?.pose?:return
+            val cameraPose = frame.camera.pose?:return
+            val cameraShiftXPose = frame.camera.pose?.extractTranslation()?.tx()
             val cameraPosition = Vector3(cameraPose.tx(), cameraPose.ty(), cameraPose.tz())
             // Create only one anchor at camera position
             val anchorPose = Pose(
@@ -968,7 +966,7 @@ class MainActivity : AppCompatActivity() {
                     bulletObj.yPoint.toFloat(),
                     bulletObj.zPoint.toFloat()
                 )
-                val offsetFloat3 = Float3(offsetVector.x, offsetVector.y, offsetVector.z)
+                val offsetFloat3 = Float3(offsetVector.x-cameraShiftXPose!!.toFloat(), offsetVector.y, offsetVector.z)
 
                 var verticalAngle=-bulletObj.verticalAngle.toFloat();
                 var horizontalAngle=-bulletObj.horizontalAngle.toFloat();
@@ -1070,8 +1068,7 @@ class MainActivity : AppCompatActivity() {
                                 captureTimer = object : CountDownTimer(delayCaptureBy.toLong(), 1000) {
                                     override fun onTick(millisUntilFinished: Long) {
                                         val secondsLeft = millisUntilFinished / 1000
-//                                        val debugText = findViewById<TextView>(R.id.debugText)
-//                                        debugText.text = "Timer:${secondsLeft}"
+
                                     }
 
                                     override fun onFinish() {
@@ -1264,13 +1261,9 @@ class MainActivity : AppCompatActivity() {
                     .addOnSuccessListener { faceMeshes ->
                         if (faceMeshes.isNotEmpty()) {
                             val faceMesh = faceMeshes[0]
-                            val boundingBox = faceMesh.boundingBox
-
-                            val allPoints = faceMesh.allPoints
+                             val allPoints = faceMesh.allPoints
                             val noseZ = allPoints.get(1)?.position?.z ?: 0f
-                            allPoints.get(1)?.position?.let { nosePos ->
-                                latestNosePosition = Float3(nosePos.x, nosePos.y, nosePos.z)
-                            }
+
 
                             // Update the face overlay with mesh information
                             faceOverlayView.updateFaceMesh(
@@ -1282,13 +1275,14 @@ class MainActivity : AppCompatActivity() {
                             isAnyFace = true
 
                             // Apply logic based on face size + z-depth
+
                             when {
                                 noseZ < cameraConfigDetection.minDistance -> {
                                     Log.d(
                                         "isFaceDetected",
                                         "updateDistanceLabel Move Back" + isFaceDetected
                                     )
-                                    updateDistanceLabel("Move Back")
+                                    updateDistanceLabel("Move Away")
                                 }
 
                                 noseZ > cameraConfigDetection.maxDistance -> {
@@ -1443,7 +1437,7 @@ class MainActivity : AppCompatActivity() {
                     distanceLabel.setBackground(
                         ContextCompat.getDrawable(
                             this,
-                            R.drawable.round_cancel_ok
+                            R.drawable.round_green_button_light
                         )
                     )
                 }
@@ -1819,6 +1813,9 @@ class MainActivity : AppCompatActivity() {
             Log.e("RingConfig", "Error loading config: ${e.message}")
         }
     }
+
+
+
 
 
 

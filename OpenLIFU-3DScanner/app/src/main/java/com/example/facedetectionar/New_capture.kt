@@ -581,8 +581,8 @@ class New_capture : AppCompatActivity() {
 
                 // Add cameraDistanceConfig object
                 put("cameraDistanceForFaceDetection", JSONObject().apply {
-                    put("maxDistance",-60.0)
-                    put("minDistance", -75.0)
+                    put("maxDistance",-66.0)
+                    put("minDistance", -73.0)
                 })
 
 
@@ -606,7 +606,7 @@ class New_capture : AppCompatActivity() {
 
                 put("cameraCaptureDelayAndSpeed", JSONObject().apply {
                     put("maxAllowedSpeed",0.6)
-                    put("captureDelayTime",6000)
+                    put("captureDelayTime",2000)
                 })
 
 
