@@ -92,7 +92,7 @@
             </intent-filter>
         </activity>
         <activity android:name=".FaceDetectionActivity" />
-        <activity android:name=".InstructionsActivity" />
+
     </application>
 
 </manifest>

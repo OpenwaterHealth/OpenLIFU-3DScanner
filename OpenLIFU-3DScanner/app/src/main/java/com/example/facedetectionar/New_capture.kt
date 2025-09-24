@@ -411,7 +411,7 @@ class New_capture : AppCompatActivity() {
                     put("seqID", 0)
                     put("xPoint", -0.006312673)
                     put("yPoint", 0.030656703)
-                    put("zPoint", -0.16314285)
+                    put("zPoint", 0.15819661)
                     put("verticalAngle", 30)
                     put("horizontalAngle", 0)
                 })
@@ -419,7 +419,7 @@ class New_capture : AppCompatActivity() {
                     put("seqID", 1)
                     put("xPoint", -0.06811607)
                     put("yPoint", 0.030656703)
-                    put("zPoint", -0.17293154)
+                    put("zPoint", 0.14840792)
                     put("verticalAngle", 26)
                     put("horizontalAngle", 18)
                 })
@@ -427,7 +427,7 @@ class New_capture : AppCompatActivity() {
                     put("seqID", 2)
                     put("xPoint", -0.12386973)
                     put("yPoint", 0.030656703)
-                    put("zPoint", -0.20133946)
+                    put("zPoint", 0.12000000)
                     put("verticalAngle", 27)
                     put("horizontalAngle", 36)
                 })
@@ -435,7 +435,7 @@ class New_capture : AppCompatActivity() {
                     put("seqID", 3)
                     put("xPoint", -0.16811607)
                     put("yPoint", 0.030656703)
-                    put("zPoint", -0.2455858)
+                    put("zPoint", 0.07575366)
                     put("verticalAngle", 24)
                     put("horizontalAngle", 54)
                 })
@@ -443,7 +443,7 @@ class New_capture : AppCompatActivity() {
                     put("seqID", 4)
                     put("xPoint", -0.19652398)
                     put("yPoint", 0.030656703)
-                    put("zPoint", -0.30133945)
+                    put("zPoint", 0.02000001)
                     put("verticalAngle",28)
                     put("horizontalAngle", 72)
                 })
@@ -451,7 +451,7 @@ class New_capture : AppCompatActivity() {
                     put("seqID", 5)
                     put("xPoint", -0.20631267)
                     put("yPoint", 0.030656703)
-                    put("zPoint", -0.36314285)
+                    put("zPoint", -0.04180339)
                     put("verticalAngle", 34)
                     put("horizontalAngle", 90)
                 })
@@ -459,7 +459,7 @@ class New_capture : AppCompatActivity() {
                     put("seqID", 6)
                     put("xPoint", -0.19652398)
                     put("yPoint", 0.030656703)
-                    put("zPoint", -0.42494625)
+                    put("zPoint", -0.10360679)
                     put("verticalAngle", 27)
                     put("horizontalAngle", 108)
                 })
@@ -467,7 +467,7 @@ class New_capture : AppCompatActivity() {
                     put("seqID", 7)
                     put("xPoint", -0.16811607)
                     put("yPoint", 0.030656703)
-                    put("zPoint", -0.4806999)
+                    put("zPoint", -0.15936044)
                     put("verticalAngle", 39)
                     put("horizontalAngle", 126)
                 })
@@ -475,7 +475,7 @@ class New_capture : AppCompatActivity() {
                     put("seqID", 8)
                     put("xPoint", -0.12386973)
                     put("yPoint", 0.030656703)
-                    put("zPoint", -0.5249463)
+                    put("zPoint", -0.20360684)
                     put("verticalAngle", 40)
                     put("horizontalAngle", 144)
                 })
@@ -483,7 +483,7 @@ class New_capture : AppCompatActivity() {
                     put("seqID", 9)
                     put("xPoint", -0.06811607)
                     put("yPoint", 0.030656703)
-                    put("zPoint", -0.55335415)
+                    put("zPoint", -0.23201469)
                     put("verticalAngle", 34)
                     put("horizontalAngle", 162)
                 })
@@ -491,7 +491,7 @@ class New_capture : AppCompatActivity() {
                     put("seqID", 10)
                     put("xPoint", -0.006312673)
                     put("yPoint", 0.030656703)
-                    put("zPoint", -0.56314284)
+                    put("zPoint", -0.24180338)
                     put("verticalAngle", 10)
                     put("horizontalAngle", 180)
                 })
@@ -499,7 +499,7 @@ class New_capture : AppCompatActivity() {
                     put("seqID", 11)
                     put("xPoint", 0.0554907277)
                     put("yPoint", 0.030656703)
-                    put("zPoint", -0.55335415)
+                    put("zPoint", -0.23201469)
                     put("verticalAngle", 30)
                     put("horizontalAngle", 198)
                 })
@@ -507,7 +507,7 @@ class New_capture : AppCompatActivity() {
                     put("seqID", 12)
                     put("xPoint", 0.111244376)
                     put("yPoint", 0.030656703)
-                    put("zPoint", -0.5249463)
+                    put("zPoint", -0.20360684)
                     put("verticalAngle", 40)
                     put("horizontalAngle", 216)
                 })
@@ -515,7 +515,7 @@ class New_capture : AppCompatActivity() {
                     put("seqID", 13)
                     put("xPoint", 0.15549072)
                     put("yPoint", 0.030656703)
-                    put("zPoint", -0.4806999)
+                    put("zPoint", -0.15936044)
                     put("verticalAngle", 41)
                     put("horizontalAngle", 0)
                 })
@@ -523,7 +523,7 @@ class New_capture : AppCompatActivity() {
                     put("seqID", 14)
                     put("xPoint", 0.18389865)
                     put("yPoint", 0.030656703)
-                    put("zPoint", -0.42494625)
+                    put("zPoint", -0.10360679)
                     put("verticalAngle", 20)
                     put("horizontalAngle", 234)
                 })
@@ -531,7 +531,7 @@ class New_capture : AppCompatActivity() {
                     put("seqID", 15)
                     put("xPoint", 0.19368734)
                     put("yPoint", 0.030656703)
-                    put("zPoint", -0.36314285)
+                    put("zPoint", -0.04180339)
                     put("verticalAngle", 14)
                     put("horizontalAngle", 252)
                 })
@@ -539,7 +539,7 @@ class New_capture : AppCompatActivity() {
                     put("seqID", 16)
                     put("xPoint", 0.18389865)
                     put("yPoint", 0.030656703)
-                    put("zPoint", -0.30133945)
+                    put("zPoint", 0.02000001)
                     put("verticalAngle", 27)
                     put("horizontalAngle", 270)
                 })
@@ -547,7 +547,7 @@ class New_capture : AppCompatActivity() {
                     put("seqID", 17)
                     put("xPoint", 0.15549072)
                     put("yPoint", 0.030656703)
-                    put("zPoint", -0.2455858)
+                    put("zPoint", 0.07575366)
                     put("verticalAngle", 11)
                     put("horizontalAngle", 288)
                 })
@@ -555,7 +555,7 @@ class New_capture : AppCompatActivity() {
                     put("seqID", 18)
                     put("xPoint", 0.111244376)
                     put("yPoint", 0.030656703)
-                    put("zPoint", -0.20133946)
+                    put("zPoint", 0.12000000)
                     put("verticalAngle", 12)
                     put("horizontalAngle", 306)
                 })
@@ -563,11 +563,17 @@ class New_capture : AppCompatActivity() {
                     put("seqID", 19)
                     put("xPoint", 0.0554907277)
                     put("yPoint", 0.030656703)
-                    put("zPoint", -0.17293154)
+                    put("zPoint", 0.14840792)
                     put("verticalAngle", 10)
                     put("horizontalAngle", 324)
                 })
+
             }
+
+
+
+
+
 
 
             // Wrap it in a root JSON object
@@ -581,16 +587,16 @@ class New_capture : AppCompatActivity() {
 
                 // Add cameraDistanceConfig object
                 put("cameraDistanceForFaceDetection", JSONObject().apply {
-                    put("maxDistance",-66.0)
-                    put("minDistance", -73.0)
+                    put("maxDistance",-68.0)
+                    put("minDistance", -70.0)
                 })
 
 
                 // Add cube configurations
                 put("cubeConfig", JSONObject().apply {
 
-                    put("zPosition", -0.46133946)
-                    put("cubeSize",0.27)
+
+                    put("cubeSize",0.32)
                 })
 
 
@@ -606,7 +612,7 @@ class New_capture : AppCompatActivity() {
 
                 put("cameraCaptureDelayAndSpeed", JSONObject().apply {
                     put("maxAllowedSpeed",0.6)
-                    put("captureDelayTime",2000)
+                    put("captureDelayTime",1000)
                 })
 
 

@@ -104,7 +104,7 @@ class MainActivity : AppCompatActivity() {
     private var lastToastTime: Long = 0
     private val toastCooldown = 2000L
     private var maxAllowedSpeed = 0.6f
-    private var delayCaptureBy = 2000
+    private var delayCaptureBy = 1000
     private lateinit var startButton: Button
     private lateinit var confirmButton: Button
     private lateinit var BackInStartCapture: Button
@@ -127,7 +127,9 @@ class MainActivity : AppCompatActivity() {
     private var frameCounter = 0
     private var isFaceDetected = false
     private var hasResetForCurrentFace = false
-
+    private var isModelsVisible: Boolean = false
+    private var isModelsPlaced: Boolean = false
+    private var faceCamDistance=0f
 
     data class CameraConfig(
         val minDistance: Float,
@@ -135,7 +137,6 @@ class MainActivity : AppCompatActivity() {
     )
 
     data class CubeConfig(
-        val zPosition: Float,
         val cubeSize: Float,
     )
 
@@ -148,6 +149,19 @@ class MainActivity : AppCompatActivity() {
         val ringSize: Int,
 
         )
+
+
+    data class Bucket(val start: Float, val end: Float, val value: Float)
+
+    private val BUCKETS = listOf(
+        Bucket(-70f, -68f, -0.53133946f),
+        Bucket(-65f, -63f, -0.55133946f),
+        Bucket(-60f, -58f, -0.60133946f),
+        Bucket(-55f, -53f, -0.63133946f),
+        Bucket(-50f, -48f, -0.65133946f),
+        Bucket(-45f, -43f, -0.68133946f),
+        Bucket(-37f, -35f, -0.74133946f),
+    )
 
 
     private lateinit var cameraConfigCapture: CameraConfig
@@ -197,7 +211,7 @@ class MainActivity : AppCompatActivity() {
 
 
 
-            Log.d("AllConfigs","$cameraConfigCapture,$cameraConfigDetection,$cubeConfig ,$faceRingConfig,$cameraRingConfig")
+
 
             //initialize session
             initializeARScene()
@@ -269,37 +283,16 @@ class MainActivity : AppCompatActivity() {
 
             confirmButton.setOnClickListener{
                 try {
+                    isModelsVisible=true
+                    cubeNode?.isVisible =true
                     faceOutline.visibility = View.GONE;
                     confirmButton.visibility = View.GONE;
                     mainScreenSubTitle.text = "Review the Planned Camera Poses"
                     initialCancelButton.visibility = View.GONE;
                     BackInStartCapture.visibility = View.VISIBLE
                     startButton.visibility = View.VISIBLE;
-
-                    // Add callback for completion
-                    placeWhenTracking(
-                        onSuccess = {
-                            runOnUiThread {
-
-                                isFaceDetected = true
-                                faceOverlayView.visibility = View.GONE
-                                distanceLabel.visibility = View.GONE
-                                moveBackText.visibility = View.VISIBLE
-                                Toast.makeText(this, "Models placed successfully!", Toast.LENGTH_SHORT).show()
-                            }
-                        },
-                        onError = { error ->
-                            runOnUiThread {
-
-                                confirmButton.isEnabled = true
-                                confirmButton.visibility = View.VISIBLE
-                                Toast.makeText(this, "Failed: $error. Try again.", Toast.LENGTH_LONG).show()
-                                Log.e("Placement", "Error: $error")
-                            }
-                        }
-                    )
                     isFaceDetected = true
-                    faceOverlayView.visibility = View.GONE;
+                    faceOverlayView.visibility = View.GONE
                     distanceLabel.visibility = View.GONE
                     moveBackText.visibility = View.VISIBLE
 
@@ -510,6 +503,9 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+
+
+
     fun placeWhenTracking(
         onSuccess: () -> Unit,
         onError: (String) -> Unit
@@ -521,7 +517,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         if (frame.camera.trackingState != TrackingState.TRACKING) {
-            showToast("Camera not ready. Hold still!")
+//            showToast("Camera not ready. Hold still!")
             sceneView.postDelayed({ placeWhenTracking(onSuccess, onError) }, 200)
             return
         }
@@ -781,7 +777,7 @@ class MainActivity : AppCompatActivity() {
             val dotFacing = Vector3.dot(cameraForward, directionToBullet)
 
             if (depth in dynamicMin..dynamicMax && dotFacing > 0.5f) {
-                bulletNode.isVisible = true
+                bulletNode.isVisible = isModelsVisible
             } else {
                 bulletNode.isVisible = false
             }
@@ -796,7 +792,7 @@ class MainActivity : AppCompatActivity() {
         // Set up frame processing
         sceneView.onSessionUpdated = { session, frame ->
             // Capture initial camera position when tracking starts
-             if (!loggedInitialCamera) {
+            if (!loggedInitialCamera) {
                 initialCameraPose = frame.camera.pose
                 loggedInitialCamera = true
             }
@@ -813,25 +809,48 @@ class MainActivity : AppCompatActivity() {
     }
 
 
+    fun approxFromRange(a: Float, b: Float): Float {
+        val lo = minOf(a, b)
+        val hi = maxOf(a, b)
+
+        // 1) Exact bucket match (range fully inside a bucket)
+        BUCKETS.firstOrNull { lo >= it.start && hi <= it.end }?.let { return it.value }
+
+        // 2) If the midpoint falls inside a bucket, use that bucket’s value
+        val mid = (lo + hi) * 0.5f
+        BUCKETS.firstOrNull { mid >= it.start && mid <= it.end }?.let { return it.value }
+
+        // 3) Fallback: linear approximation from your samples
+        // y ≈ m*x + c  (fit from (-69,-0.5313) to (-36,-0.7413))
+        val m = -0.0063636f
+        val c = -0.9810f
+        val final= m * mid + c
+        return final
+    }
+
+
+
 
 
 
 
     // Function to place the cube model on head
     private fun placeCube() {
+
         val frame = sceneView.session?.frame
-        if (frame == null) {
-            showToast("Camera frame not available")
-            return
-        }
         try {
             val session = sceneView.session ?: return
-            val cameraPose = initialCameraPose ?: frame.camera.pose
-             val cameraShiftXPose = frame.camera.pose?.extractTranslation()?.tx()
+            val cameraPose = frame?.camera?.pose?:return
+            val cameraPosition = Vector3(cameraPose.tx(), cameraPose.ty(), cameraPose.tz())
 
 
-            Log.d("cameraShiftXPose","$cameraShiftXPose")
-            val anchor = session.createAnchor(cameraPose)
+            // Create only one anchor at camera position
+            val anchorPose = Pose(
+                floatArrayOf(cameraPosition.x, cameraPosition.y, cameraPosition.z),
+                floatArrayOf(0f, 0f, 0f, 1f) // No initial rotation on anchor
+            )
+
+            val anchor = session.createAnchor(anchorPose)
 
             // Attach anchor to scene
             anchorNode = AnchorNode(sceneView.engine, anchor).apply {
@@ -843,10 +862,9 @@ class MainActivity : AppCompatActivity() {
 
             //Place each arrow model relative to anchor
 
-            val xPoint = 0.061244376-cameraShiftXPose!!.toFloat()// Shift cube slightly to the right
-            val yPoint = -0.200656703// Raise cube slightly upward
-            val zPoint =
-                cubeConfig.zPosition   // Push cube slightly further back to match ring depth
+            val xPoint = 0.061244376  // Shift cube slightly to the right
+            val yPoint =  -0.200656703 // Raise cube slightly upward
+            val zPoint = approxFromRange(cameraConfigDetection.minDistance,cameraConfigDetection.minDistance)// Push cube slightly further back to match ring depth
 
 
 
@@ -878,21 +896,27 @@ class MainActivity : AppCompatActivity() {
                     sceneView.modelLoader.loadModelInstance(faceCubeUri)?.let { modelInstance ->
 
                         modelInstance.materialInstances.forEach { materialInstance ->
-                        }
-                        cubeNode = ModelNode(
-                            modelInstance = modelInstance,
-                            scaleToUnits = cubeConfig.cubeSize
-                        ).apply {
-                            isPositionEditable = false
-                            isTouchable=false
-                            transform(position = offsetFloat3, rotation = combinedRotation3)
+
+                            cubeNode = ModelNode(
+                                modelInstance = modelInstance,
+                                scaleToUnits = cubeConfig.cubeSize ,
+                                autoAnimate = true,
+                                centerOrigin = null
+                            ).apply {
+                                isPositionEditable = false
+                                isVisible=isModelsVisible
+                                transform(position = offsetFloat3, rotation = combinedRotation3)
+
+
+                            }
+
+                            cubeNode?.let {
+                                anchorNode.addChildNode(it)
+                                sceneView.addChildNode(anchorNode)
+                            }
 
                         }
 
-                        cubeNode?.let {
-                            anchorNode.addChildNode(it)
-                            sceneView.addChildNode(anchorNode)
-                        }
 
                     }
                 } catch (e: Exception) {
@@ -943,7 +967,6 @@ class MainActivity : AppCompatActivity() {
 
             val session = sceneView.session ?: return
             val cameraPose = frame.camera.pose?:return
-            val cameraShiftXPose = frame.camera.pose?.extractTranslation()?.tx()
             val cameraPosition = Vector3(cameraPose.tx(), cameraPose.ty(), cameraPose.tz())
             // Create only one anchor at camera position
             val anchorPose = Pose(
@@ -964,9 +987,9 @@ class MainActivity : AppCompatActivity() {
                 val offsetVector = Vector3(
                     bulletObj.xPoint.toFloat(),
                     bulletObj.yPoint.toFloat(),
-                    bulletObj.zPoint.toFloat()
+                    bulletObj.zPoint.toFloat() +  approxFromRange(cameraConfigDetection.minDistance,cameraConfigDetection.minDistance)+0.15f
                 )
-                val offsetFloat3 = Float3(offsetVector.x-cameraShiftXPose!!.toFloat(), offsetVector.y, offsetVector.z)
+                val offsetFloat3 = Float3(offsetVector.x, offsetVector.y, offsetVector.z)
 
                 var verticalAngle=-bulletObj.verticalAngle.toFloat();
                 var horizontalAngle=-bulletObj.horizontalAngle.toFloat();
@@ -1101,7 +1124,7 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
 
-                val debugText = findViewById<TextView>(R.id.debugText)
+
                 minAngleText.text = "Ring  :${currentRingIndex}"
                 maxAngleText.text = "Angle  :${ringAngle}"
             }
@@ -1228,7 +1251,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun resetARSession() {
         try {
-            showLoading("Repositioning models...")
+            showLoading(" Hold still! \n Repositioning models.")
 
             val restartIntent = intent
             restartIntent.putExtra(EXTRA_ALREADY_RESET, true) // mark that we reset
@@ -1261,7 +1284,7 @@ class MainActivity : AppCompatActivity() {
                     .addOnSuccessListener { faceMeshes ->
                         if (faceMeshes.isNotEmpty()) {
                             val faceMesh = faceMeshes[0]
-                             val allPoints = faceMesh.allPoints
+                            val allPoints = faceMesh.allPoints
                             val noseZ = allPoints.get(1)?.position?.z ?: 0f
 
 
@@ -1274,7 +1297,8 @@ class MainActivity : AppCompatActivity() {
 
                             isAnyFace = true
 
-                            // Apply logic based on face size + z-depth
+
+
 
                             when {
                                 noseZ < cameraConfigDetection.minDistance -> {
@@ -1283,6 +1307,7 @@ class MainActivity : AppCompatActivity() {
                                         "updateDistanceLabel Move Back" + isFaceDetected
                                     )
                                     updateDistanceLabel("Move Away")
+                                    confirmButton.isEnabled=false
                                 }
 
                                 noseZ > cameraConfigDetection.maxDistance -> {
@@ -1291,12 +1316,27 @@ class MainActivity : AppCompatActivity() {
                                         "updateDistanceLabel MOVE Close" + isFaceDetected
                                     )
                                     updateDistanceLabel("Move Closer")
+                                    confirmButton.isEnabled=false
                                 }
 
                                 else -> {
                                     Log.d("isFaceDetected", "updateDistanceLabel DETECTED" + noseZ)
                                     updateDistanceLabel("Subject Detected")
                                     confirmButton.isEnabled = true
+
+                                    if(isModelsPlaced==false){
+                                        faceCamDistance=noseZ
+                                        isModelsPlaced=true;
+                                        placeWhenTracking(
+                                            onSuccess = {},
+                                            onError = { error ->
+                                                runOnUiThread {
+                                                    Toast.makeText(this, "Failed: $error. Try again.", Toast.LENGTH_LONG).show()
+                                                    Log.e("Placement", "Error: $error")
+                                                }
+                                            }
+                                        )
+                                    }
 
 
 
@@ -1773,16 +1813,15 @@ class MainActivity : AppCompatActivity() {
             // Load cameraDistanceForFaceDetection
             root.optJSONObject("cameraDistanceForFaceDetection")?.let { obj ->
                 cameraConfigDetection = CameraConfig(
-                    minDistance = obj.optDouble("minDistance", -75.0).toFloat(),
-                    maxDistance = obj.optDouble("maxDistance", -60.0).toFloat()
+                    minDistance = obj.optDouble("minDistance", -70.0).toFloat(),
+                    maxDistance = obj.optDouble("maxDistance", -68.0).toFloat()
                 )
             }
 
             // Load cubeConfig
             root.optJSONObject("cubeConfig")?.let { obj ->
                 cubeConfig = CubeConfig(
-                    zPosition = obj.optDouble("zPosition", -0.46133946).toFloat(),
-                    cubeSize = obj.optDouble("cubeSize", 0.27).toFloat()
+                    cubeSize = obj.optDouble("cubeSize", 0.32).toFloat()
                 )
             }
 
@@ -1803,7 +1842,7 @@ class MainActivity : AppCompatActivity() {
 
             root.optJSONObject("cameraCaptureDelayAndSpeed")?.let { obj ->
                 maxAllowedSpeed =obj.optDouble("maxAllowedSpeed", 0.6).toFloat()
-                delayCaptureBy=obj.optInt("captureDelayTime",2000)
+                delayCaptureBy=obj.optInt("captureDelayTime",1000)
 
             }
 
