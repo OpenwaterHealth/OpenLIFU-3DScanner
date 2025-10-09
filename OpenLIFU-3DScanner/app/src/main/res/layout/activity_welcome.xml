@@ -116,7 +116,7 @@
         android:layout_height="30dp"
         android:layout_marginTop="36dp"
         android:gravity="center_vertical"
-        android:text="VER 0.5.6"
+        android:text="VER 0.6"
         android:textColor="@color/white"
         app:layout_constraintEnd_toStartOf="@+id/textViewDisclaimer"
         app:layout_constraintHorizontal_bias="0.68"

@@ -14,7 +14,7 @@ android {
         minSdk = 28
         targetSdk = 35
         versionCode = 1
-        versionName = "0.5.6"
+        versionName = "0.6"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
@@ -58,8 +58,19 @@ dependencies {
     implementation("com.google.mlkit:face-mesh-detection:16.0.0-beta3")
     implementation("androidx.cardview:cardview:1.0.0")
     implementation ("com.google.mlkit:barcode-scanning:17.2.0")
+    implementation ("com.google.android.material:material:1.12.0")
 
+    implementation ("org.opencv:opencv:4.12.0")
+    configurations.configureEach {
+        exclude(group = "com.google.mediapipe", module = "solution-core")
+    }
 
+// Include the necessary MediaPipe modules
+    implementation("com.google.mediapipe:tasks-core:0.20230731")
+    implementation("com.google.mediapipe:tasks-vision:0.20230731")
+    implementation("com.google.mediapipe:facemesh:0.10.20")
+    implementation("com.google.mediapipe:facedetection:0.10.20")
+    implementation("com.google.mediapipe:hands:0.10.20")
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -81,6 +92,7 @@ dependencies {
     implementation(libs.material)
     implementation(libs.androidx.activity)
     implementation(libs.androidx.recyclerview)
+//    implementation(libs.genai.common)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

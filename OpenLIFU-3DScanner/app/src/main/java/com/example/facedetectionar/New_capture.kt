@@ -568,6 +568,15 @@ class New_capture : AppCompatActivity() {
                     put("horizontalAngle", 324)
                 })
 
+                put(JSONObject().apply {
+                    put("seqID", 20)
+                    put("xPoint", 0.0)
+                    put("yPoint", 0.0)
+                    put("zPoint", 0.0)
+                    put("verticalAngle", 90)
+                    put("horizontalAngle", 0)
+                })
+
             }
 
 
@@ -587,8 +596,8 @@ class New_capture : AppCompatActivity() {
 
                 // Add cameraDistanceConfig object
                 put("cameraDistanceForFaceDetection", JSONObject().apply {
-                    put("maxDistance",-68.0)
-                    put("minDistance", -70.0)
+                    put("maxDistance",-9.0)
+                    put("minDistance", -10.0)
                 })
 
 
@@ -596,7 +605,7 @@ class New_capture : AppCompatActivity() {
                 put("cubeConfig", JSONObject().apply {
 
 
-                    put("cubeSize",0.32)
+                    put("cubeSize",0.35)
                 })
 
 

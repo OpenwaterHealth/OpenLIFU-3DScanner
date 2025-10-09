@@ -25,22 +25,19 @@ import android.os.Build
 import android.os.Bundle
 import android.os.CountDownTimer
 import android.os.Environment
-import android.os.Handler
-import android.os.Looper
 import android.util.Log
 import android.util.SparseIntArray
+import android.view.Gravity
 import android.view.Surface
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.FrameLayout
 import android.widget.ImageView
-import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
-import androidx.collection.ObjectLongMap
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -54,9 +51,6 @@ import com.google.ar.core.Frame
 import com.google.ar.core.Pose
 import com.google.ar.core.TrackingState
 import com.google.ar.core.exceptions.UnavailableException
-import com.google.mlkit.vision.common.InputImage
-import com.google.mlkit.vision.facemesh.FaceMeshDetection
-import com.google.mlkit.vision.facemesh.FaceMeshDetectorOptions
 import dev.romainguy.kotlin.math.Float3
 import dev.romainguy.kotlin.math.Quaternion
 import io.github.sceneview.ar.ARSceneView
@@ -75,7 +69,18 @@ import java.io.File
 import java.io.FileOutputStream
 import kotlin.math.sqrt
 import androidx.core.graphics.toColorInt
-import com.google.ar.core.Session
+import com.google.mediapipe.framework.image.BitmapImageBuilder
+import com.google.mlkit.vision.facemesh.FaceMesh
+// MediaPipe Tasks
+import com.google.mediapipe.tasks.core.BaseOptions
+import com.google.mediapipe.tasks.vision.core.RunningMode
+import com.google.mediapipe.tasks.vision.facelandmarker.FaceLandmarker
+import com.google.mediapipe.framework.image.MPImage
+import com.google.mediapipe.tasks.vision.core.ImageProcessingOptions
+import io.github.sceneview.math.Direction
+import org.opencv.core.Mat
+import org.opencv.core.MatOfDouble
+import java.util.Locale
 
 
 class MainActivity : AppCompatActivity() {
@@ -85,14 +90,35 @@ class MainActivity : AppCompatActivity() {
 
     }
 
+    // --- MediaPipe Face Landmarker ---
+    private lateinit var mpFaceLandmarker: FaceLandmarker
+    private var mpReady = false
+    private var lastMpLandmarks: List<com.google.mediapipe.tasks.components.containers.NormalizedLandmark> = emptyList()
+
+    private lateinit var angleHud: TextView
+    private var showAngleHud = true
+    private lateinit var pivotNode: Node;
+    // Tracks the pivot's current local transform (relative to its AnchorNode)
+    private var angleLogFrame = 0
+
+    private var pivotBaseQ = Quaternion(0f, 0f, 0f, 1f)
+
+    private var userYawDeg: Float = 0f                 // extra yaw you control
+    private var userYawInHeadSpace: Boolean = true     // rotate about head's up axis
+
+    private var angleDegG: Double? =null
+    private var yawLRDegG= 0.0F
+    private var pitchUDegG: Double? =null
+
 
     private var cubeNode: ModelNode? = null
     private lateinit var sceneView: ARSceneView
     private lateinit var anchorNode: AnchorNode;
-    private var latestNosePosition: Float3? = null
 
+    private lateinit var latestNosePosition: Point3D
+    private lateinit var latestCamPosition: Point3D
 
-
+    private var zDistance=0.0f;
 
     val capturedModelList = mutableSetOf<Node>()
     val nonCapturedModelList = mutableListOf<ModelNode>()
@@ -113,23 +139,44 @@ class MainActivity : AppCompatActivity() {
     private var referenceNumber: String = "DEFAULT_REF"
     private var imageCounter: Int = 1
     private var IsCaptureStarted: Boolean = true
+    private var IsTrackingStarted: Boolean = false
     private lateinit var distanceLabel: TextView
     private lateinit var faceOverlayView: FaceOverlayView
+
     private val arrowList = mutableListOf<bulletPointConfig>()
     private lateinit var sensorManager: SensorManager
     private lateinit var rotationVectorSensor: Sensor
     private val rotationMatrix = FloatArray(9)
     private val orientationAngles = FloatArray(3)
     private var angleString = 0
+    private var adjustedZ = 0.0f
     private lateinit var minAngleText: TextView
     private lateinit var maxAngleText: TextView
     private lateinit var faceRing: ImageView
     private var frameCounter = 0
     private var isFaceDetected = false
     private var hasResetForCurrentFace = false
-    private var isModelsVisible: Boolean = false
-    private var isModelsPlaced: Boolean = false
-    private var faceCamDistance=0f
+
+    private var lastFaceDetectTime = 0L
+
+
+    private  val ROT_FIX_X_DEG = 0f      // try 0 / ±90
+    private  val ROT_FIX_Y_DEG = 0f      // if you see a corner, try ±45 or 180
+    private  val ROT_FIX_Z_DEG = 0f
+
+    private lateinit var angleFilter:AngleNoiseFilter
+
+
+
+
+    private var mesh1 : FaceMesh?=null
+
+    private var emaDist: Float? = null
+    private val DIST_ALPHA = 0.25f  // 0..1 (higher = snappier)
+
+    /** Simple EMA smoothing for a Float */
+    private fun ema(prev: Float?, cur: Float, a: Float): Float =
+        if (prev == null) cur else prev + a * (cur - prev)
 
     data class CameraConfig(
         val minDistance: Float,
@@ -139,6 +186,8 @@ class MainActivity : AppCompatActivity() {
     data class CubeConfig(
         val cubeSize: Float,
     )
+
+    data class Point3D(val x: Double, val y: Double, val z: Double)
 
     data class FaceRingConfig(
         val initialRingSize: Float,
@@ -178,6 +227,13 @@ class MainActivity : AppCompatActivity() {
     private var captureTimer: CountDownTimer? = null
     private var initialCameraPose: Pose? = null
 
+    private lateinit var faceThread: android.os.HandlerThread
+    private lateinit var faceHandler: android.os.Handler
+    @Volatile private var isProcessingFrame = false
+    private val TARGET_FPS = 10
+    private val MIN_INTERVAL_NS = 1_000_000_000L / TARGET_FPS // 33,333,333 ns
+    private var lastDispatchTimestampNs = 0L
+
 
     private fun showLoading(message: String = "Initializing...") {
         runOnUiThread {
@@ -192,19 +248,106 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun getFaceDistanceMeters(): Pair<Float, Float>? {
+        val frame = sceneView.session?.frame ?: return null
+        val cam = frame.camera
+        if (lastMpLandmarks.isEmpty()) return null
 
+        return try {
+            // Build PnP inputs
+            val objPts = model3dMat()
+            val imgPts = mp2dToPixels(lastMpLandmarks, cam)
+            val K = cameraMatrixFromAR(cam)
+            val dist = MatOfDouble(Mat.zeros(1, 5, org.opencv.core.CvType.CV_64F))
 
+            // Solve head -> camera pose
+            val rvec = Mat()
+            val tvec = Mat()
+            org.opencv.calib3d.Calib3d.solvePnP(
+                objPts, imgPts, K, dist, rvec, tvec, false,
+                org.opencv.calib3d.Calib3d.SOLVEPNP_ITERATIVE
+            )
 
+            // OpenCV camera coords (X right, Y down, Z forward in meters)
+            val tx = tvec.get(0, 0)[0]
+            val ty = tvec.get(1, 0)[0]
+            val tz = tvec.get(2, 0)[0]
 
+            val total = kotlin.math.sqrt(tx*tx + ty*ty + tz*tz).toFloat()  // Euclidean distance
+            val depth = tz.toFloat()                                       // forward along camera axis
 
+            // Optional smoothing
+            val smooth = ema(emaDist, total, DIST_ALPHA).also { emaDist = it }
+            Pair(smooth, depth)
 
+        } catch (e: Exception) {
+            android.util.Log.e("FaceDistance", "Failed: ${e.message}")
+            null
+        }
+    }
 
+    private fun setupAngleHud() {
+        angleHud = TextView(this).apply {
+            text = "—"
+            textSize = 13f
+            typeface = android.graphics.Typeface.MONOSPACE
+            setTextColor(android.graphics.Color.WHITE)
+            setPadding(12, 8, 12, 8)
+            setBackgroundColor(0x66000000) // semi-transparent black
+        }
+        val lp = FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.WRAP_CONTENT,
+            FrameLayout.LayoutParams.WRAP_CONTENT
+        ).apply {
+            gravity = Gravity.TOP or Gravity.START
+            leftMargin = 16
+            topMargin = 16
+        }
+        addContentView(angleHud, lp)
+    }
+
+    private fun setConfirmEnabled(enabled: Boolean) = runOnUiThread {
+        if (confirmButton.isEnabled != enabled) confirmButton.isEnabled = enabled
+    }
+
+    private fun updateAngleHud(yaw: Float) {
+        if (!showAngleHud) return
+        val s = String.format(Locale.US, "Shift Angle %.1f°",yaw)
+        runOnUiThread {
+            angleHud.text = s
+            angleHud.visibility = android.view.View.VISIBLE
+        }
+    }
+    private fun deg(d: Float) = Math.toRadians(d.toDouble()).toFloat()
+
+    private fun modelCorrectionQuat(): dev.romainguy.kotlin.math.Quaternion =
+        createQuaternionFromAxisAngle(Vector3(1f,0f,0f), deg(ROT_FIX_X_DEG)) *
+                createQuaternionFromAxisAngle(Vector3(0f,1f,0f), deg(ROT_FIX_Y_DEG)) *
+                createQuaternionFromAxisAngle(Vector3(0f,0f,1f), deg(ROT_FIX_Z_DEG))
 
     override fun onCreate(savedInstanceState: Bundle?) {
         try {
             super.onCreate(savedInstanceState)
             setContentView(R.layout.activity_main)
             // Load arrow data from JSON
+
+            setupAngleHud()
+
+            angleFilter = AngleNoiseFilter(
+                windowSize =  9,   // try 7–11 for your stream
+                deadband   = 0.5f,            // ignore micro-jitter within ±0.2°
+                emaAlpha   = 0.29f,           // higher = more responsive
+                maxDegPerSec = 300f,          // raise for snappier tracking
+                fpsHint    = 30f              // your processing FPS
+            )
+
+            faceThread = android.os.HandlerThread("FaceDetectThread")
+            faceThread.start()
+            faceHandler = android.os.Handler(faceThread.looper)
+
+            setupMediaPipeLandmarker()
+            Log.i("OPENCV","LINE0")
+
             loadsDataFromJson()
 
             loadsCameraConfigFromJson();
@@ -252,6 +395,9 @@ class MainActivity : AppCompatActivity() {
             val mainScreenSubTitle = findViewById<TextView>(R.id.mainScreenSubTitle)
             val imageCountText = findViewById<TextView>(R.id.imageCountText)
             val faceOutline = findViewById<ImageView>(R.id.faceOutline)
+//            val plusButton = findViewById<Button>(R.id.plusButton)
+//            val minusButton = findViewById<Button>(R.id.minusButton)
+
             val moveBackText = findViewById<TextView>(R.id.MoveBackText)
             val angleContainer = findViewById<ConstraintLayout>(R.id.angleContainer)
             faceRing=findViewById<ImageView>(R.id.faceRing)
@@ -272,18 +418,20 @@ class MainActivity : AppCompatActivity() {
             maxAngleText = findViewById<TextView>(R.id.maxAngleText)
             referenceNumber = intent.getStringExtra("REFERENCE_NUMBER") ?: "DEFAULT_REF"
 
-
-
-
-
-
-
-
-
-
             confirmButton.setOnClickListener{
                 try {
-                    isModelsVisible=true
+
+                    Log.d("PlacementFlow","Confirm Clicked")
+                    placeWhenTracking(
+
+                        onSuccess = {},
+                        onError = { error ->
+                            runOnUiThread {
+                                Toast.makeText(this, "Failed: $error. Try again.", Toast.LENGTH_LONG).show()
+                                Log.e("Placement", "Error: $error")
+                            }
+                        }
+                    )
                     cubeNode?.isVisible =true
                     faceOutline.visibility = View.GONE;
                     confirmButton.visibility = View.GONE;
@@ -296,14 +444,12 @@ class MainActivity : AppCompatActivity() {
                     distanceLabel.visibility = View.GONE
                     moveBackText.visibility = View.VISIBLE
 
+
+
                 }catch (e: Exception){
-                    Log.d("ConfirmButtonLogs","Error in confirm button"+e.message.toString())
+                    Log.d("PlacementFlow","Error in confirm button"+e.message.toString())
                 }
             }
-
-
-
-
             initialCancelButton.setOnClickListener {
                 try {
                     val intent = Intent(this, New_capture::class.java).apply {
@@ -311,6 +457,7 @@ class MainActivity : AppCompatActivity() {
                     }
                     startActivity(intent)
                     finish()
+
                 } catch (e: Exception) {
                     Log.e("CancelButton", "Error starting activity", e)
                     Toast.makeText(this, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
@@ -318,39 +465,136 @@ class MainActivity : AppCompatActivity() {
             }
 
 
+
+//            var pivotLocalPos = Float3(0.261244386f, 0.09934329f, mapFloat(latestNosePosition.z*100+adjustedZ,-5f,-12f,-0.85133916f,-0.55133945f).toFloat())
+
+//            fun shiftPivotBackBy(str: String) {
+//                if (!::pivotNode.isInitialized) {
+//                    Log.w("PivotShift", "pivotNode not initialized yet; ignoring shift.")
+//                    return
+//                }
+//                // Subtract from z (e.g., z = -0.5713 -> -0.6213 if amount = 0.05)
+//
+//                if(str=="Plus"){
+//                    pivotLocalPos = Float3(pivotLocalPos.x, pivotLocalPos.y, pivotLocalPos.z + 0.02f)
+//                }else{
+//                    pivotLocalPos = Float3(pivotLocalPos.x, pivotLocalPos.y, pivotLocalPos.z - 0.02f)
+//                }
+//
+//                pivotNode.transform(position = pivotLocalPos, quaternion = pivotBaseQ)
+//                Log.d("NewPositionIS","New Position is ${pivotLocalPos.z}")
+//            }
+//            plusButton.setOnClickListener {
+//                shiftPivotBackBy("Plus")
+//            }
+//
+//            minusButton.setOnClickListener {
+//                shiftPivotBackBy("Minus")
+//            }
+
+
+
+
+
+
+
+            fun clearAnchorsAndNodes() {
+                // Stop any pending countdown/capture
+                try {
+                    captureTimer?.cancel()
+                    captureTimer = null
+                    isCaptureInProgress = false
+                } catch (_: Exception) {}
+
+                // Remove ring/cube nodes from the pivot
+                try {
+                    nonCapturedModelList.forEach { node ->
+                        runCatching { pivotNode.removeChildNode(node) }
+                    }
+                    nonCapturedModelList.clear()
+                    capturedModelList.clear()
+                    activeRing = null
+                } catch (_: Exception) {}
+
+                // Remove cube if present
+                cubeNode?.let {
+                    runCatching { pivotNode.removeChildNode(it) }
+                }
+                cubeNode = null
+
+                // Detach and remove the pivot (if it was added)
+                if (::pivotNode.isInitialized) {
+                    runCatching { sceneView.removeChildNode(pivotNode) }
+                }
+
+                // Detach and remove the main anchor
+                if (::anchorNode.isInitialized) {
+                    runCatching { anchorNode.anchor?.detach() }
+                    runCatching { sceneView.removeChildNode(anchorNode) }
+                }
+
+                // Safety: remove any stray AnchorNodes that may exist
+                sceneView.childNodes
+                    .filterIsInstance<AnchorNode>()
+                    .forEach { an ->
+                        runCatching { an.anchor?.detach() }
+                        runCatching { sceneView.removeChildNode(an) }
+                    }
+
+
+                currentRingIndex = 0
+                faceRing.visibility = View.GONE
+
+            }
+
+
+
+
+
+
+
+
             BackInStartCapture.setOnClickListener {
                 // Hide UI elements
+                IsTrackingStarted=false
+
                 BackInStartCapture.visibility = View.GONE
                 mainScreenSubTitle.text = "Position the Subject in the Frame"
                 startButton.visibility = View.GONE
                 confirmButton.visibility = View.VISIBLE
                 faceOverlayView.visibility = View.VISIBLE
-
                 // Clear face detection state
                 isFaceDetected = false
-                faceOverlayView.updatePoints(emptyList(), 0, 0,null)
+
                 if (!isFaceDetected) {
-                    confirmButton.isEnabled = false
+
+                    setConfirmEnabled(false)
                 }
                 initialCancelButton.visibility = View.VISIBLE
                 faceOutline.visibility = View.VISIBLE
-
                 currentRingIndex = 0 // Reset ring index
                 moveBackText.visibility = View.GONE
                 distanceLabel.visibility = View.VISIBLE
-
                 // Reset any other relevant state
                 updateDistanceLabel("Subject not in Frame")
 
-                resetARSession()
+                //remove all anchors and nodes
+                clearAnchorsAndNodes()
 
             }
+
+
+
+
+
+
+
 
             startButton.setOnClickListener {
 
                 // Remove the cube if it exists
                 cubeNode?.let {
-                    anchorNode.removeChildNode(it)
+                    pivotNode.removeChildNode(it)
                     cubeNode = null
 
                 }
@@ -383,17 +627,20 @@ class MainActivity : AppCompatActivity() {
                 startBlinkingAnimation(leftArrowInstruction)
                 leftArrowInstruction.postDelayed({
                     leftArrowInstruction.visibility = View.GONE
-                    startTrackingRings();
+                    //will start Tracking
+                    IsTrackingStarted=true
                     initSensorListener()}, 3000)
             }
+
+
+
 
             stopButton.setOnClickListener {
                 stopButton.visibility = View.GONE
                 if (IsCaptureStarted) {
                     IsCaptureStarted = false
+                    IsTrackingStarted=false
                     updateDistanceLabel("Paused");
-
-
                 }
                 endCaptureButton.visibility = View.VISIBLE
                 resumeCaptureButton.visibility = View.VISIBLE
@@ -403,6 +650,7 @@ class MainActivity : AppCompatActivity() {
             resumeCaptureButton.setOnClickListener {
                 if (!IsCaptureStarted) {
                     IsCaptureStarted = true
+                    IsTrackingStarted=true
                 }
                 resumeCaptureButton.visibility = View.GONE
                 endCaptureButton.visibility = View.GONE
@@ -496,6 +744,34 @@ class MainActivity : AppCompatActivity() {
 
     }
 
+    private fun setupMediaPipeLandmarker() {
+        try {
+            val base = BaseOptions.builder()
+                .setModelAssetPath("face_landmarker.task")
+                .build()
+
+            val options = FaceLandmarker.FaceLandmarkerOptions.builder()
+                .setBaseOptions(base)
+                .setNumFaces(1)
+                .setRunningMode(RunningMode.IMAGE) // we pass a Bitmap each time
+                .build()
+
+            mpFaceLandmarker = FaceLandmarker.createFromOptions(this, options)
+            mpReady = true
+            Log.d("MP", "Face Landmarker ready")
+        } catch (e: Exception) {
+            mpReady = false
+            Log.e("MP", "Failed to init Face Landmarker: ${e.message}")
+            Toast.makeText(this, "Face Landmarker init failed", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        if (::faceThread.isInitialized) {
+            faceThread.quitSafely()
+        }
+    }
 
     private fun showToast(message: String) {
         runOnUiThread {
@@ -504,57 +780,231 @@ class MainActivity : AppCompatActivity() {
     }
 
 
+    private fun applyOrbitYaw(deg: Float) {
+        Log.d("NewPositionIS","Angle was $deg")
+        val yawQ = Quaternion.fromAxisAngle(Direction(0f, 1f, 0f), deg)
+        val finalQ = pivotBaseQ * yawQ
+        pivotNode?.transform(quaternion = finalQ)
+    }
+
+    fun mapFloat(x: Double, inMin: Float, inMax: Float, outMin: Float, outMax: Float): Double {
+        return (x - inMin) * (outMax - outMin) / (inMax - inMin) + outMin
+    }
 
 
     fun placeWhenTracking(
         onSuccess: () -> Unit,
         onError: (String) -> Unit
     ) {
-        val frame = sceneView.session?.frame
-        if (frame == null) {
-            onError("Camera frame not available")
-            return
-        }
 
+        Log.d("PlacementFlow","Done 1")
+        val frame = sceneView.session?.frame ?: return onError("Camera frame not available")
+        Log.d("PlacementFlow","Done 2")
         if (frame.camera.trackingState != TrackingState.TRACKING) {
-//            showToast("Camera not ready. Hold still!")
             sceneView.postDelayed({ placeWhenTracking(onSuccess, onError) }, 200)
             return
         }
 
+        Log.d("PlacementFlow","Done 3")
+
         try {
-            // Use the current session, not the stored one
-            val session = sceneView.session ?: return onError("AR session not available")
-            val cameraPose = initialCameraPose ?: frame.camera.pose
-            val anchor = session.createAnchor(cameraPose)
-            anchorNode = AnchorNode(sceneView.engine, anchor).apply {
-                isEditable = true
-            }
+            Log.d("PlacementFlow","Done 4")
+            val session = sceneView.session ?: return onError("No AR session")
+            val cameraPose = frame.camera.pose
+
+            // Anchor at camera position WITH yaw baked in
+            val anchorPose = Pose(
+                floatArrayOf(cameraPose.tx(), cameraPose.ty(), cameraPose.tz()),
+                floatArrayOf(cameraPose.qx(), cameraPose.qy(), cameraPose.qz(),cameraPose.qw()),
+            )
+            val anchor = session.createAnchor(anchorPose)
+            anchorNode = AnchorNode(sceneView.engine, anchor).apply { isEditable = true }
             sceneView.addChildNode(anchorNode)
 
-            // Place models sequentially
+            //computeHere
+            val xPoint = 0.261244386f             //up down
+            val yPoint = 0.09934329f-0.02f
+//            val zPoint = -0.57133945f
+
+            val zPoint=mapFloat(latestNosePosition.z*100+adjustedZ,-5f,-12f,-0.85133916f,-0.55133945f)
+            Log.d("NewPositionIS"," Adjusted BY ${latestNosePosition.z*100+adjustedZ}")
+
+
+
+
+
+
+
+
+            // 🟡 Position offset for this circle
+            val offsetVector = Vector3(
+                xPoint.toFloat(),
+                yPoint.toFloat(),
+                zPoint.toFloat()
+            )
+            val offsetFloat3 = Float3(offsetVector.x, offsetVector.y, offsetVector.z)
+
+
+
+
+
+            val orbitNode = Node(sceneView.engine).apply {parent = anchorNode }
+            pivotNode = orbitNode
+            val correctionQ = createQuaternionFromAxisAngle(Vector3(0f, 0f, 1f), 90f)
+            pivotBaseQ = correctionQ
+            pivotNode.transform(position = offsetFloat3, quaternion = correctionQ)
+
+
+            pivotNode.transform(
+                position = offsetFloat3,
+                quaternion = correctionQ
+            )
+
+
+
+            if(yawLRDegG<=10f && yawLRDegG>=-10f){
+                applyOrbitYaw(0f)
+            }else{
+                var shiftBy=0.0f;
+
+                if(yawLRDegG<0){
+                    shiftBy=yawLRDegG-10f
+                }else{
+                    shiftBy=yawLRDegG+10f
+                }
+                applyOrbitYaw(shiftBy)
+            }
+
+
+
+
+
+
+
+
+
+
+
             lifecycleScope.launch {
                 try {
+
                     placeCube()
                     placeCirclesAroundFace()
                     onSuccess()
                 } catch (e: Exception) {
+                    Log.d("ConfirmButtonLogs", "Error lifecycleScope.launch: ${e.message}")
                     onError(e.message ?: "Unknown error placing models")
-                    Log.d("ConfirmButtonLogs","Error lifecycleScope.launch: ${e.message}")
                 }
             }
-
         } catch (e: Exception) {
+            Log.d("ConfirmButtonLogs", "Error in function: ${e.message}")
             onError(e.message ?: "Failed to create anchor")
-            Log.d("ConfirmButtonLogs","Error in function: ${e.message}")
         }
     }
 
 
 
-//This function sets up the AR scene by checking if the
-// device supports ARCore, configuring features like depth,
-// lighting, and plane detection, and hiding plane visuals.
+
+
+
+
+
+    // Function to place the cube model on head
+    private fun placeCube() {
+        try {
+            // Keep any orientation you want for the cube
+            val rotationX = createQuaternionFromAxisAngle(Vector3(1f, 0f, 0f), 0f)
+            val rotationY = createQuaternionFromAxisAngle(Vector3(0f, 1f, 0f), 0f)
+            val rotationZ = createQuaternionFromAxisAngle(Vector3(0f, 0f, 1f), 0f)
+            val combinedRotation3 = (rotationZ * rotationY * rotationX).toEulerAngles()
+
+            lifecycleScope.launch {
+                try {
+                    sceneView.modelLoader.loadModelInstance(faceCubeUri)?.let { modelInstance ->
+                        modelInstance.materialInstances.forEach { _ ->
+                            cubeNode = ModelNode(
+                                modelInstance = modelInstance,
+                                scaleToUnits = cubeConfig.cubeSize,
+                                autoAnimate = true,
+                                centerOrigin = null
+                            ).apply {
+                                isPositionEditable = false
+                                isVisible = true  //hides the modal
+                                // ⬇️ No offset. Cube sits at pivot origin.
+                                transform(position = Float3(0f, 0f, 0f), rotation = combinedRotation3)
+                            }
+
+                            cubeNode?.let { pivotNode.addChildNode(it) }
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.e("CubePlacement", "Error: ${e.message}")
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("placeCube", "Error: ${e.message}", e)
+            showToast("Something went wrong. Try again!")
+        }
+    }
+
+
+    // The function responsible for placing the circles around the face .It loops arrowList which contains all the circles configurations and places them accordingly
+    private fun placeCirclesAroundFace() {
+
+        try {
+            arrowList.forEachIndexed{ index, bulletObj ->
+                // Position offset for this circle
+
+                //computeHere
+                val offsetVector = Vector3(
+                    bulletObj.xPoint.toFloat()-0.08f,
+                    bulletObj.yPoint.toFloat()+0.25f,
+                    bulletObj.zPoint.toFloat() +0.16f
+                )
+                val offsetFloat3 = Float3(offsetVector.x, offsetVector.y, offsetVector.z)
+
+                var verticalAngle=-bulletObj.verticalAngle.toFloat();
+                var horizontalAngle=-bulletObj.horizontalAngle.toFloat();
+
+
+
+                // Rotation logic — replace with actual angles when needed
+                val rotationX = createQuaternionFromAxisAngle(Vector3(1f, 0f, 0f), verticalAngle);
+                val rotationY = createQuaternionFromAxisAngle(Vector3(0f, 1f, 0f),horizontalAngle)
+                val rotationZ = createQuaternionFromAxisAngle(Vector3(0f, 0f, 1f), 0f)
+                val combinedRotation = rotationZ * rotationY * rotationX
+                val combinedRotation3=combinedRotation.toEulerAngles()
+
+
+                // Load and place model asynchronously
+                lifecycleScope.launch {
+                    try {
+                        val modelNode = makeCircleModel()
+                        modelNode?.let {
+                            it.transform(position = offsetFloat3, rotation = combinedRotation3)
+
+
+                            pivotNode?.addChildNode(it)
+                            //adding model node to a mutable list
+                            it.isEditable=false;
+                            it.isPositionEditable=false
+                            it.name="${bulletObj.seqID}"
+                            nonCapturedModelList.add(modelNode) }
+
+
+                    } catch (e: Exception) {
+                        Log.e("ArrowLoad", "Error loading arrow: ${e.message}", e)
+                    }
+                }
+            }
+
+
+
+        } catch (e: Exception) {
+            Log.e("placeCirclesAroundFace", "Error: ${e.message}", e)
+            showToast("Something Went wrong. Try again !")
+        }
+    }
 
 
     private fun initializeARScene() {
@@ -595,6 +1045,7 @@ class MainActivity : AppCompatActivity() {
                     startFaceDetection()
                 }
             }
+
 
             onSessionFailed = { exception ->
                 Log.e("ARCore", "Session failed", exception)
@@ -747,6 +1198,42 @@ class MainActivity : AppCompatActivity() {
         animator.start()
     }
 
+    private fun readFxFyCxCy(camIntr: com.google.ar.core.CameraIntrinsics): Intrinsics {
+        // Try struct-style first (.x/.y). If that fails at compile time, comment block A and use block B.
+        // ---------- Block A: struct-style ----------
+
+        val fxA = camIntr.focalLength[0].toDouble()
+
+        val fyA = camIntr.focalLength[1].toDouble()
+        val cxA = camIntr.principalPoint[0].toDouble()
+        val cyA = camIntr.principalPoint[1].toDouble()
+        return Intrinsics(fxA, fyA, cxA, cyA)
+
+        // ---------- Block B: array-style (uncomment if your SDK returns float[]) ----------
+        // val fl = camIntr.focalLength            // float[2]
+        // val pp = camIntr.principalPoint         // float[2]
+        // return Intrinsics(fl[0].toDouble(), fl[1].toDouble(), pp[0].toDouble(), pp[1].toDouble())
+    }
+
+    private fun scaleIntrinsicsToImage(
+        intr: Intrinsics,
+        intrDims: IntArray,            // from camera.textureIntrinsics.imageDimensions
+        imageW: Int, imageH: Int       // the EXACT width/height used to feed FaceMesh and build img_pts
+    ): Intrinsics {
+        val srcW = intrDims[0].toDouble()
+        val srcH = intrDims[1].toDouble()
+        val sx = imageW / srcW
+        val sy = imageH / srcH
+        Log.i("OPENCV","LINE6")
+
+        return Intrinsics(
+            fx = intr.fx * sx,
+            fy = intr.fy * sy,
+            cx = intr.cx * sx,
+            cy = intr.cy * sy
+        )
+    }
+
 
 
 
@@ -777,263 +1264,461 @@ class MainActivity : AppCompatActivity() {
             val dotFacing = Vector3.dot(cameraForward, directionToBullet)
 
             if (depth in dynamicMin..dynamicMax && dotFacing > 0.5f) {
-                bulletNode.isVisible = isModelsVisible
+                bulletNode.isVisible = true // show the rings
             } else {
                 bulletNode.isVisible = false
             }
         }
     }
 
-    //Function which starts the face detection process,it captures every 5th frame of AR frame
+
+
+
+
     var loggedInitialCamera = false
     private fun startFaceDetection() {
         updateDistanceLabel("Subject not in Frame")
 
         // Set up frame processing
-        sceneView.onSessionUpdated = { session, frame ->
-            // Capture initial camera position when tracking starts
+        sceneView.onSessionUpdated = onSessionUpdated@{ session, frame ->
+
             if (!loggedInitialCamera) {
                 initialCameraPose = frame.camera.pose
                 loggedInitialCamera = true
             }
 
+            if(IsTrackingStarted){
+                startTrackingRings(frame);
+            }
+//            getFaceDistanceMeters()?.let { (distanceM, depthM) ->
+//                // distanceM = straight-line distance camera→nose (meters)
+//                // depthM    = Z forward distance (meters)
+//                Log.i("FaceDistance", "distance=${"%.2f".format(distanceM)} m, depth=${"%.2f".format(depthM)} m")
+//            }
+
+            if (lastMpLandmarks.isNotEmpty()) {
+                logFaceToCameraAngles()
+            }
+
+
+            val cameraPosition = frame.camera.pose
+            latestCamPosition=Point3D(cameraPosition.tx().toDouble(),cameraPosition.ty().toDouble(), cameraPosition.tz().toDouble())
+
             checkVisibilityOfBullets()
-            frameCounter++
-            if (frameCounter % 5 == 0 && !isFaceDetected) {
-                processFrameForFaceDetection(frame)
-            }
-            if (frameCounter > 30) {
-                frameCounter = 0
-            }
-        }
-    }
 
-
-    fun approxFromRange(a: Float, b: Float): Float {
-        val lo = minOf(a, b)
-        val hi = maxOf(a, b)
-
-        // 1) Exact bucket match (range fully inside a bucket)
-        BUCKETS.firstOrNull { lo >= it.start && hi <= it.end }?.let { return it.value }
-
-        // 2) If the midpoint falls inside a bucket, use that bucket’s value
-        val mid = (lo + hi) * 0.5f
-        BUCKETS.firstOrNull { mid >= it.start && mid <= it.end }?.let { return it.value }
-
-        // 3) Fallback: linear approximation from your samples
-        // y ≈ m*x + c  (fit from (-69,-0.5313) to (-36,-0.7413))
-        val m = -0.0063636f
-        val c = -0.9810f
-        val final= m * mid + c
-        return final
-    }
-
-
-
-
-
-
-
-    // Function to place the cube model on head
-    private fun placeCube() {
-
-        val frame = sceneView.session?.frame
-        try {
-            val session = sceneView.session ?: return
-            val cameraPose = frame?.camera?.pose?:return
-            val cameraPosition = Vector3(cameraPose.tx(), cameraPose.ty(), cameraPose.tz())
-
-
-            // Create only one anchor at camera position
-            val anchorPose = Pose(
-                floatArrayOf(cameraPosition.x, cameraPosition.y, cameraPosition.z),
-                floatArrayOf(0f, 0f, 0f, 1f) // No initial rotation on anchor
-            )
-
-            val anchor = session.createAnchor(anchorPose)
-
-            // Attach anchor to scene
-            anchorNode = AnchorNode(sceneView.engine, anchor).apply {
-                isEditable = true
-
-            }
-            sceneView.addChildNode(anchorNode)
-
-
-            //Place each arrow model relative to anchor
-
-            val xPoint = 0.061244376  // Shift cube slightly to the right
-            val yPoint =  -0.200656703 // Raise cube slightly upward
-            val zPoint = approxFromRange(cameraConfigDetection.minDistance,cameraConfigDetection.minDistance)// Push cube slightly further back to match ring depth
-
-
-
-
-
-
-            // 🟡 Position offset for this circle
-            val offsetVector = Vector3(
-                xPoint.toFloat(),
-                yPoint.toFloat(),
-                zPoint.toFloat()
-            )
-            val offsetFloat3 = Float3(offsetVector.x, offsetVector.y, offsetVector.z)
-
-            // 🟡 Rotation logic — replace with actual angles when needed
-            val rotationX = createQuaternionFromAxisAngle(Vector3(1f, 0f, 0f), 0f) //vertical
-            val rotationY = createQuaternionFromAxisAngle(Vector3(0f, 1f, 0f),0f) // horizontal
-            val rotationZ = createQuaternionFromAxisAngle(Vector3(0f, 0f, 1f), 0f)
-            val combinedRotation = rotationZ * rotationY * rotationX
-
-
-
-            val combinedRotation3=combinedRotation.toEulerAngles()
-
-
-
-            lifecycleScope.launch {
-                try {
-                    sceneView.modelLoader.loadModelInstance(faceCubeUri)?.let { modelInstance ->
-
-                        modelInstance.materialInstances.forEach { materialInstance ->
-
-                            cubeNode = ModelNode(
-                                modelInstance = modelInstance,
-                                scaleToUnits = cubeConfig.cubeSize ,
-                                autoAnimate = true,
-                                centerOrigin = null
-                            ).apply {
-                                isPositionEditable = false
-                                isVisible=isModelsVisible
-                                transform(position = offsetFloat3, rotation = combinedRotation3)
-
-
-                            }
-
-                            cubeNode?.let {
-                                anchorNode.addChildNode(it)
-                                sceneView.addChildNode(anchorNode)
-                            }
-
-                        }
-
-
-                    }
-                } catch (e: Exception) {
-                    Log.e("CubePlacement", "Error: ${e.message}")
-                }
-            }
-
-
-        } catch (e: Exception) {
-            Log.e("placeCirclesAroundFace", "Error: ${e.message}", e)
-            showToast("Something Went wrong. Try again !")
-        }
-    }
-
-
-
-
-
-
-
-
-
-
-
-    // Converts  the captured frame in bitmap format so that it can be saved in the device using the function [processBitmapForFaceDetection]
-    private fun processFrameForFaceDetection(frame: Frame?) {
-        try {
-            val image = frame?.acquireCameraImage() ?: return
-            val bitmap = convertImageToBitmap(image)
-            image.close()
-
-            processBitmapForFaceDetection(bitmap)
-        } catch (e: Exception) {
-            Log.e("FaceDetection", "Error processing frame: ${e.message}")
-        }
-    }
-
-
-
-    // The function responsible for placing the circles around the face .It loops arrowList which contains all the circles configurations and places them accordingly
-    private fun placeCirclesAroundFace() {
-        val frame = sceneView.session?.frame
-        if (frame == null) {
-            showToast("Camera frame not available")
-            return
-        }
-        try {
-
-            val session = sceneView.session ?: return
-            val cameraPose = frame.camera.pose?:return
-            val cameraPosition = Vector3(cameraPose.tx(), cameraPose.ty(), cameraPose.tz())
-            // Create only one anchor at camera position
-            val anchorPose = Pose(
-                floatArrayOf(cameraPosition.x, cameraPosition.y, cameraPosition.z),
-                floatArrayOf(0f, 0f, 0f, 1f) // No initial rotation on anchor
-            )
-
-            val anchor = session.createAnchor(anchorPose)
-
-            // Attach anchor to scene
-            anchorNode = AnchorNode(sceneView.engine, anchor).apply {
-                isEditable = true
-            }
-            sceneView.addChildNode(anchorNode)
-
-            arrowList.forEachIndexed { index, bulletObj ->
-                // Position offset for this circle
-                val offsetVector = Vector3(
-                    bulletObj.xPoint.toFloat(),
-                    bulletObj.yPoint.toFloat(),
-                    bulletObj.zPoint.toFloat() +  approxFromRange(cameraConfigDetection.minDistance,cameraConfigDetection.minDistance)+0.15f
-                )
-                val offsetFloat3 = Float3(offsetVector.x, offsetVector.y, offsetVector.z)
-
-                var verticalAngle=-bulletObj.verticalAngle.toFloat();
-                var horizontalAngle=-bulletObj.horizontalAngle.toFloat();
-
-
-
-                // Rotation logic — replace with actual angles when needed
-                val rotationX = createQuaternionFromAxisAngle(Vector3(1f, 0f, 0f), verticalAngle);
-                val rotationY = createQuaternionFromAxisAngle(Vector3(0f, 1f, 0f),horizontalAngle)
-                val rotationZ = createQuaternionFromAxisAngle(Vector3(0f, 0f, 1f), 0f)
-                val combinedRotation = rotationZ * rotationY * rotationX
-                val combinedRotation3=combinedRotation.toEulerAngles()
-
-
-
-
-
-                // Load and place model asynchronously
-                lifecycleScope.launch {
+//            val now = System.currentTimeMillis()
+//            val frameIntervalMs = 7L   // ~30 FPS
+//
+//            if ((now - lastFaceDetectTime) >= frameIntervalMs && faceOverlayView.visibility == View.VISIBLE) {
+//                processFrameForFaceDetection(frame)
+//                lastFaceDetectTime = now
+//            }
+
+            // 30 FPS gate + overlap guard
+            val ts = frame.timestamp // in ns
+            val due = ts - lastDispatchTimestampNs >= MIN_INTERVAL_NS
+            if (!due || isProcessingFrame) return@onSessionUpdated
+
+            try {
+                // Acquire **this frame’s** camera image on the render thread
+                val image = frame.acquireCameraImage()
+
+                // Mark dispatch time now, so we keep a stable cadence
+                lastDispatchTimestampNs = ts
+                isProcessingFrame = true
+
+                // Hand off heavy work to background thread
+                faceHandler.post {
                     try {
-                        val modelNode = makeCircleModel()
-                        modelNode?.let {
-                            it.transform(position = offsetFloat3, rotation = combinedRotation3)
-                            anchorNode.addChildNode(it)
-                            //adding model node to a mutable list
-                            it.isEditable=false;
-                            it.isPositionEditable=false
-                            it.name="${bulletObj.seqID}"
-                            nonCapturedModelList.add(modelNode) }
-
-
-                    } catch (e: Exception) {
-                        Log.e("ArrowLoad", "Error loading arrow: ${e.message}", e)
+                        val bmp = convertImageToBitmap(image) // your helper
+                        // Inside this you can rotate, run MediaPipe, update UI via runOnUiThread
+                        processBitmapForFaceDetection(bmp)
+                    } catch (t: Throwable) {
+                        android.util.Log.e("FaceDetection", "Worker error: ${t.message}", t)
+                    } finally {
+                        try { image.close() } catch (_: Exception) {}
+                        isProcessingFrame = false
                     }
+                }
+            } catch (_: Exception) {
+                // No camera image available this frame; skip gracefully
+            }
+
+
+        }
+    }
+
+
+
+
+
+    // ====== OpenCV helpers ======
+    private fun mat33(vararg m: Double): Mat {
+        require(m.size == 9) { "mat33 needs 9 values" }
+        return Mat(3, 3, org.opencv.core.CvType.CV_64F).apply { put(0, 0, *m) }
+    }
+
+    private fun matOfDouble(vararg v: Double): Mat =
+        Mat(v.size, 1, org.opencv.core.CvType.CV_64F).apply {
+            put(0, 0, *v)   // <-- spread
+        }
+
+
+
+    private fun rvecToQuaternionFromR(R: Mat): dev.romainguy.kotlin.math.Quaternion {
+        val rvec = Mat()
+        org.opencv.calib3d.Calib3d.Rodrigues(R, rvec)
+        val rx = rvec.get(0,0)[0]; val ry = rvec.get(1,0)[0]; val rz = rvec.get(2,0)[0]
+        val angle = kotlin.math.sqrt(rx*rx + ry*ry + rz*rz)
+        if (angle < 1e-9) return dev.romainguy.kotlin.math.Quaternion(0f,0f,0f,1f)
+        val ax = (rx/angle).toFloat(); val ay = (ry/angle).toFloat(); val az = (rz/angle).toFloat()
+        val half = (angle*0.5).toFloat()
+        val s = kotlin.math.sin(half); val c = kotlin.math.cos(half)
+        return dev.romainguy.kotlin.math.Quaternion(ax*s, ay*s, az*s, c)
+    }
+
+    private fun cvToArPos(x: Double, y: Double, z: Double) =
+        dev.romainguy.kotlin.math.Float3(x.toFloat(), (-y).toFloat(), (-z).toFloat())
+
+    private fun cvToArRot(Rcv: Mat): Mat {
+        val S = mat33(
+            1.0, 0.0, 0.0,
+            0.0,-1.0, 0.0,
+            0.0, 0.0,-1.0
+        )
+        val tmp = Mat()
+        val Rar = Mat()
+        org.opencv.core.Core.gemm(S, Rcv, 1.0, Mat(), 0.0, tmp)     // tmp = S * Rcv
+        org.opencv.core.Core.gemm(tmp, S, 1.0, Mat(), 0.0, Rar)     // Rar = tmp * S
+        return Rar
+    }
+
+
+
+    private fun ema(pPrev: dev.romainguy.kotlin.math.Float3?, pNew: dev.romainguy.kotlin.math.Float3, a: Float)
+            : dev.romainguy.kotlin.math.Float3 =
+        if (pPrev == null) pNew else dev.romainguy.kotlin.math.Float3(
+            pPrev.x + a*(pNew.x - pPrev.x),
+            pPrev.y + a*(pNew.y - pPrev.y),
+            pPrev.z + a*(pNew.z - pPrev.z)
+        )
+
+    private fun slerp(q1: dev.romainguy.kotlin.math.Quaternion,
+                      q2: dev.romainguy.kotlin.math.Quaternion,
+                      t: Float): dev.romainguy.kotlin.math.Quaternion {
+        var qb = q2
+        var cos = q1.x*qb.x + q1.y*qb.y + q1.z*qb.z + q1.w*qb.w
+        if (cos < 0f) { qb = dev.romainguy.kotlin.math.Quaternion(-qb.x,-qb.y,-qb.z,-qb.w); cos = -cos }
+        if (cos > 0.9995f) {
+            val x = q1.x + t*(qb.x - q1.x); val y = q1.y + t*(qb.y - q1.y); val z = q1.z + t*(qb.z - q1.z); val w = q1.w + t*(qb.w - q1.w)
+            val inv = 1f/kotlin.math.sqrt(x*x + y*y + z*z + w*w)
+            return dev.romainguy.kotlin.math.Quaternion(x*inv,y*inv,z*inv,w*inv)
+        }
+        val theta = kotlin.math.acos(cos)
+        val sinT = kotlin.math.sin(theta)
+        val w1 = kotlin.math.sin((1f - t)*theta)/sinT
+        val w2 = kotlin.math.sin(t*theta)/sinT
+        return dev.romainguy.kotlin.math.Quaternion(
+            q1.x*w1 + qb.x*w2, q1.y*w1 + qb.y*w2, q1.z*w1 + qb.z*w2, q1.w*w1 + qb.w*w2
+        )
+    }
+
+    // Rodrigues rvec -> Quaternion (unchanged from before)
+    private fun rvecToQuaternion(rvec: Mat): dev.romainguy.kotlin.math.Quaternion {
+        val rx = rvec.get(0,0)[0]; val ry = rvec.get(1,0)[0]; val rz = rvec.get(2,0)[0]
+        val angle = kotlin.math.sqrt(rx*rx + ry*ry + rz*rz)
+        if (angle < 1e-9) return dev.romainguy.kotlin.math.Quaternion(0f,0f,0f,1f)
+        val ax = (rx/angle).toFloat(); val ay = (ry/angle).toFloat(); val az = (rz/angle).toFloat()
+        val half = (angle*0.5).toFloat()
+        val s = kotlin.math.sin(half); val c = kotlin.math.cos(half)
+        return dev.romainguy.kotlin.math.Quaternion(ax*s, ay*s, az*s, c)
+    }
+
+    private fun normalize3(x: Double, y: Double, z: Double): Triple<Float, Float, Float> {
+        val n = kotlin.math.sqrt(x*x + y*y + z*z).coerceAtLeast(1e-9)
+        return Triple((x/n).toFloat(), (y/n).toFloat(), (z/n).toFloat())
+    }
+
+    /** Minimal canonical 3D model (meters). +Z out of face. Keep origin at nose tip. */
+    private data class LM(val idx: Int, val name: String)
+    private val LM_SET = listOf(
+        LM(1,   "nose_tip"),
+        LM(33,  "left_eye_outer"),
+        LM(263, "right_eye_outer"),
+        LM(61,  "mouth_left"),
+        LM(291, "mouth_right"),
+        LM(199, "chin"),
+        LM(9,   "glabella")
+    )
+    private val MODEL_3D: Map<String, DoubleArray> = mapOf(
+        "nose_tip"        to doubleArrayOf( 0.000,  0.000,  0.000),
+        "left_eye_outer"  to doubleArrayOf(-0.0325, 0.0220, 0.0280),
+        "right_eye_outer" to doubleArrayOf( 0.0325, 0.0220, 0.0280),
+        "mouth_left"      to doubleArrayOf(-0.0280,-0.0200, 0.0200),
+        "mouth_right"     to doubleArrayOf( 0.0280,-0.0200, 0.0200),
+        "chin"            to doubleArrayOf( 0.000,-0.0550,-0.0100),
+        "glabella"        to doubleArrayOf( 0.000, 0.0350, 0.0350)
+    )
+    // Build camera matrix from ARCore
+    private fun cameraMatrixFromAR(cam: com.google.ar.core.Camera): Mat {
+        val fx = cam.textureIntrinsics.focalLength[0].toDouble()
+        val fy = cam.textureIntrinsics.focalLength[1].toDouble()
+        val cx = cam.textureIntrinsics.principalPoint[0].toDouble()
+        val cy = cam.textureIntrinsics.principalPoint[1].toDouble()
+        return mat33(
+            fx, 0.0, cx,
+            0.0, fy, cy,
+            0.0, 0.0, 1.0
+        )
+    }
+
+    /** Convert MediaPipe normalized 2D landmarks -> pixel points using ARCore texture size */
+    private fun mp2dToPixels(
+        lms: List<com.google.mediapipe.tasks.components.containers.NormalizedLandmark>,
+        cam: com.google.ar.core.Camera
+    ): org.opencv.core.MatOfPoint2f {
+        val w = cam.textureIntrinsics.imageDimensions[0].toDouble()
+        val h = cam.textureIntrinsics.imageDimensions[1].toDouble()
+        val pts = java.util.ArrayList<org.opencv.core.Point>(LM_SET.size)
+        for (lm in LM_SET) {
+            val p = lms[lm.idx]
+            pts.add(org.opencv.core.Point(p.x() * w, p.y() * h))
+        }
+        return org.opencv.core.MatOfPoint2f(*pts.toTypedArray())
+    }
+
+    private fun clamp01(n: Double) = when {
+        n < -1.0 -> -1.0
+        n >  1.0 ->  1.0
+        else -> n
+    }
+
+    /** 3D model points for our chosen landmarks */
+    private fun model3dMat(): org.opencv.core.MatOfPoint3f {
+        val arr = LM_SET.map { lm -> val v = MODEL_3D[lm.name]!!; org.opencv.core.Point3(v[0], v[1], v[2]) }
+        return org.opencv.core.MatOfPoint3f(*arr.toTypedArray())
+    }
+
+    private var lastCubeEdgeM = -1f
+    // Helper: degrees → radians
+    private fun rad(deg: Float) = Math.toRadians(deg.toDouble()).toFloat()
+
+    private var cubeLoadInFlight = false
+
+
+    private fun radToDeg(x: Float) = Math.toDegrees(x.toDouble()).toFloat()
+    private fun eulerRadToDeg(e: dev.romainguy.kotlin.math.Float3) =
+        dev.romainguy.kotlin.math.Float3(radToDeg(e.x), radToDeg(e.y), radToDeg(e.z))
+
+
+
+
+
+
+    private fun logFaceToCameraAngles() {
+        val frame = sceneView.session?.frame ?: return
+        val cam = frame.camera
+        if (lastMpLandmarks.isEmpty()) return
+
+        try {
+            // Build PnP inputs (reuse your existing helpers)
+            val objPts = model3dMat()
+            val imgPts = mp2dToPixels(lastMpLandmarks, cam)
+            val K      = cameraMatrixFromAR(cam)
+            val dist   = MatOfDouble(Mat.zeros(1, 5, org.opencv.core.CvType.CV_64F))
+
+            // Solve head->camera
+            val rvec = Mat()
+            val tvec = Mat()
+            org.opencv.calib3d.Calib3d.solvePnP(
+                objPts, imgPts, K, dist, rvec, tvec, false,
+                org.opencv.calib3d.Calib3d.SOLVEPNP_ITERATIVE
+            )
+
+            // Face forward in camera coords = third column of R
+            val R = Mat()
+            org.opencv.calib3d.Calib3d.Rodrigues(rvec, R)
+            val fx = R.get(0, 2)[0]
+            val fy = R.get(1, 2)[0]
+            val fz = R.get(2, 2)[0]
+            val n  = kotlin.math.sqrt(fx*fx + fy*fy + fz*fz).coerceAtLeast(1e-9)
+            val dx = fx / n
+            val dy = fy / n
+            val dz = fz / n
+
+            // Camera optical axis in OpenCV coords is (0,0,1)
+            val dot = clamp01(dz)           // since dot = (0,0,1) · (dx,dy,dz) = dz
+            val angleRad  = kotlin.math.acos(dot)
+            val angleDeg  = Math.toDegrees(angleRad)             // 0° = facing camera; 90° = pure side
+
+            // Signed left/right (yaw-ish): +right, -left
+            val yawLRDeg  = Math.toDegrees(kotlin.math.atan2(dx, dz))
+
+            // Signed up/down (pitch-ish): +up, -down
+            val pitchUDeg = Math.toDegrees(kotlin.math.atan2(-dy, kotlin.math.sqrt(dx*dx + dz*dz)))
+
+
+            angleLogFrame = (angleLogFrame + 1) % 3
+            if (angleLogFrame == 0) {
+                val yawLRDegG_1 = if(yawLRDeg<0){
+                    -(180+yawLRDeg.toFloat())
+                }else{
+                    180-yawLRDeg.toFloat()
+                }
+                val cleanDeg = angleFilter.update(yawLRDegG_1)
+                yawLRDegG = cleanDeg
+                // Show on screen
+                updateAngleHud(yawLRDegG)
+                Log.e("FaceToCamera", "Angle : ${yawLRDegG}")
+            }
+
+
+        } catch (e: Exception) {
+            Log.e("FaceToCamera", "Angle compute failed: ${e.message}")
+        }
+    }
+
+
+    private fun rotateBitmap(src: Bitmap, degrees: Int): Bitmap {
+        if (degrees % 360 == 0) return src
+        val m = Matrix().apply { postRotate(degrees.toFloat()) }
+        return Bitmap.createBitmap(src, 0, 0, src.width, src.height, m, true)
+    }
+
+
+    private fun showDebug (Text: String){
+        runOnUiThread {
+            val debugText=findViewById<TextView>(R.id.debugText)
+            debugText.visibility=View.VISIBLE
+            debugText.text=Text
+        }
+
+    }
+
+
+
+
+
+    // Function detects the face and updates overlay & UI using MediaPipe Face Landmarker
+    private fun processBitmapForFaceDetection(bitmap: Bitmap) {
+        try {
+            if (!mpReady) {
+
+                setConfirmEnabled(false)
+                return
+            }
+            // --- ensure detector & overlay see the same orientation ---
+            val rotation = getRotationCompensation("0", isFrontFacing = false) // back cam
+            val bmp = rotateBitmap(bitmap, rotation)
+
+            val mpImage: MPImage = BitmapImageBuilder(bmp).build()
+            val rotationDegrees = getRotationCompensation("0", isFrontFacing = false) // back camera
+            val ipOpts = ImageProcessingOptions.builder()
+                .setRotationDegrees(rotationDegrees)
+                .build()
+            val result = mpFaceLandmarker.detect(mpImage,ipOpts)
+
+            if (result.faceLandmarks().isEmpty()) {
+                isAnyFace = false
+                isFaceDetected = false
+                lastMpLandmarks = emptyList()
+                faceOverlayView.updatePointsPx(emptyList(), 0, 0, null) // uses the new overload
+                updateDistanceLabel("Subject not in Frame")
+                setConfirmEnabled(false)
+                hasResetForCurrentFace = false
+                return
+            }
+
+
+
+
+            val landmarks = result.faceLandmarks()[0]
+            lastMpLandmarks = landmarks
+
+            val pixelPoints1 = landmarks.map { android.graphics.PointF(it.x() * bmp.width, it.y() * bmp.height) }
+
+
+// call the overload with triangles
+            faceOverlayView.updatePointsPx(
+                pointsPx = pixelPoints1,
+                trianglesIdx = FaceMeshTriangulation.triangles,
+                w = bmp.width,
+                h = bmp.height,
+                box = null
+            )
+
+            val nose = landmarks[1]
+
+
+            latestNosePosition = Point3D((nose.x() * bmp.width).toDouble(), (nose.y() * bmp.height).toDouble(), nose.z()
+                .toDouble())
+
+
+
+
+
+            val noseZ=latestNosePosition.z*100
+            val noseDistance= String.format(Locale.US, "Face Distance %.1f",noseZ)
+
+            showDebug(noseDistance)
+            when {
+                //approximateValues
+                noseZ < cameraConfigDetection.minDistance -> {
+                    Log.d(
+                        "isFaceDetected",
+                        "updateDistanceLabel Move Back" + isFaceDetected
+                    )
+                    updateDistanceLabel("Move Away")
+                    setConfirmEnabled(false)
+                }
+
+                noseZ >cameraConfigDetection.maxDistance -> {
+                    Log.d(
+                        "isFaceDetected",
+                        "updateDistanceLabel MOVE Close" + isFaceDetected
+                    )
+                    updateDistanceLabel("Move Closer")
+                    setConfirmEnabled(false)
+                }
+
+                else -> {
+                    Log.d("isFaceDetected", "updateDistanceLabel DETECTED" + noseZ)
+                    updateDistanceLabel("Subject Detected")
+                    isAnyFace = true
+                    isFaceDetected = true
+                    setConfirmEnabled(true)
+
                 }
             }
 
 
 
+
+
+
+
         } catch (e: Exception) {
-            Log.e("placeCirclesAroundFace", "Error: ${e.message}", e)
-            showToast("Something Went wrong. Try again !")
+            Log.e("FaceLandmarker", "Error: ${e.message}")
+
+            setConfirmEnabled(false)
         }
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1056,79 +1741,78 @@ class MainActivity : AppCompatActivity() {
 
 
     //Function to start tracking the circles around face which helps the  user to capture image according to his desired position
-    private fun startTrackingRings() {
+    private fun startTrackingRings(frame: Frame) {
         if (nonCapturedModelList.isEmpty()) return
-        sceneView.onSessionUpdated = onSessionUpdated@{ _, frame ->
-            val cameraPose = frame.camera.pose
-            val cameraPosition = Vector3(cameraPose.tx(), cameraPose.ty(), cameraPose.tz())
-            checkMovementSpeed(cameraPosition)
-            checkVisibilityOfBullets()
 
-            if (currentRingIndex < nonCapturedModelList.size) {
-                nonCapturedModelList.forEachIndexed { index, node ->
-                    if (node.name == currentRingIndex.toString()) {
-                        activeRing = node
-                    }
+        val cameraPose = frame.camera.pose
+        val cameraPosition = Vector3(cameraPose.tx(), cameraPose.ty(), cameraPose.tz())
+        checkMovementSpeed(cameraPosition)
+        checkVisibilityOfBullets()
+        if (currentRingIndex < nonCapturedModelList.size) {
+            nonCapturedModelList.forEachIndexed { index, node ->
+                if (node.name == currentRingIndex.toString()) {
+                    activeRing = node
                 }
+            }
 
-                val activeRingPosition = (activeRing!!).worldPosition.toVector3()
-                val distance = calculateDistance(cameraPosition, activeRingPosition)
-                val ringAngle = arrowList[currentRingIndex].verticalAngle
+            val activeRingPosition = (activeRing!!).worldPosition.toVector3()
+            val distance = calculateDistance(cameraPosition, activeRingPosition)
+            val ringAngle = arrowList[currentRingIndex].verticalAngle
 
-                when {
-                    distance >= cameraConfigCapture.minDistance &&
-                            distance <= cameraConfigCapture.maxDistance -> {
+            when {
+                distance >= cameraConfigCapture.minDistance &&
+                        distance <= cameraConfigCapture.maxDistance -> {
 
-                        if (angleString>=ringAngle-1 && angleString<=ringAngle+1)
-                        {
-                            updateDistanceLabel("Hold Still")
+                    if (angleString>=ringAngle-1 && angleString<=ringAngle+1)
+                    {
+                        updateDistanceLabel("Hold Still")
 
 
-                            if (IsCaptureStarted && !isCaptureInProgress) {
-                                isCaptureInProgress = true
+                        if (IsCaptureStarted && !isCaptureInProgress) {
+                            isCaptureInProgress = true
 
-                                // Start a countdown timer before capture
-                                captureTimer = object : CountDownTimer(delayCaptureBy.toLong(), 1000) {
-                                    override fun onTick(millisUntilFinished: Long) {
-                                        val secondsLeft = millisUntilFinished / 1000
+                            // Start a countdown timer before capture
+                            captureTimer = object : CountDownTimer(delayCaptureBy.toLong(), 1000) {
+                                override fun onTick(millisUntilFinished: Long) {
+                                    val secondsLeft = millisUntilFinished / 1000
 
-                                    }
+                                }
 
-                                    override fun onFinish() {
-                                        Log.d("CaptureTimer", "Timer finished -> Capturing now")
-                                        captureAndNextRing()
-                                        isCaptureInProgress = false
-                                        captureTimer = null
-                                    }
-                                }.start()
-                            }
-
-                        } else {
-                            cancelScheduledCapture()
-                            updateDistanceLabel("Adjust angle")
-                            faceRing.setBackgroundResource(R.drawable.circle_ring)
+                                override fun onFinish() {
+                                    Log.d("CaptureTimer", "Timer finished -> Capturing now")
+                                    captureAndNextRing()
+                                    isCaptureInProgress = false
+                                    captureTimer = null
+                                }
+                            }.start()
                         }
 
-                    }
-
-                    distance > cameraConfigCapture.maxDistance -> {
+                    } else {
                         cancelScheduledCapture()
-                        updateDistanceLabel("Move Closer")
+                        updateDistanceLabel("Adjust angle")
                         faceRing.setBackgroundResource(R.drawable.circle_ring)
                     }
 
-                    distance < cameraConfigCapture.minDistance -> {
-                        cancelScheduledCapture()
-                        updateDistanceLabel("Move Away")
-                        faceRing.setBackgroundResource(R.drawable.circle_ring)
-                    }
                 }
 
+                distance > cameraConfigCapture.maxDistance -> {
+                    cancelScheduledCapture()
+                    updateDistanceLabel("Move Closer")
+                    faceRing.setBackgroundResource(R.drawable.circle_ring)
+                }
 
-                minAngleText.text = "Ring  :${currentRingIndex}"
-                maxAngleText.text = "Angle  :${ringAngle}"
+                distance < cameraConfigCapture.minDistance -> {
+                    cancelScheduledCapture()
+                    updateDistanceLabel("Move Away")
+                    faceRing.setBackgroundResource(R.drawable.circle_ring)
+                }
             }
+
+
+            minAngleText.text = "Ring  :${currentRingIndex}"
+            maxAngleText.text = "Angle  :${ringAngle}"
         }
+
     }
 
     private fun cancelScheduledCapture() {
@@ -1249,137 +1933,13 @@ class MainActivity : AppCompatActivity() {
     var isAnyFace = false
 
 
-    private fun resetARSession() {
-        try {
-            showLoading(" Hold still! \n Repositioning models.")
 
-            val restartIntent = intent
-            restartIntent.putExtra(EXTRA_ALREADY_RESET, true) // mark that we reset
-            finish()
-            startActivity(restartIntent)
-//            hideLoading()
-
-        } catch (e: Exception) {
-            Log.e("ARSession", "Failed to reset AR session: ${e.message}")
-        }
-    }
 
 
 
     // Function detects the face and updates the face mesh points on face .It also helps user to detect the distance between camera and face
-    private fun processBitmapForFaceDetection(bitmap: Bitmap) {
-        try {
-            if (isFaceDetected == false) {
-                val cameraId = "0" // or "1" for front camera; adjust based on use
-                val rotationDegrees = getRotationCompensation(cameraId, isFrontFacing = false)
-                val inputImage = InputImage.fromBitmap(bitmap, rotationDegrees)
+    // Function detects the face and updates the face mesh points on face .It also helps user to detect the distance between camera and face
 
-                val options = FaceMeshDetectorOptions.Builder()
-                    .setUseCase(FaceMeshDetectorOptions.FACE_MESH)
-                    .build()
-
-                val detector = FaceMeshDetection.getClient(options)
-
-                detector.process(inputImage)
-                    .addOnSuccessListener { faceMeshes ->
-                        if (faceMeshes.isNotEmpty()) {
-                            val faceMesh = faceMeshes[0]
-                            val allPoints = faceMesh.allPoints
-                            val noseZ = allPoints.get(1)?.position?.z ?: 0f
-
-
-                            // Update the face overlay with mesh information
-                            faceOverlayView.updateFaceMesh(
-                                faceMesh,
-                                bitmap.width,
-                                bitmap.height
-                            )
-
-                            isAnyFace = true
-
-
-
-
-                            when {
-                                noseZ < cameraConfigDetection.minDistance -> {
-                                    Log.d(
-                                        "isFaceDetected",
-                                        "updateDistanceLabel Move Back" + isFaceDetected
-                                    )
-                                    updateDistanceLabel("Move Away")
-                                    confirmButton.isEnabled=false
-                                }
-
-                                noseZ > cameraConfigDetection.maxDistance -> {
-                                    Log.d(
-                                        "isFaceDetected",
-                                        "updateDistanceLabel MOVE Close" + isFaceDetected
-                                    )
-                                    updateDistanceLabel("Move Closer")
-                                    confirmButton.isEnabled=false
-                                }
-
-                                else -> {
-                                    Log.d("isFaceDetected", "updateDistanceLabel DETECTED" + noseZ)
-                                    updateDistanceLabel("Subject Detected")
-                                    confirmButton.isEnabled = true
-
-                                    if(isModelsPlaced==false){
-                                        faceCamDistance=noseZ
-                                        isModelsPlaced=true;
-                                        placeWhenTracking(
-                                            onSuccess = {},
-                                            onError = { error ->
-                                                runOnUiThread {
-                                                    Toast.makeText(this, "Failed: $error. Try again.", Toast.LENGTH_LONG).show()
-                                                    Log.e("Placement", "Error: $error")
-                                                }
-                                            }
-                                        )
-                                    }
-
-
-
-
-                                    Handler(Looper.getMainLooper()).postDelayed({
-
-                                        if (!hasResetForCurrentFace) {  // double check after delay
-                                            resetARSession()
-                                            hasResetForCurrentFace = true
-                                        }
-                                    }, 1500)
-                                }
-                            }
-                        } else {
-                            faceOverlayView.updatePoints(emptyList(), 0, 0, null)
-                            Log.d("isFaceDetected", "updateDistanceLabel DETECTED" + isFaceDetected)
-                            updateDistanceLabel("Subject not in Frame")
-                            confirmButton.isEnabled = false
-                            hasResetForCurrentFace = false
-                        }
-                    }
-                    .addOnFailureListener { e ->
-                        Log.e("FaceMeshDetection", "Detection failed: ${e.message}")
-                        distanceLabel.text = "Detecting Face..."
-                        distanceLabel.setTextColor(
-                            ContextCompat.getColor(
-                                this,
-                                android.R.color.black
-                            )
-                        )
-                        startButton.visibility = View.GONE
-                    }
-            }
-        } catch (e: Exception) {
-            Log.e(
-                "processBitmapForFaceDetection",
-                "Error in processBitmapForFaceDetection: ${e.message}"
-            )
-            distanceLabel.text = "Detecting Face..."
-            distanceLabel.setTextColor(ContextCompat.getColor(this, android.R.color.black))
-            startButton.visibility = View.GONE
-        }
-    }
 
     // Updates the visual label of distance between camera and face.And helps the user to keep phone close or far
     private fun updateDistanceLabel(baseText: String) {
@@ -1486,12 +2046,6 @@ class MainActivity : AppCompatActivity() {
 
         }
 
-
-
-        if (!isFaceDetected) {
-
-            confirmButton.isEnabled = false;
-        }
     }
 
 
