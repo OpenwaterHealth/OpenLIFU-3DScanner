@@ -17,8 +17,10 @@ import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import dagger.hilt.android.AndroidEntryPoint
 import java.io.File
 
+@AndroidEntryPoint
 class UsbScreenActivity : AppCompatActivity() {
 
     private lateinit var imageCountTextView: TextView

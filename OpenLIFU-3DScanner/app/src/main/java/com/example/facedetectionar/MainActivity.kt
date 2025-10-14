@@ -77,12 +77,14 @@ import com.google.mediapipe.tasks.vision.core.RunningMode
 import com.google.mediapipe.tasks.vision.facelandmarker.FaceLandmarker
 import com.google.mediapipe.framework.image.MPImage
 import com.google.mediapipe.tasks.vision.core.ImageProcessingOptions
+import dagger.hilt.android.AndroidEntryPoint
 import io.github.sceneview.math.Direction
 import org.opencv.core.Mat
 import org.opencv.core.MatOfDouble
 import java.util.Locale
 
 
+@AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
     private companion object {
         private const val CAMERA_PERMISSION_CODE = 1

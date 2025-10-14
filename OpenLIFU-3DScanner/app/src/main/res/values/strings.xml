@@ -9,4 +9,17 @@
     <string name="connectUsbText">Connect the USB cable to the PC to allow OpenLIFU to retrieve this capture</string>
     <string name="captureDoneModalText">Capture %1$s completed with %2$s images.</string>
     <string name="idInReview">ID:%1$s</string>
+    <string name="not_logged_in">Not Logged In</string>
+    <string name="not_connected">Not connected</string>
+    <string name="cancel">Cancel</string>
+    <string name="log_in">Log In</string>
+    <string name="log_out">Log Out</string>
+    <string name="cloud_compute">Cloud Compute</string>
+    <string name="available">Available</string>
+    <string name="not_available">Not Available</string>
+    <string name="connected">Connected</string>
+    <string name="user_name_email_credits">%1$s\n%2$s\n%3$d credits</string>
+    <string name="username">Username:</string>
+    <string name="password">Password:</string>
+    <string name="forgot_password_u"><u>Forgot Password?</u></string>
 </resources>
