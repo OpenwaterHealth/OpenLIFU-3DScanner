@@ -1,5 +1,9 @@
 package com.example.facedetectionar
 
+import android.content.Context
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
 
 import android.Manifest
 import android.animation.ValueAnimator
@@ -76,6 +80,7 @@ import java.io.FileOutputStream
 import kotlin.math.sqrt
 import androidx.core.graphics.toColorInt
 import com.google.ar.core.Session
+import io.github.sceneview.math.Direction
 
 
 class MainActivity : AppCompatActivity() {
@@ -89,7 +94,10 @@ class MainActivity : AppCompatActivity() {
     private var cubeNode: ModelNode? = null
     private lateinit var sceneView: ARSceneView
     private lateinit var anchorNode: AnchorNode;
+    private lateinit var pivotNode: Node;
+    private var pivotBaseQ = Quaternion(0f, 0f, 0f, 1f)
     private var latestNosePosition: Float3? = null
+    private var hasVibratedForCenter = false
 
 
 
@@ -127,8 +135,8 @@ class MainActivity : AppCompatActivity() {
     private var frameCounter = 0
     private var isFaceDetected = false
     private var hasResetForCurrentFace = false
-    private var isModelsVisible: Boolean = false
-    private var isModelsPlaced: Boolean = false
+
+
     private var faceCamDistance=0f
 
     data class CameraConfig(
@@ -283,7 +291,18 @@ class MainActivity : AppCompatActivity() {
 
             confirmButton.setOnClickListener{
                 try {
-                    isModelsVisible=true
+
+                    placeWhenTracking(
+                        onSuccess = {},
+                        onError = { error ->
+                            runOnUiThread {
+                                Toast.makeText(this, "Failed: $error. Try again.", Toast.LENGTH_LONG).show()
+                                Log.e("Placement", "Error: $error")
+                            }
+                        }
+                    )
+
+
                     cubeNode?.isVisible =true
                     faceOutline.visibility = View.GONE;
                     confirmButton.visibility = View.GONE;
@@ -317,6 +336,55 @@ class MainActivity : AppCompatActivity() {
                 }
             }
 
+            fun clearAnchorsAndNodes() {
+                // Stop any pending countdown/capture
+                try {
+                    captureTimer?.cancel()
+                    captureTimer = null
+                    isCaptureInProgress = false
+                } catch (_: Exception) {}
+
+                // Remove ring/cube nodes from the pivot
+                try {
+                    nonCapturedModelList.forEach { node ->
+                        runCatching { pivotNode.removeChildNode(node) }
+                    }
+                    nonCapturedModelList.clear()
+                    capturedModelList.clear()
+                    activeRing = null
+                } catch (_: Exception) {}
+
+                // Remove cube if present
+                cubeNode?.let {
+                    runCatching { pivotNode.removeChildNode(it) }
+                }
+                cubeNode = null
+
+                // Detach and remove the pivot (if it was added)
+                if (::pivotNode.isInitialized) {
+                    runCatching { sceneView.removeChildNode(pivotNode) }
+                }
+
+                // Detach and remove the main anchor
+                if (::anchorNode.isInitialized) {
+                    runCatching { anchorNode.anchor?.detach() }
+                    runCatching { sceneView.removeChildNode(anchorNode) }
+                }
+
+                // Safety: remove any stray AnchorNodes that may exist
+                sceneView.childNodes
+                    .filterIsInstance<AnchorNode>()
+                    .forEach { an ->
+                        runCatching { an.anchor?.detach() }
+                        runCatching { sceneView.removeChildNode(an) }
+                    }
+
+
+                currentRingIndex = 0
+                faceRing.visibility = View.GONE
+
+            }
+
 
             BackInStartCapture.setOnClickListener {
                 // Hide UI elements
@@ -342,7 +410,7 @@ class MainActivity : AppCompatActivity() {
                 // Reset any other relevant state
                 updateDistanceLabel("Subject not in Frame")
 
-                resetARSession()
+                clearAnchorsAndNodes()
 
             }
 
@@ -350,7 +418,7 @@ class MainActivity : AppCompatActivity() {
 
                 // Remove the cube if it exists
                 cubeNode?.let {
-                    anchorNode.removeChildNode(it)
+                    pivotNode.removeChildNode(it)
                     cubeNode = null
 
                 }
@@ -505,48 +573,211 @@ class MainActivity : AppCompatActivity() {
 
 
 
+    private fun applyOrbitYaw(deg: Float) {
+        Log.d("NewPositionIS","Angle was $deg")
+        val yawQ = Quaternion.fromAxisAngle(Direction(0f, 1f, 0f), deg)
+        val finalQ = pivotBaseQ * yawQ
+        pivotNode?.transform(quaternion = finalQ)
+    }
+
+
 
     fun placeWhenTracking(
         onSuccess: () -> Unit,
         onError: (String) -> Unit
     ) {
-        val frame = sceneView.session?.frame
-        if (frame == null) {
-            onError("Camera frame not available")
-            return
-        }
 
+        Log.d("PlacementFlow","Done 1")
+        val frame = sceneView.session?.frame ?: return onError("Camera frame not available")
+        Log.d("PlacementFlow","Done 2")
         if (frame.camera.trackingState != TrackingState.TRACKING) {
-//            showToast("Camera not ready. Hold still!")
             sceneView.postDelayed({ placeWhenTracking(onSuccess, onError) }, 200)
             return
         }
 
+        Log.d("PlacementFlow","Done 3")
+
         try {
-            // Use the current session, not the stored one
-            val session = sceneView.session ?: return onError("AR session not available")
-            val cameraPose = initialCameraPose ?: frame.camera.pose
-            val anchor = session.createAnchor(cameraPose)
-            anchorNode = AnchorNode(sceneView.engine, anchor).apply {
-                isEditable = true
-            }
+            Log.d("PlacementFlow","Done 4")
+            val session = sceneView.session ?: return onError("No AR session")
+            val cameraPose = frame.camera.pose
+
+            // Anchor at camera position WITH yaw baked in
+            val anchorPose = Pose(
+                floatArrayOf(cameraPose.tx(), cameraPose.ty(), cameraPose.tz()),
+                floatArrayOf(cameraPose.qx(), cameraPose.qy(), cameraPose.qz(),cameraPose.qw()),
+            )
+            val anchor = session.createAnchor(anchorPose)
+            anchorNode = AnchorNode(sceneView.engine, anchor).apply { isEditable = true }
             sceneView.addChildNode(anchorNode)
 
-            // Place models sequentially
+            //computeHere
+            val xPoint = 0.261244386f             //up down
+            val yPoint = 0.09934329f-0.02f
+//            val zPoint = -0.57133945f
+            val zPoint = approxFromRange(cameraConfigDetection.minDistance,cameraConfigDetection.minDistance)// Push cube slightly further back to match ring depth
+
+
+
+
+
+
+
+
+
+
+
+            // 🟡 Position offset for this circle
+            val offsetVector = Vector3(
+                xPoint.toFloat(),
+                yPoint.toFloat(),
+                zPoint.toFloat()
+            )
+            val offsetFloat3 = Float3(offsetVector.x, offsetVector.y, offsetVector.z)
+
+
+
+
+
+            val orbitNode = Node(sceneView.engine).apply {parent = anchorNode }
+            pivotNode = orbitNode
+            val correctionQ = createQuaternionFromAxisAngle(Vector3(0f, 0f, 1f), 90f)
+            pivotBaseQ = correctionQ
+            pivotNode.transform(position = offsetFloat3, quaternion = correctionQ)
+
+
+            pivotNode.transform(
+                position = offsetFloat3,
+                quaternion = correctionQ
+            )
+
+
+
+            applyOrbitYaw(0f)
+
+
+
+
+
+
+
+
+
+
+
             lifecycleScope.launch {
                 try {
+
                     placeCube()
                     placeCirclesAroundFace()
                     onSuccess()
                 } catch (e: Exception) {
+                    Log.d("ConfirmButtonLogs", "Error lifecycleScope.launch: ${e.message}")
                     onError(e.message ?: "Unknown error placing models")
-                    Log.d("ConfirmButtonLogs","Error lifecycleScope.launch: ${e.message}")
+                }
+            }
+        } catch (e: Exception) {
+            Log.d("ConfirmButtonLogs", "Error in function: ${e.message}")
+            onError(e.message ?: "Failed to create anchor")
+        }
+    }
+
+
+
+    // Function to place the cube model on head
+    private fun placeCube() {
+        try {
+            // Keep any orientation you want for the cube
+            val rotationX = createQuaternionFromAxisAngle(Vector3(1f, 0f, 0f), 0f)
+            val rotationY = createQuaternionFromAxisAngle(Vector3(0f, 1f, 0f), 0f)
+            val rotationZ = createQuaternionFromAxisAngle(Vector3(0f, 0f, 1f), 0f)
+            val combinedRotation3 = (rotationZ * rotationY * rotationX).toEulerAngles()
+
+            lifecycleScope.launch {
+                try {
+                    sceneView.modelLoader.loadModelInstance(faceCubeUri)?.let { modelInstance ->
+                        modelInstance.materialInstances.forEach { _ ->
+                            cubeNode = ModelNode(
+                                modelInstance = modelInstance,
+                                scaleToUnits = cubeConfig.cubeSize,
+                                autoAnimate = true,
+                                centerOrigin = null
+                            ).apply {
+                                isPositionEditable = false
+                                isVisible = true  //hides the modal
+                                // ⬇️ No offset. Cube sits at pivot origin.
+                                transform(position = Float3(0f, 0f, 0f), rotation = combinedRotation3)
+                            }
+
+                            cubeNode?.let { pivotNode.addChildNode(it) }
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.e("CubePlacement", "Error: ${e.message}")
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("placeCube", "Error: ${e.message}", e)
+            showToast("Something went wrong. Try again!")
+        }
+    }
+
+
+    // The function responsible for placing the circles around the face .It loops arrowList which contains all the circles configurations and places them accordingly
+    private fun placeCirclesAroundFace() {
+
+        try {
+            arrowList.forEachIndexed{ index, bulletObj ->
+                // Position offset for this circle
+
+                //computeHere
+                val offsetVector = Vector3(
+                    bulletObj.xPoint.toFloat()-0.08f,
+                    bulletObj.yPoint.toFloat()+0.25f,
+                    bulletObj.zPoint.toFloat() +0.16f
+                )
+                val offsetFloat3 = Float3(offsetVector.x, offsetVector.y, offsetVector.z)
+
+                var verticalAngle=-bulletObj.verticalAngle.toFloat();
+                var horizontalAngle=-bulletObj.horizontalAngle.toFloat();
+
+
+
+                // Rotation logic — replace with actual angles when needed
+                val rotationX = createQuaternionFromAxisAngle(Vector3(1f, 0f, 0f), verticalAngle);
+                val rotationY = createQuaternionFromAxisAngle(Vector3(0f, 1f, 0f),horizontalAngle)
+                val rotationZ = createQuaternionFromAxisAngle(Vector3(0f, 0f, 1f), 0f)
+                val combinedRotation = rotationZ * rotationY * rotationX
+                val combinedRotation3=combinedRotation.toEulerAngles()
+
+
+                // Load and place model asynchronously
+                lifecycleScope.launch {
+                    try {
+                        val modelNode = makeCircleModel()
+                        modelNode?.let {
+                            it.transform(position = offsetFloat3, rotation = combinedRotation3)
+
+
+                            pivotNode?.addChildNode(it)
+                            //adding model node to a mutable list
+                            it.isEditable=false;
+                            it.isPositionEditable=false
+                            it.name="${bulletObj.seqID}"
+                            nonCapturedModelList.add(modelNode) }
+
+
+                    } catch (e: Exception) {
+                        Log.e("ArrowLoad", "Error loading arrow: ${e.message}", e)
+                    }
                 }
             }
 
+
+
         } catch (e: Exception) {
-            onError(e.message ?: "Failed to create anchor")
-            Log.d("ConfirmButtonLogs","Error in function: ${e.message}")
+            Log.e("placeCirclesAroundFace", "Error: ${e.message}", e)
+            showToast("Something Went wrong. Try again !")
         }
     }
 
@@ -747,6 +978,25 @@ class MainActivity : AppCompatActivity() {
         animator.start()
     }
 
+    private fun vibrateShort(durationMs: Long = 35) {
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                val vm = getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
+                val v = vm.defaultVibrator
+                v.vibrate(VibrationEffect.createOneShot(durationMs, VibrationEffect.DEFAULT_AMPLITUDE))
+            } else {
+                @Suppress("DEPRECATION")
+                val v = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    v.vibrate(VibrationEffect.createOneShot(durationMs, VibrationEffect.DEFAULT_AMPLITUDE))
+                } else {
+                    v.vibrate(durationMs)
+                }
+            }
+        } catch (_: Exception) { /* safe no-op */ }
+    }
+
+
 
 
 
@@ -777,7 +1027,7 @@ class MainActivity : AppCompatActivity() {
             val dotFacing = Vector3.dot(cameraForward, directionToBullet)
 
             if (depth in dynamicMin..dynamicMax && dotFacing > 0.5f) {
-                bulletNode.isVisible = isModelsVisible
+                bulletNode.isVisible = true
             } else {
                 bulletNode.isVisible = false
             }
@@ -834,102 +1084,6 @@ class MainActivity : AppCompatActivity() {
 
 
 
-    // Function to place the cube model on head
-    private fun placeCube() {
-
-        val frame = sceneView.session?.frame
-        try {
-            val session = sceneView.session ?: return
-            val cameraPose = frame?.camera?.pose?:return
-            val cameraPosition = Vector3(cameraPose.tx(), cameraPose.ty(), cameraPose.tz())
-
-
-            // Create only one anchor at camera position
-            val anchorPose = Pose(
-                floatArrayOf(cameraPosition.x, cameraPosition.y, cameraPosition.z),
-                floatArrayOf(0f, 0f, 0f, 1f) // No initial rotation on anchor
-            )
-
-            val anchor = session.createAnchor(anchorPose)
-
-            // Attach anchor to scene
-            anchorNode = AnchorNode(sceneView.engine, anchor).apply {
-                isEditable = true
-
-            }
-            sceneView.addChildNode(anchorNode)
-
-
-            //Place each arrow model relative to anchor
-
-            val xPoint = 0.061244376  // Shift cube slightly to the right
-            val yPoint =  -0.200656703 // Raise cube slightly upward
-            val zPoint = approxFromRange(cameraConfigDetection.minDistance,cameraConfigDetection.minDistance)// Push cube slightly further back to match ring depth
-
-
-
-
-
-
-            // 🟡 Position offset for this circle
-            val offsetVector = Vector3(
-                xPoint.toFloat(),
-                yPoint.toFloat(),
-                zPoint.toFloat()
-            )
-            val offsetFloat3 = Float3(offsetVector.x, offsetVector.y, offsetVector.z)
-
-            // 🟡 Rotation logic — replace with actual angles when needed
-            val rotationX = createQuaternionFromAxisAngle(Vector3(1f, 0f, 0f), 0f) //vertical
-            val rotationY = createQuaternionFromAxisAngle(Vector3(0f, 1f, 0f),0f) // horizontal
-            val rotationZ = createQuaternionFromAxisAngle(Vector3(0f, 0f, 1f), 0f)
-            val combinedRotation = rotationZ * rotationY * rotationX
-
-
-
-            val combinedRotation3=combinedRotation.toEulerAngles()
-
-
-
-            lifecycleScope.launch {
-                try {
-                    sceneView.modelLoader.loadModelInstance(faceCubeUri)?.let { modelInstance ->
-
-                        modelInstance.materialInstances.forEach { materialInstance ->
-
-                            cubeNode = ModelNode(
-                                modelInstance = modelInstance,
-                                scaleToUnits = cubeConfig.cubeSize ,
-                                autoAnimate = true,
-                                centerOrigin = null
-                            ).apply {
-                                isPositionEditable = false
-                                isVisible=isModelsVisible
-                                transform(position = offsetFloat3, rotation = combinedRotation3)
-
-
-                            }
-
-                            cubeNode?.let {
-                                anchorNode.addChildNode(it)
-                                sceneView.addChildNode(anchorNode)
-                            }
-
-                        }
-
-
-                    }
-                } catch (e: Exception) {
-                    Log.e("CubePlacement", "Error: ${e.message}")
-                }
-            }
-
-
-        } catch (e: Exception) {
-            Log.e("placeCirclesAroundFace", "Error: ${e.message}", e)
-            showToast("Something Went wrong. Try again !")
-        }
-    }
 
 
 
@@ -956,84 +1110,6 @@ class MainActivity : AppCompatActivity() {
 
 
 
-    // The function responsible for placing the circles around the face .It loops arrowList which contains all the circles configurations and places them accordingly
-    private fun placeCirclesAroundFace() {
-        val frame = sceneView.session?.frame
-        if (frame == null) {
-            showToast("Camera frame not available")
-            return
-        }
-        try {
-
-            val session = sceneView.session ?: return
-            val cameraPose = frame.camera.pose?:return
-            val cameraPosition = Vector3(cameraPose.tx(), cameraPose.ty(), cameraPose.tz())
-            // Create only one anchor at camera position
-            val anchorPose = Pose(
-                floatArrayOf(cameraPosition.x, cameraPosition.y, cameraPosition.z),
-                floatArrayOf(0f, 0f, 0f, 1f) // No initial rotation on anchor
-            )
-
-            val anchor = session.createAnchor(anchorPose)
-
-            // Attach anchor to scene
-            anchorNode = AnchorNode(sceneView.engine, anchor).apply {
-                isEditable = true
-            }
-            sceneView.addChildNode(anchorNode)
-
-            arrowList.forEachIndexed { index, bulletObj ->
-                // Position offset for this circle
-                val offsetVector = Vector3(
-                    bulletObj.xPoint.toFloat(),
-                    bulletObj.yPoint.toFloat(),
-                    bulletObj.zPoint.toFloat() +  approxFromRange(cameraConfigDetection.minDistance,cameraConfigDetection.minDistance)+0.15f
-                )
-                val offsetFloat3 = Float3(offsetVector.x, offsetVector.y, offsetVector.z)
-
-                var verticalAngle=-bulletObj.verticalAngle.toFloat();
-                var horizontalAngle=-bulletObj.horizontalAngle.toFloat();
-
-
-
-                // Rotation logic — replace with actual angles when needed
-                val rotationX = createQuaternionFromAxisAngle(Vector3(1f, 0f, 0f), verticalAngle);
-                val rotationY = createQuaternionFromAxisAngle(Vector3(0f, 1f, 0f),horizontalAngle)
-                val rotationZ = createQuaternionFromAxisAngle(Vector3(0f, 0f, 1f), 0f)
-                val combinedRotation = rotationZ * rotationY * rotationX
-                val combinedRotation3=combinedRotation.toEulerAngles()
-
-
-
-
-
-                // Load and place model asynchronously
-                lifecycleScope.launch {
-                    try {
-                        val modelNode = makeCircleModel()
-                        modelNode?.let {
-                            it.transform(position = offsetFloat3, rotation = combinedRotation3)
-                            anchorNode.addChildNode(it)
-                            //adding model node to a mutable list
-                            it.isEditable=false;
-                            it.isPositionEditable=false
-                            it.name="${bulletObj.seqID}"
-                            nonCapturedModelList.add(modelNode) }
-
-
-                    } catch (e: Exception) {
-                        Log.e("ArrowLoad", "Error loading arrow: ${e.message}", e)
-                    }
-                }
-            }
-
-
-
-        } catch (e: Exception) {
-            Log.e("placeCirclesAroundFace", "Error: ${e.message}", e)
-            showToast("Something Went wrong. Try again !")
-        }
-    }
 
 
 
@@ -1249,20 +1325,53 @@ class MainActivity : AppCompatActivity() {
     var isAnyFace = false
 
 
-    private fun resetARSession() {
-        try {
-            showLoading(" Hold still! \n Repositioning models.")
-
-            val restartIntent = intent
-            restartIntent.putExtra(EXTRA_ALREADY_RESET, true) // mark that we reset
-            finish()
-            startActivity(restartIntent)
-//            hideLoading()
-
-        } catch (e: Exception) {
-            Log.e("ARSession", "Failed to reset AR session: ${e.message}")
-        }
+    private fun dpToPx(dp: Float): Float {
+        return dp * resources.displayMetrics.density
     }
+
+    /**
+     * Map image-space coordinates (ix, iy) to view-space (vx, vy) with a CenterCrop transform.
+     * imgW/imgH are the bitmap size passed to the detector.
+     * viewW/viewH are the overlay (FaceOverlayView) size on screen.
+     */
+    private fun imageToViewCoords(
+        ix: Float,
+        iy: Float,
+        imgW: Int,
+        imgH: Int,
+        viewW: Int,
+        viewH: Int
+    ): Pair<Float, Float> {
+        if (imgW <= 0 || imgH <= 0 || viewW <= 0 || viewH <= 0) return 0f to 0f
+
+        val scale = maxOf(
+            viewW.toFloat() / imgW.toFloat(),
+            viewH.toFloat() / imgH.toFloat()
+        ) // CenterCrop scale
+
+        val drawnW = imgW * scale
+        val drawnH = imgH * scale
+        val offX = (viewW - drawnW) * 0.5f
+        val offY = (viewH - drawnH) * 0.5f
+
+        val vx = ix * scale + offX
+        val vy = iy * scale + offY
+        return vx to vy
+    }
+
+    /** Returns dx, dy in view pixels from view center (dx>0 = nose is right of center; dy>0 = nose is below center). */
+    private fun centerOffsetPx(vx: Float, vy: Float, viewW: Int, viewH: Int): Pair<Float, Float> {
+        val cx = viewW * 0.5f
+        val cy = viewH * 0.5f
+        return (vx - cx) to (vy - cy)
+    }
+
+    /** True if nose is within tolerance of the screen center. */
+    private fun isNoseCentered(dxPx: Float, dyPx: Float, toleranceDp: Float = 24f): Boolean {
+        val tolPx = dpToPx(toleranceDp)
+        return kotlin.math.abs(dxPx) <= tolPx && kotlin.math.abs(dyPx) <= tolPx
+    }
+
 
 
 
@@ -1285,7 +1394,13 @@ class MainActivity : AppCompatActivity() {
                         if (faceMeshes.isNotEmpty()) {
                             val faceMesh = faceMeshes[0]
                             val allPoints = faceMesh.allPoints
-                            val noseZ = allPoints.get(1)?.position?.z ?: 0f
+
+                            val nosePose=allPoints.get(1)?.position
+                            val noseZ = nosePose?.z ?: 0f
+
+
+
+
 
 
                             // Update the face overlay with mesh information
@@ -1308,6 +1423,8 @@ class MainActivity : AppCompatActivity() {
                                     )
                                     updateDistanceLabel("Move Away")
                                     confirmButton.isEnabled=false
+                                    faceOverlayView.setMeshDetected(false)
+                                    hasVibratedForCenter = false
                                 }
 
                                 noseZ > cameraConfigDetection.maxDistance -> {
@@ -1317,37 +1434,70 @@ class MainActivity : AppCompatActivity() {
                                     )
                                     updateDistanceLabel("Move Closer")
                                     confirmButton.isEnabled=false
+                                    faceOverlayView.setMeshDetected(false)
+                                    hasVibratedForCenter = false
                                 }
 
                                 else -> {
                                     Log.d("isFaceDetected", "updateDistanceLabel DETECTED" + noseZ)
-                                    updateDistanceLabel("Subject Detected")
-                                    confirmButton.isEnabled = true
 
-                                    if(isModelsPlaced==false){
-                                        faceCamDistance=noseZ
-                                        isModelsPlaced=true;
-                                        placeWhenTracking(
-                                            onSuccess = {},
-                                            onError = { error ->
-                                                runOnUiThread {
-                                                    Toast.makeText(this, "Failed: $error. Try again.", Toast.LENGTH_LONG).show()
-                                                    Log.e("Placement", "Error: $error")
+
+
+
+
+                                    //checks if camera aligned to nose
+
+                                    val imgW = bitmap.width
+                                    val imgH = bitmap.height
+
+// Make sure overlay is measured; if not yet, skip this frame
+                                    val vW = faceOverlayView.width
+                                    val vH = faceOverlayView.height
+                                    if (vW > 0 && vH > 0) {
+                                        val (vx, vy) = imageToViewCoords(nosePose?.x ?: 0f,
+                                            nosePose?.y ?: 0f, imgW, imgH, vW, vH)
+                                        val (dx, dy) = centerOffsetPx(vx, vy, vW, vH)
+
+                                        val centered = isNoseCentered(dx, dy, toleranceDp = 50f)  //24f
+
+                                        // Optional: guidance text for user
+                                        val hint = when {
+                                            centered -> "Centered"
+                                            kotlin.math.abs(dx) > kotlin.math.abs(dy) -> if (dx > 0) "Move camera RIGHT" else "Move camera LEFT"
+                                            else -> if (dy > 0) "Move camera DOWN" else "Move camera UP"
+                                        }
+
+                                        // Update your existing UI
+                                        runOnUiThread {
+                                            if (centered) {
+                                                updateDistanceLabel("Subject Detected")
+                                                confirmButton.isEnabled = true
+                                                faceCamDistance = noseZ
+                                                faceOverlayView.setMeshDetected(true)
+
+                                                if (!hasVibratedForCenter) {
+                                                    vibrateShort(100)
+                                                    hasVibratedForCenter = true
                                                 }
+                                            } else {
+                                                faceRing.setBackgroundResource(R.drawable.circle_ring)
+                                                updateDistanceLabel("Face Not Aligned")
+                                                Log.d("FaceAlignment", "$hint")
+                                                faceOverlayView.setMeshDetected(false)
+                                                hasVibratedForCenter = false
                                             }
-                                        )
+                                        }
+
+
+
+
                                     }
 
 
 
 
-                                    Handler(Looper.getMainLooper()).postDelayed({
 
-                                        if (!hasResetForCurrentFace) {  // double check after delay
-                                            resetARSession()
-                                            hasResetForCurrentFace = true
-                                        }
-                                    }, 1500)
+
                                 }
                             }
                         } else {

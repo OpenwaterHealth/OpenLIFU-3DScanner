@@ -27,9 +27,10 @@
         android:layout_width="wrap_content"
 
         android:layout_height="wrap_content"
-        android:layout_marginTop="152dp"
+        android:layout_marginTop="156dp"
         android:src="@drawable/logo_lifu"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -45,7 +46,7 @@
         android:textSize="20sp"
         app:layout_constraintBottom_toTopOf="@+id/newCaptureButton"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.497"
+        app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.0" />
@@ -61,7 +62,7 @@
         app:backgroundTint="@null"
         app:layout_constraintBottom_toTopOf="@+id/reviewButton"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.625"
+        app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.944" />
@@ -77,7 +78,7 @@
         android:textColor="@color/white"
         app:backgroundTint="@null"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.625"
+        app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -90,7 +91,7 @@
         android:src="@drawable/logo_water"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.537"
+        app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.889" />
@@ -110,19 +111,19 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/logoClickImage" />
 
+
     <TextView
         android:id="@+id/appVersionText"
         android:layout_width="109dp"
         android:layout_height="30dp"
         android:layout_marginTop="36dp"
         android:gravity="center_vertical"
-        android:text="VER 0.5.6"
+        android:text="VER 0.5.7"
         android:textColor="@color/white"
         app:layout_constraintEnd_toStartOf="@+id/textViewDisclaimer"
-        app:layout_constraintHorizontal_bias="0.68"
+        app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/logoClickImage" />
-
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guideline"

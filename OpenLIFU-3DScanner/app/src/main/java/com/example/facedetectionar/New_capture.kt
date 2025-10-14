@@ -588,7 +588,7 @@ class New_capture : AppCompatActivity() {
                 // Add cameraDistanceConfig object
                 put("cameraDistanceForFaceDetection", JSONObject().apply {
                     put("maxDistance",-68.0)
-                    put("minDistance", -70.0)
+                    put("minDistance", -72.0)
                 })
 
 

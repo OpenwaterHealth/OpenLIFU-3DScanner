@@ -44,10 +44,11 @@
     <!-- EditText -->
     <EditText
         android:id="@+id/scanIDInputText"
-        android:layout_width="354dp"
+        android:layout_width="match_parent"
         android:layout_height="45dp"
         android:layout_marginTop="12dp"
-        android:layout_marginEnd="8dp"
+        android:layout_marginHorizontal="15dp"
+
         android:background="@drawable/rounded_edittext_background"
         android:hint="Scan ID"
         android:imeOptions="actionDone"

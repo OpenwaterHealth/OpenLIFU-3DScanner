@@ -7,6 +7,7 @@ import android.view.View
 import com.google.mlkit.vision.common.Triangle
 import com.google.mlkit.vision.facemesh.FaceMeshPoint
 import com.google.mlkit.vision.facemesh.FaceMesh
+import androidx.core.graphics.toColorInt
 
 
 class FaceOverlayView(context: Context) : View(context) {
@@ -15,6 +16,19 @@ class FaceOverlayView(context: Context) : View(context) {
     private var imageWidth = 1
     private var imageHeight = 1
     private var boundingBox: Rect? = null
+
+    // at top-level in FaceOverlayView class
+    private var meshPointColor: Int = Color.RED
+    private var meshLineColor: Int = Color.RED
+
+    /** Call this to switch mesh colors (e.g., when centered vs not). */
+    fun setMeshDetected(detected: Boolean) {
+        // Green tones when centered, grey/red-ish when not
+        meshPointColor = if (detected) "#48ff00".toColorInt() else "#f96c34".toColorInt()
+        meshLineColor  = if (detected) "#48ff00".toColorInt() else "#f96c34".toColorInt()
+        postInvalidateOnAnimation()
+    }
+
 
     fun updatePoints(
         meshPoints: List<FaceMeshPoint>,
@@ -40,82 +54,69 @@ class FaceOverlayView(context: Context) : View(context) {
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        if (points.isEmpty() || boundingBox == null) return
+        val faceBox = boundingBox ?: return
+        if (points.isEmpty()) return
 
-        val faceBox = boundingBox!!
         val scaleX = width.toFloat() / imageWidth
         val scaleY = height.toFloat() / imageHeight
 
-        // Create paints for points and lines
-        val pointPaint = Paint().apply {
-            color = Color.GREEN
+        val cx = faceBox.exactCenterX() * scaleX
+        val cy = faceBox.exactCenterY() * scaleY
+        val factor = 1.4f
+
+        // 1) Precompute screen coords once (by landmark index)
+        val screen = HashMap<Int, PointF>(points.size)
+        for (p in points) {
+            val x = p.position.x * scaleX
+            val y = p.position.y * scaleY
+            val sx = cx + (x - cx) * factor
+            val sy = cy + (y - cy) * factor
+            screen[p.index] = PointF(sx, sy) // FaceMeshPoint.index is stable per landmark
+        }
+
+        // Paints
+        val pointPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = meshPointColor
             strokeWidth = 2f
             style = Paint.Style.FILL
         }
-
-        val linePaint = Paint().apply {
-            color = Color.LTGRAY
+        val linePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = meshLineColor
             strokeWidth = 2f
             style = Paint.Style.STROKE
-            alpha = 180 // Semi-transparent
+            alpha = 180
         }
 
-        // Draw mesh triangles (connections)
+        // 2) Draw triangles using the precomputed coords
         if (triangles.isNotEmpty()) {
-            for (triangle in triangles) {
-                val connectedPoints = triangle.allPoints
-                if (connectedPoints.size >= 3) {
-                    val path = Path()
-
-                    for (i in connectedPoints.indices) {
-                        val point = connectedPoints[i]
-                        var x = point.position.x * scaleX
-                        var y = point.position.y * scaleY
-
-                        // Apply scaling factor around face center
-                        val cx = (faceBox.exactCenterX()) * scaleX
-                        val cy = (faceBox.exactCenterY()) * scaleY
-                        val factor = 1.4f
-
-                        x = cx + (x - cx) * factor
-                        y = cy + (y - cy) * factor
-
-                        if (i == 0) {
-                            path.moveTo(x, y)
-                        } else {
-                            path.lineTo(x, y)
-                        }
-                    }
-
+            val path = Path()
+            for (tri in triangles) {
+                val ps = tri.allPoints
+                if (ps.size >= 3) {
+                    val p0 = screen[ps[0].index] ?: continue
+                    val p1 = screen[ps[1].index] ?: continue
+                    val p2 = screen[ps[2].index] ?: continue
+                    path.reset()
+                    path.moveTo(p0.x, p0.y)
+                    path.lineTo(p1.x, p1.y)
+                    path.lineTo(p2.x, p2.y)
                     path.close()
                     canvas.drawPath(path, linePaint)
                 }
             }
         }
 
-        // Draw points
-        for (point in points) {
-            var x = point.position.x * scaleX
-            var y = point.position.y * scaleY
-
-            // Apply scaling factor around face center
-            val cx = (faceBox.exactCenterX()) * scaleX
-            val cy = (faceBox.exactCenterY()) * scaleY
-            val factor = 1.4f
-
-            x = cx + (x - cx) * factor
-            y = cy + (y - cy) * factor
-
-            canvas.drawCircle(x, y, 3f, pointPaint)
+        // 3) Draw landmark dots once each, reusing the same coords
+        for ((_, pt) in screen) {
+            canvas.drawCircle(pt.x, pt.y, 3f, pointPaint)
         }
 
-        // Optional: Draw bounding box
-        val boxPaint = Paint().apply {
+        // Optional: bounding box (already scaled)
+        val boxPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = Color.TRANSPARENT
             strokeWidth = 3f
             style = Paint.Style.STROKE
         }
-
         val scaledBox = Rect(
             (faceBox.left * scaleX).toInt(),
             (faceBox.top * scaleY).toInt(),
@@ -124,4 +125,5 @@ class FaceOverlayView(context: Context) : View(context) {
         )
         canvas.drawRect(scaledBox, boxPaint)
     }
+
 }
