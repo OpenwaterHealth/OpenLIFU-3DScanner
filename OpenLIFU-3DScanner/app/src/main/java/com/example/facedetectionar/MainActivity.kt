@@ -84,8 +84,10 @@ import androidx.core.graphics.toColorInt
 import androidx.transition.Visibility
 import com.google.ar.core.Session
 import io.github.sceneview.math.Direction
+import dagger.hilt.android.AndroidEntryPoint
 
 
+@AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
     private companion object {
         private const val CAMERA_PERMISSION_CODE = 1

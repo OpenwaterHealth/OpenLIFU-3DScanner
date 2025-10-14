@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "341318872140",
+    "project_id": "openwater-cloud",
+    "storage_bucket": "openwater-cloud.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:341318872140:android:0c3ffd4b3d6fb5be7b18e9",
+        "android_client_info": {
+          "package_name": "com.example.facedetectionar"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBtfFuyGJeo8E8kUyMTPQ2uho6OmJW3xUQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

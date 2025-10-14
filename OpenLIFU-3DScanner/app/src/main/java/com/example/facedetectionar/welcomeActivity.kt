@@ -1,27 +1,37 @@
 package com.example.facedetectionar
 
 import android.app.Dialog
-import android.graphics.Paint
 import android.content.Intent
+import android.graphics.Paint
 import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.CheckBox
-import android.widget.FrameLayout
 import android.widget.ImageButton
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import kotlin.jvm.java
-import kotlin.text.toInt
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.flowWithLifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import com.example.facedetectionar.api.repository.UserRepository
+import com.example.facedetectionar.dialogs.CloudStatusDialog
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
+import javax.inject.Inject
 
+@AndroidEntryPoint
 class welcomeActivity : AppCompatActivity() {
 
+    @Inject
+    lateinit var userRepository: UserRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
 
@@ -36,6 +46,7 @@ class welcomeActivity : AppCompatActivity() {
         }
         handleNoticeModal()
 
+        subscribeToCloudStatus()
 
 
 
@@ -127,7 +138,42 @@ appVersionText.text="VER:${versionName}";
         }
     }
 
+    private fun subscribeToCloudStatus() {
+        val cloudStatusButton = findViewById<ImageView>(R.id.cloudStatusButton)
+        val cloudStatusText = findViewById<TextView>(R.id.textCloudStatus)
 
+        cloudStatusButton.setOnClickListener {
+            val dialog = CloudStatusDialog()
+            dialog.show(supportFragmentManager, CloudStatusDialog::class.simpleName)
+        }
+
+        lifecycleScope.launch {
+            userRepository.getUserInfo().flowWithLifecycle(lifecycle).collect { userInfo ->
+                cloudStatusButton.setImageDrawable(
+                    AppCompatResources.getDrawable(
+                        this@welcomeActivity,
+                        when {
+                            userInfo != null -> R.drawable.ic_cloud_connected
+                            else -> R.drawable.ic_cloud_not_connected
+                        }
+                    )
+                )
+
+                cloudStatusText.text = when {
+                    userInfo != null -> userInfo.displayName
+                    userRepository.authService.isSignedIn() -> getString(R.string.not_connected)
+                    else -> getString(R.string.not_logged_in)
+                }
+            }
+        }
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                userRepository.checkCloudAvailability()
+                userRepository.refreshUserInfo()
+            }
+        }
+    }
 
 }
 

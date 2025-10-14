@@ -33,6 +33,7 @@
     <uses-feature android:name="android.hardware.usb.host" />
 
     <application
+        android:name=".App"
         android:requestLegacyExternalStorage="true"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -93,6 +94,9 @@
         </activity>
         <activity android:name=".FaceDetectionActivity" />
 
+        <activity
+            android:name=".LoginActivity"
+            android:exported="false" />
     </application>
 
 </manifest>
