@@ -1,11 +1,21 @@
 package com.example.facedetectionar.api
 
-import com.google.firebase.auth.AuthResult
+import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
+import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import com.google.firebase.auth.FirebaseUser
 import kotlinx.coroutines.tasks.await
 
 class AuthService {
+    enum class AuthResponse {
+        SUCCESS,
+        INVALID_CREDENTIALS,
+        NETWORK_ERROR,
+        UNKNOWN
+    }
+
+
     private val auth = FirebaseAuth.getInstance()
     private var idToken: String? = null
 
@@ -18,8 +28,17 @@ class AuthService {
         }
     }
 
-    suspend fun signIn(email: String, password: String): AuthResult {
-        return auth.signInWithEmailAndPassword(email, password).await()
+    suspend fun signIn(email: String, password: String): AuthResponse {
+        return try {
+            if (auth.signInWithEmailAndPassword(email, password).await().user != null)
+                AuthResponse.SUCCESS
+            else
+                AuthResponse.UNKNOWN
+        } catch (_: FirebaseAuthInvalidCredentialsException) {
+            AuthResponse.INVALID_CREDENTIALS
+        } catch (_: Exception) {
+            AuthResponse.NETWORK_ERROR
+        }
     }
 
     fun signOut() {
@@ -36,7 +55,15 @@ class AuthService {
     }
 
     suspend fun getToken(): String? {
-        return idToken ?: auth.currentUser?.getIdToken(true)?.await()?.token
+        return idToken ?: run {
+            try {
+                auth.currentUser?.getIdToken(true)?.await()?.token
+            } catch (e: FirebaseAuthInvalidUserException) {
+                Log.w(TAG, e.message ?: "Invalid user")
+                signOut()
+                null
+            }
+        }
     }
 
     companion object {

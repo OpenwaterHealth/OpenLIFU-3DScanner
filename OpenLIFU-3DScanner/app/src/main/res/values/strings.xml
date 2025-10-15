@@ -19,7 +19,14 @@
     <string name="not_available">Not Available</string>
     <string name="connected">Connected</string>
     <string name="user_name_email_credits">%1$s\n%2$s\n%3$d credits</string>
+    <string name="email_credits">%1$s\n%2$d credits</string>
     <string name="username">Username:</string>
     <string name="password">Password:</string>
     <string name="forgot_password_u"><u>Forgot Password?</u></string>
+    <string name="logged_in">Logged In</string>
+    <string name="_continue">Continue</string>
+    <string name="could_not_log_in">Could Not Log In</string>
+    <string name="go_back">Go Back</string>
+    <string name="incorrect_username_or_password">Incorrect Username\nand/or Password</string>
+    <string name="check_internet_connection">Please check your internet connection and try again</string>
 </resources>
