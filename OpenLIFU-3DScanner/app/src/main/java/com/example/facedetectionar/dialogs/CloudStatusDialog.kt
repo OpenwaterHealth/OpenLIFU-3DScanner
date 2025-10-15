@@ -49,7 +49,7 @@ class CloudStatusDialog: DialogFragment() {
         }
 
         lifecycleScope.launch {
-            userRepository.getCloudAvailability().flowWithLifecycle(lifecycle).collect {
+            userRepository.getUserInfo().flowWithLifecycle(lifecycle).collect {
                 refreshUI()
             }
         }
