@@ -52,6 +52,7 @@ android {
 dependencies {
 //sceneView dependencies
     implementation("io.github.sceneview:arsceneview:2.3.0")
+    implementation ("com.google.android.material:material:1.13.0-rc01")
 
     implementation("com.google.ar:core:1.33.0")
     implementation("com.google.mlkit:face-detection:16.1.7")

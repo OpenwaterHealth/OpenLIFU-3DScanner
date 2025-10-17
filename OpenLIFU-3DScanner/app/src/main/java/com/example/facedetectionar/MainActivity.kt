@@ -612,9 +612,8 @@ class MainActivity : AppCompatActivity() {
             sceneView.addChildNode(anchorNode)
 
             //computeHere
-            val xPoint = 0.261244386f             //up down
-            val yPoint = 0.09934329f-0.02f
-//            val zPoint = -0.57133945f
+            val xPoint =0.131244386f             //up down
+            val yPoint = 0.07934329f            //left right
             val zPoint = approxFromRange(cameraConfigDetection.minDistance,cameraConfigDetection.minDistance)// Push cube slightly further back to match ring depth
 
 
@@ -629,8 +628,8 @@ class MainActivity : AppCompatActivity() {
 
             // 🟡 Position offset for this circle
             val offsetVector = Vector3(
-                xPoint.toFloat(),
-                yPoint.toFloat(),
+                xPoint.toFloat(),         //up down
+                yPoint.toFloat(),         //left right
                 zPoint.toFloat()
             )
             val offsetFloat3 = Float3(offsetVector.x, offsetVector.y, offsetVector.z)
@@ -732,9 +731,9 @@ class MainActivity : AppCompatActivity() {
 
                 //computeHere
                 val offsetVector = Vector3(
-                    bulletObj.xPoint.toFloat()-0.08f,
-                    bulletObj.yPoint.toFloat()+0.25f,
-                    bulletObj.zPoint.toFloat() +0.16f
+                    bulletObj.xPoint.toFloat(),
+                    bulletObj.yPoint.toFloat(),
+                    bulletObj.zPoint.toFloat()
                 )
                 val offsetFloat3 = Float3(offsetVector.x, offsetVector.y, offsetVector.z)
 
