@@ -393,6 +393,7 @@ class MainActivity : AppCompatActivity() {
                 startButton.visibility = View.GONE
                 confirmButton.visibility = View.VISIBLE
                 faceOverlayView.visibility = View.VISIBLE
+                resetARSession()
 
                 // Clear face detection state
                 isFaceDetected = false
@@ -411,6 +412,8 @@ class MainActivity : AppCompatActivity() {
                 updateDistanceLabel("Subject not in Frame")
 
                 clearAnchorsAndNodes()
+
+
 
             }
 
@@ -581,49 +584,42 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-
     fun placeWhenTracking(
         onSuccess: () -> Unit,
         onError: (String) -> Unit
     ) {
 
-        Log.d("PlacementFlow","Done 1")
+        Log.d("PlacementFlow", "Done 1")
         val frame = sceneView.session?.frame ?: return onError("Camera frame not available")
-        Log.d("PlacementFlow","Done 2")
+        Log.d("PlacementFlow", "Done 2")
         if (frame.camera.trackingState != TrackingState.TRACKING) {
             sceneView.postDelayed({ placeWhenTracking(onSuccess, onError) }, 200)
             return
         }
 
-        Log.d("PlacementFlow","Done 3")
+        Log.d("PlacementFlow", "Done 3")
 
         try {
-            Log.d("PlacementFlow","Done 4")
+            Log.d("PlacementFlow", "Done 4")
             val session = sceneView.session ?: return onError("No AR session")
             val cameraPose = frame.camera.pose
 
             // Anchor at camera position WITH yaw baked in
             val anchorPose = Pose(
                 floatArrayOf(cameraPose.tx(), cameraPose.ty(), cameraPose.tz()),
-                floatArrayOf(cameraPose.qx(), cameraPose.qy(), cameraPose.qz(),cameraPose.qw()),
+                floatArrayOf(0f,0f,0f,1f),
             )
             val anchor = session.createAnchor(anchorPose)
             anchorNode = AnchorNode(sceneView.engine, anchor).apply { isEditable = true }
             sceneView.addChildNode(anchorNode)
 
             //computeHere
-            val xPoint =0.131244386f             //up down
-            val yPoint = 0.07934329f            //left right
-            val zPoint = approxFromRange(cameraConfigDetection.minDistance,cameraConfigDetection.minDistance)// Push cube slightly further back to match ring depth
-
-
-
-
-
-
-
-
-
+            val xPoint =0.081244386f     //LR
+            val yPoint =-0.20065671f          //  up down
+            val zPoint = approxFromRange(
+                cameraConfigDetection.minDistance,
+                cameraConfigDetection.minDistance
+            )+0.03f  // Push cube slightly further back to match ring depth
 
 
             // 🟡 Position offset for this circle
@@ -635,14 +631,11 @@ class MainActivity : AppCompatActivity() {
             val offsetFloat3 = Float3(offsetVector.x, offsetVector.y, offsetVector.z)
 
 
-
-
-
-            val orbitNode = Node(sceneView.engine).apply {parent = anchorNode }
+            val orbitNode = Node(sceneView.engine).apply { parent = anchorNode }
             pivotNode = orbitNode
-            val correctionQ = createQuaternionFromAxisAngle(Vector3(0f, 0f, 1f), 90f)
+            val correctionQ = createQuaternionFromAxisAngle(Vector3(0f, 0f, 1f), 0f)
             pivotBaseQ = correctionQ
-            pivotNode.transform(position = offsetFloat3, quaternion = correctionQ)
+            pivotNode.transform(position = offsetFloat3)
 
 
             pivotNode.transform(
@@ -652,7 +645,7 @@ class MainActivity : AppCompatActivity() {
 
 
 
-            applyOrbitYaw(0f)
+//            applyOrbitYaw(0f)
 
 
 
@@ -678,6 +671,21 @@ class MainActivity : AppCompatActivity() {
         } catch (e: Exception) {
             Log.d("ConfirmButtonLogs", "Error in function: ${e.message}")
             onError(e.message ?: "Failed to create anchor")
+        }
+    }
+
+    private fun resetARSession() {
+        try {
+            showLoading("Repositioning models...")
+
+            val restartIntent = intent
+            restartIntent.putExtra(EXTRA_ALREADY_RESET, true) // mark that we reset
+            finish()
+            startActivity(restartIntent)
+//            hideLoading()
+
+        } catch (e: Exception) {
+            Log.e("ARSession", "Failed to reset AR session: ${e.message}")
         }
     }
 
@@ -1478,12 +1486,21 @@ class MainActivity : AppCompatActivity() {
                                                     vibrateShort(100)
                                                     hasVibratedForCenter = true
                                                 }
+
+                                                Handler(Looper.getMainLooper()).postDelayed({
+
+                                                    if (!hasResetForCurrentFace) {  // double check after delay
+                                                        resetARSession()
+                                                        hasResetForCurrentFace = true
+                                                    }
+                                                }, 1500)
                                             } else {
                                                 faceRing.setBackgroundResource(R.drawable.circle_ring)
                                                 updateDistanceLabel("Face Not Aligned")
                                                 Log.d("FaceAlignment", "$hint")
                                                 faceOverlayView.setMeshDetected(false)
                                                 hasVibratedForCenter = false
+                                                hasResetForCurrentFace = false
                                             }
                                         }
 

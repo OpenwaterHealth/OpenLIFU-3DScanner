@@ -19,4 +19,14 @@
     <color name='ripple_blue'>#4a768e</color>
     <color name='ripple_red'>#cc2626</color>
     <color name='ripple_light_green'>#4eb792</color>
+
+
+    <color name="slider_thumb">#FFFFFF</color>
+    <color name="slider_halo">#330066FF</color>           <!-- 20% alpha blue -->
+    <color name="slider_track_active">#0066FF</color>     <!-- active line -->
+    <color name="slider_track_inactive">#99CCFF</color>   <!-- faded line -->
+    <color name="slider_tick_active">#FFFFFFFF</color>
+    <color name="slider_tick_inactive">#80FFFFFF</color>
+    <color name="slider_label">#FFFFFF</color>
+
 </resources>

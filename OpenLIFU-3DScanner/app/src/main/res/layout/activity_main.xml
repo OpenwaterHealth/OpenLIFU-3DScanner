@@ -9,7 +9,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
 
-<!--first half-->
+    <!--first half-->
     <LinearLayout
         android:layout_width="match_parent"
         android:orientation="vertical"
@@ -190,7 +190,7 @@
 
 
 
-<!--    second half-->
+    <!--    second half-->
     <FrameLayout
         android:layout_width="match_parent"
         android:background="@color/white"
@@ -200,41 +200,41 @@
 
 
         <!-- AR Fragment -->
-<io.github.sceneview.ar.ARSceneView
+        <io.github.sceneview.ar.ARSceneView
             android:id="@+id/arSceneView"
             android:layout_width="match_parent"
             android:layout_height="match_parent"/>
 
 
-    <!-- Loading Overlay -->
-    <LinearLayout
-        android:id="@+id/loadingOverlay"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:gravity="center"
-        android:orientation="vertical"
-        android:background="#80000000"
-    android:visibility="gone">
+        <!-- Loading Overlay -->
+        <LinearLayout
+            android:id="@+id/loadingOverlay"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:background="#80000000"
+            android:visibility="gone">
 
-    <ProgressBar
-        android:id="@+id/loadingProgress"
-        android:layout_width="50dp"
-        android:layout_height="50dp"
-        android:indeterminate="true" />
+            <ProgressBar
+                android:id="@+id/loadingProgress"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:indeterminate="true" />
 
-    <TextView
-        android:id="@+id/loadingMessage"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Initializing..."
-        android:textSize="16sp"
-        android:layout_marginTop="12dp"
-        android:textColor="@android:color/white" />
+            <TextView
+                android:id="@+id/loadingMessage"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Initializing..."
+                android:textSize="16sp"
+                android:layout_marginTop="12dp"
+                android:textColor="@android:color/white" />
 
-</LinearLayout>
+        </LinearLayout>
 
 
-<TextView
+        <TextView
             android:id="@+id/distanceLabel"
             android:layout_width="200dp"
             android:layout_height="wrap_content"
@@ -295,7 +295,7 @@
             android:visibility="visible"
             android:layout_gravity="center_horizontal"
 
-/>
+            />
 
 
 
@@ -345,7 +345,7 @@
 
 
 
-<!--    third half-->
+    <!--    third half-->
     <LinearLayout
         android:layout_width="match_parent"
         android:orientation="vertical"
