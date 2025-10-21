@@ -5,18 +5,27 @@ import com.example.facedetectionar.api.AuthService
 import com.example.facedetectionar.api.PhotocollectionService
 import com.example.facedetectionar.api.PhotoscanService
 import com.example.facedetectionar.api.UserService
+import com.example.facedetectionar.api.WebsocketService
+import com.example.facedetectionar.api.repository.ReconstructionRepository
 import com.example.facedetectionar.api.repository.UserRepository
+import com.google.gson.FieldNamingPolicy
+import com.google.gson.Gson
+import com.google.gson.GsonBuilder
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import okhttp3.Dispatcher
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
+
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -30,6 +39,19 @@ class ApiModule {
         photocollectionService: PhotocollectionService
     ): UserRepository {
         return UserRepository(authService, userService, photocollectionService)
+    }
+
+    @Provides
+    @Singleton
+    fun provideReconstructionRepository(
+        authService: AuthService,
+        photocollectionService: PhotocollectionService,
+        photoscanService: PhotoscanService,
+        websocketService: WebsocketService
+    ): ReconstructionRepository {
+        return ReconstructionRepository(
+            authService, photocollectionService, photoscanService, websocketService
+        )
     }
 
     @Provides
@@ -64,10 +86,18 @@ class ApiModule {
     }
 
     @Provides
-    fun provideRetrofit(client: OkHttpClient): Retrofit {
+    fun provideGson(): Gson {
+        return GsonBuilder()
+            .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
+            .setDateFormat("yyyy-MM-dd'T'HH:mm:ss")
+            .create()
+    }
+
+    @Provides
+    fun provideRetrofit(client: OkHttpClient, gson: Gson): Retrofit {
         val builder = Retrofit.Builder()
             .baseUrl(API_URL)
-            .addConverterFactory(GsonConverterFactory.create())
+            .addConverterFactory(GsonConverterFactory.create(gson))
         return builder.client(client).build()
     }
 
@@ -92,8 +122,14 @@ class ApiModule {
         return AuthService()
     }
 
+    @Provides
+    fun provideWebsocketService(authService: AuthService): WebsocketService {
+        val scope = CoroutineScope(Dispatchers.Main)
+        return WebsocketService(authService, scope)
+    }
+
     companion object {
         private const val TIMEOUT = 30L
-        private const val API_URL = "https://api.nvpsoftware.com"
+        const val API_URL = "https://api.nvpsoftware.com"
     }
 }

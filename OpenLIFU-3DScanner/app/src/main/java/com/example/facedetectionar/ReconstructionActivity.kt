@@ -1,0 +1,118 @@
+package com.example.facedetectionar
+
+import android.content.Intent
+import android.os.Bundle
+import android.widget.Button
+import android.widget.ProgressBar
+import android.widget.TextView
+import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.flowWithLifecycle
+import androidx.lifecycle.lifecycleScope
+import com.example.facedetectionar.api.dto.Photoscan
+import com.example.facedetectionar.api.repository.ReconstructionRepository
+import com.example.facedetectionar.api.repository.UserRepository
+import com.example.facedetectionar.dialogs.PhotoscanDownloadDialog
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
+import javax.inject.Inject
+
+@AndroidEntryPoint
+class ReconstructionActivity : AppCompatActivity() {
+
+    @Inject
+    lateinit var reconstructionRepository: ReconstructionRepository
+    @Inject
+    lateinit var userRepository: UserRepository
+
+    private lateinit var textTitle: TextView
+    private lateinit var textDescription: TextView
+    private lateinit var progressBar: ProgressBar
+    private lateinit var buttonHome: Button
+    private lateinit var buttonDownload: Button
+
+    private var photoscan: Photoscan? = null
+    private var photoscanId: Long = 0
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+        setContentView(R.layout.activity_reconstruction)
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+            insets
+        }
+
+        textTitle = findViewById(R.id.title)
+        progressBar = findViewById(R.id.progress_bar)
+        textDescription = findViewById(R.id.description)
+        buttonHome = findViewById(R.id.returnHomeButton)
+        buttonDownload = findViewById(R.id.downloadButton)
+        buttonDownload.isEnabled = false
+
+        photoscanId = intent.getLongExtra(EXTRA_PHOTOSCAN_ID, 0)
+
+        buttonHome.setOnClickListener {
+            startActivity(Intent(application, welcomeActivity::class.java).also {
+                it.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
+            })
+            finish()
+        }
+
+        buttonDownload.setOnClickListener {
+            val intent = Intent(this, UsbScreenActivity::class.java)
+                .putExtra("REFERENCE_NUMBER", reconstructionRepository.currentReferenceNumber)
+                .putExtra("TOTAL_IMAGE_COUNT", reconstructionRepository.totalImageCount)
+            startActivity(intent)
+            finish()
+        }
+
+        subscribeToProgress()
+        lifecycleScope.launch {
+            photoscan = reconstructionRepository.startReconstructionProgressListener(photoscanId)
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        reconstructionRepository.stopReconstructionProgressListener(photoscanId)
+    }
+
+    private fun subscribeToProgress() {
+        lifecycleScope.launch {
+            reconstructionRepository.getReconstructionProgress().flowWithLifecycle(lifecycle).collect { progress ->
+                if (progress == null) return@collect
+
+                when (progress.status) {
+                    "FINISHED" -> {
+                        textTitle.text = getString(R.string.reconstruction_complete)
+                        textDescription.text =
+                            getString(R.string.results_can_also_be_downloaded_later)
+
+                        photoscan?.let {
+                            val dialog = PhotoscanDownloadDialog(it)
+                            dialog.show(supportFragmentManager, PhotoscanDownloadDialog::class.simpleName)
+                        }
+
+                        buttonDownload.isEnabled = true
+                    }
+
+                    "FAILED" -> {
+                        textTitle.text = getString(R.string.reconstruction_failed)
+                        textTitle.setTextColor(getColor(R.color.red))
+                        buttonDownload.isEnabled = true
+                    }
+                }
+
+                progressBar.setProgress(progress.progress, true)
+            }
+        }
+    }
+
+    companion object {
+        const val EXTRA_PHOTOSCAN_ID = "EXTRA_PHOTOSCAN_ID"
+    }
+}

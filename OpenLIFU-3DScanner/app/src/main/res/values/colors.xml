@@ -30,4 +30,5 @@
     <color name="slider_tick_inactive">#80FFFFFF</color>
     <color name="slider_label">#FFFFFF</color>
 
+    <color name="dark_green">#272F2F</color>
 </resources>

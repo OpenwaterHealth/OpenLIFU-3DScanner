@@ -29,13 +29,22 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import com.example.facedetectionar.api.repository.ReconstructionRepository
+import com.example.facedetectionar.api.repository.UserRepository
 import com.google.ar.core.ArCoreApk
 import com.google.ar.core.exceptions.UnavailableDeviceNotCompatibleException
+import dagger.hilt.android.AndroidEntryPoint
 import org.json.JSONArray
 import org.json.JSONObject
+import javax.inject.Inject
 
-
+@AndroidEntryPoint
 class New_capture : AppCompatActivity() {
+    @Inject
+    lateinit var reconstructionRepository: ReconstructionRepository
+    @Inject
+    lateinit var userRepository: UserRepository
+
     private val REQUIRED_PERMISSIONS = when {
         Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU -> arrayOf(
             android.Manifest.permission.CAMERA,
@@ -85,6 +94,10 @@ class New_capture : AppCompatActivity() {
 //        val qrIconButton=findViewById<ImageButton>(R.id.qrIconButton);
         val startCaptureButton = findViewById<Button>(R.id.startCaptureButton);
         newCaptureCheckbox = findViewById<CheckBox>(R.id.newCaptureCheckbox)
+
+        val autoUploadCheckbox = findViewById<CheckBox>(R.id.autoUploadCheckbox)
+        val autoUploadContainer = findViewById<View>(R.id.autoUploadContainer)
+
         val referenceNumberEditText = findViewById<EditText>(R.id.scanIDInputText)
 
         val fetchedQRText = intent.getStringExtra("QR_TEXT")
@@ -92,7 +105,10 @@ class New_capture : AppCompatActivity() {
         val doNotShowInfoPref = prefs.getBoolean("do_not_show_info", false)
 
 
-
+        if (!userRepository.authService.isSignedIn()) {
+            autoUploadCheckbox.isChecked = false
+            autoUploadContainer.visibility = View.GONE
+        }
 
         if (doNotShowInfoPref) {
             newCaptureCheckbox.isChecked = false;
@@ -181,6 +197,8 @@ class New_capture : AppCompatActivity() {
             } else if (hasAllPermissions()) {
                 //LogFileUtil.appendLog("Moving to face detection screen")
 
+                reconstructionRepository.currentReferenceNumber = referenceNumber
+                reconstructionRepository.setAutoUpload(autoUploadCheckbox.isChecked)
                 navigateToFaceDetection(referenceNumber)
             } else {
                 showToastAndLog("Permissions are required to proceed")
