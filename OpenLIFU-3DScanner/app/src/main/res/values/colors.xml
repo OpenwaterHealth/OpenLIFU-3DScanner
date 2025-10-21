@@ -19,4 +19,5 @@
     <color name='ripple_blue'>#4a768e</color>
     <color name='ripple_red'>#cc2626</color>
     <color name='ripple_light_green'>#4eb792</color>
+    <color name="dark_green">#272F2F</color>
 </resources>

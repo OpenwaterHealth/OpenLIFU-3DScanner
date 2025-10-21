@@ -86,11 +86,10 @@
         android:id="@+id/instructionContainer"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
+        android:layout_marginBottom="8dp"
         android:orientation="horizontal"
-        app:layout_constraintBottom_toTopOf="@+id/startCaptureButton"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.13"
+        app:layout_constraintBottom_toTopOf="@+id/autoUploadContainer"
+        android:layout_marginStart="32dp"
         app:layout_constraintStart_toStartOf="parent">
 
         <CheckBox
@@ -106,6 +105,32 @@
             android:layout_gravity="center_vertical"
             android:layout_marginStart="8dp"
             android:text="Show instructions"
+            android:textColor="@color/white" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/autoUploadContainer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:orientation="horizontal"
+        android:layout_marginStart="32dp"
+        app:layout_constraintBottom_toTopOf="@+id/startCaptureButton"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <CheckBox
+            android:id="@+id/autoUploadCheckbox"
+            android:layout_width="38dp"
+            android:layout_height="32dp"
+            android:buttonTint="@color/algae"
+            android:checked="true" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:layout_marginStart="8dp"
+            android:text="@string/auto_upload"
             android:textColor="@color/white" />
     </LinearLayout>
 

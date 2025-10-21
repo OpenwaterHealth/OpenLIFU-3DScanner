@@ -22,6 +22,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import com.example.facedetectionar.api.repository.ReconstructionRepository
 import com.example.facedetectionar.api.repository.UserRepository
 import com.example.facedetectionar.dialogs.CloudStatusDialog
 import dagger.hilt.android.AndroidEntryPoint
@@ -35,6 +36,8 @@ class welcomeActivity : AppCompatActivity() {
 
     @Inject
     lateinit var userRepository: UserRepository
+    @Inject
+    lateinit var reconstructionRepository: ReconstructionRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
 
@@ -57,6 +60,7 @@ class welcomeActivity : AppCompatActivity() {
         handleNoticeModal()
 
         subscribeToCloudStatus()
+        reconstructionRepository.reset()
 
 
 

@@ -29,4 +29,32 @@
     <string name="go_back">Go Back</string>
     <string name="incorrect_username_or_password">Incorrect Username\nand/or Password</string>
     <string name="check_internet_connection">Please check your internet connection and try again</string>
+    <string name="auto_upload">Auto-Upload</string>
+    <string name="uploading">Uploading</string>
+    <string name="reconstruction_can_also_be_started_later_from_the_review_captures_screen">Reconstruction can also be started later from the \"Review Captures\" Screen</string>
+    <string name="start_now">Start Now</string>
+    <string name="return_home">Return Home</string>
+    <string name="credits_available_n">Credits Available: %1$d</string>
+    <string name="credits_required_n">Credits Required: %1$d</string>
+    <string name="refresh">Refresh</string>
+    <string name="contact_sales_to_purchase_additional_compute_credits_images_will_be_saved_and_can_be_reconstructed_later">Contact sales to purchase additional compute credits. Images will be saved and can be reconstructed later.</string>
+    <string name="uploading_images_n_n">Uploading images... [%1$d/%2$d]</string>
+    <string name="ready_to_reconstruct">Ready to Reconstruct</string>
+    <string name="ready">Ready</string>
+    <string name="upload_failed">Upload Failed</string>
+    <string name="not_enough_credits">Not Enough Credits</string>
+    <string name="cannot_start_reconstruction">Cannot start Reconstruction</string>
+    <string name="download_to_device">Download to Device</string>
+    <string name="running_reconstruction">Running\nReconstruction</string>
+    <string name="reconstruction_will_continue_running_in_the_cloud_results_can_also_be_downloaded_later_once_complete">Reconstruction will continue running in the cloud. Results can also be downloaded later once complete</string>
+    <string name="reconstruction_complete">Reconstruction Complete</string>
+    <string name="reconstruction_failed">Reconstruction Failed</string>
+    <string name="results_can_also_be_downloaded_later">Results can also be downloaded later</string>
+    <string name="downloading">Downloading...</string>
+    <string name="ok">Ok</string>
+    <string name="download_successful">Download\nSuccessful</string>
+    <string name="scan_s">Scan %1$s</string>
+    <string name="download_failed">Download\\nFailed</string>
+    <string name="try_again_later">Try Again Later</string>
+
 </resources>

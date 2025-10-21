@@ -1,10 +1,42 @@
 package com.example.facedetectionar.api
 
+import com.example.facedetectionar.api.dto.CreatePhotocollectionRequest
+import com.example.facedetectionar.api.dto.Photocollection
+import com.example.facedetectionar.api.dto.StartPhotoscanRequest
+import com.example.facedetectionar.api.dto.StartPhotoscanResponse
+import okhttp3.RequestBody
 import retrofit2.Response
+import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.POST
+import retrofit2.http.Path
+import retrofit2.http.Query
 
 interface PhotocollectionService {
 
     @GET("health")
     suspend fun healthCheck(): Response<Void>
+
+    @POST("photocollection")
+    suspend fun createPhotocollection(@Body request: CreatePhotocollectionRequest): Response<Photocollection>
+
+    @GET("photocollection/{id}")
+    suspend fun getPhotocollection(
+        @Path("id") photocollectionId: Long,
+        @Query("join_photos") joinPhotos: Boolean = false
+    ): Response<Photocollection>
+
+    @POST("photocollection/{id}/photo/{name}")
+    suspend fun uploadPhoto(
+        @Path("id") photocollectionId: Long,
+        @Path("name") fileName: String,
+        @Body body: RequestBody
+    ): Response<Void>
+
+    @POST("photocollection/{id}/start_photoscan")
+    suspend fun startPhotoscan(
+        @Path("id") photocollectionId: Long,
+        @Body request: StartPhotoscanRequest
+    ): Response<StartPhotoscanResponse>
+
 }
