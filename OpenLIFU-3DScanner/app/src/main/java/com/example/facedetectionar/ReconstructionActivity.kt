@@ -62,12 +62,19 @@ class ReconstructionActivity : AppCompatActivity() {
             finish()
         }
 
-        buttonDownload.setOnClickListener {
+        supportFragmentManager.setFragmentResultListener(PhotoscanDownloadDialog.TAG, this) { requestKey, bundle ->
             val intent = Intent(this, UsbScreenActivity::class.java)
                 .putExtra("REFERENCE_NUMBER", reconstructionRepository.currentReferenceNumber)
                 .putExtra("TOTAL_IMAGE_COUNT", reconstructionRepository.totalImageCount)
             startActivity(intent)
             finish()
+        }
+
+        buttonDownload.setOnClickListener {
+            photoscan?.let {
+                val dialog = PhotoscanDownloadDialog(it)
+                dialog.show(supportFragmentManager, PhotoscanDownloadDialog::class.simpleName)
+            }
         }
 
         subscribeToProgress()
@@ -91,11 +98,6 @@ class ReconstructionActivity : AppCompatActivity() {
                         textTitle.text = getString(R.string.reconstruction_complete)
                         textDescription.text =
                             getString(R.string.results_can_also_be_downloaded_later)
-
-                        photoscan?.let {
-                            val dialog = PhotoscanDownloadDialog(it)
-                            dialog.show(supportFragmentManager, PhotoscanDownloadDialog::class.simpleName)
-                        }
 
                         buttonDownload.isEnabled = true
                     }

@@ -57,6 +57,7 @@ class ImageUploadActivity : AppCompatActivity() {
         buttonHome = findViewById(R.id.returnHomeButton)
         buttonStart = findViewById(R.id.startButton)
         buttonRefresh = findViewById(R.id.refreshButton)
+        val loadingLayout = findViewById<View>(R.id.layoutLoading)
         buttonStart.isEnabled = false
 
         subscribeToUserCredits()
@@ -64,9 +65,11 @@ class ImageUploadActivity : AppCompatActivity() {
 
         buttonStart.setOnClickListener {
             buttonStart.isEnabled = false
+            loadingLayout.visibility = View.VISIBLE
 
             lifecycleScope.launch {
                 val photoscanId = reconstructionRepository.startReconstruction()
+                loadingLayout.visibility = View.GONE
                 if (photoscanId != null) {
                     val intent = Intent(this@ImageUploadActivity, ReconstructionActivity::class.java)
                         .putExtra(ReconstructionActivity.EXTRA_PHOTOSCAN_ID, photoscanId)

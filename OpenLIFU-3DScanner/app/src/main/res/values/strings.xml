@@ -56,5 +56,11 @@
     <string name="scan_s">Scan %1$s</string>
     <string name="download_failed">Download\\nFailed</string>
     <string name="try_again_later">Try Again Later</string>
+    <string name="photocollection_available">Photocollection Available</string>
+    <string name="photoscan_available">Photoscan Available</string>
+    <string name="photocollection_transferred">Photocollection Transferred</string>
+    <string name="capture_has_been_transferred_successfully">Capture has been transferred successfully !</string>
+    <string name="photoscan_not_available">Photoscan Not Available</string>
+    <string name="photoscan_transferred">Photoscan Transferred</string>
 
 </resources>
