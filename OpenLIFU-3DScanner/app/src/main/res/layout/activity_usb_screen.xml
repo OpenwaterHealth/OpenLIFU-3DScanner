@@ -15,7 +15,6 @@
         android:id="@+id/readyForTransferText"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="68dp"
         android:paddingHorizontal="24dp"
         android:text="Ready for Transfer Scan ABC123"
         android:textAlignment="center"
@@ -81,6 +80,34 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="16dp"
+        android:paddingHorizontal="24dp" />
+
+    <!-- Photocollection status -->
+    <TextView
+        android:id="@+id/photocollectionStatusText"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="@string/photocollection_available"
+        android:textColor="@color/light_green"
+        android:textSize="20sp"
+        app:layout_constraintTop_toBottomOf="@id/usbStatusText"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="48dp"
+        android:paddingHorizontal="24dp" />
+
+    <!-- Photoscan status -->
+    <TextView
+        android:id="@+id/photoscanStatusText"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="@string/photoscan_available"
+        android:textColor="@color/light_green"
+        android:textSize="20sp"
+        app:layout_constraintTop_toBottomOf="@id/photocollectionStatusText"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="8dp"
         android:paddingHorizontal="24dp" />
 
     <!-- OK Button fixed at bottom -->

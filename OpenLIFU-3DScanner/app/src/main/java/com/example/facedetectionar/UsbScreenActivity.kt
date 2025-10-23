@@ -19,6 +19,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import dagger.hilt.android.AndroidEntryPoint
 import java.io.File
+import java.io.FilenameFilter
 
 @AndroidEntryPoint
 class UsbScreenActivity : AppCompatActivity() {
@@ -27,6 +28,7 @@ class UsbScreenActivity : AppCompatActivity() {
     private val handler = Handler(Looper.getMainLooper())
     private var isUsbConnected = false
     private var isStorageMounted = false
+    private var isPhotoscanDownloaded = false
     private var referenceNumber: String = "REFNO"
     private var totalImageCount: String = "00"
 
@@ -71,6 +73,8 @@ class UsbScreenActivity : AppCompatActivity() {
         }
         registerReceiver(powerReceiver, filter)
 
+        isPhotoscanDownloaded = checkPhotoscanExistance()
+
         handler.post(updateStatusRunnable)
     }
 
@@ -78,11 +82,12 @@ class UsbScreenActivity : AppCompatActivity() {
         override fun run() {
             checkUsbAndStorage()
             updateUSBconnectionText()
+            updatePhotoscanStatus()
 
             // Safely check for images only when storage is mounted
             if (isUsbConnected && isStorageMounted) {
                 try {
-                    checkFolderExistance(referenceNumber)
+                    checkFolderExistance()
                     
                 } catch (e: Exception) {
                     Log.e("ImageCheck", "Error reading images: ${e.message}")
@@ -104,18 +109,51 @@ class UsbScreenActivity : AppCompatActivity() {
 
     }
 
-
+    private fun getDirectory(): File {
+        return File(Environment.getExternalStorageDirectory(), "OpenLIFU-3DScanner/$referenceNumber")
+    }
 
     //function checks weather image folder exists or not
-    private fun checkFolderExistance(referenceNumber: String) {
-         val imageFolderName="${referenceNumber}"
-         val folder = File(Environment.getExternalStorageDirectory(), "OpenLIFU-3DScanner/$imageFolderName")
+    private fun checkFolderExistance() {
+         val folder = getDirectory()
          if (!folder.exists()) {
              val usbStatusText = findViewById<TextView>(R.id.usbStatusText)
-            usbStatusText.text = "Capture has been transferred successfully !"
+             val photocollectionStatusText = findViewById<TextView>(R.id.photocollectionStatusText)
+             val photoscanStatusText = findViewById<TextView>(R.id.photoscanStatusText)
 
+             usbStatusText.text = getString(R.string.capture_has_been_transferred_successfully)
+             photocollectionStatusText.text = getString(R.string.photocollection_transferred)
+             if (isPhotoscanDownloaded) {
+                 photoscanStatusText.text = getString(R.string.photoscan_transferred)
+             }
         }
+    }
 
+    private fun updatePhotoscanStatus() {
+        val photoscanStatusText = findViewById<TextView>(R.id.photoscanStatusText)
+        val transferred = !checkPhotoscanExistance()
+
+        photoscanStatusText.text = getString(
+            when {
+                isPhotoscanDownloaded && !transferred -> R.string.photoscan_available
+                isPhotoscanDownloaded && transferred -> R.string.photoscan_transferred
+                else -> R.string.photoscan_not_available
+            }
+        )
+
+        photoscanStatusText.setTextColor(
+            getColor(if (!isPhotoscanDownloaded) R.color.red else R.color.light_green)
+        )
+    }
+
+    private fun checkPhotoscanExistance(): Boolean {
+        val parent = getDirectory()
+        if (parent.exists()) {
+            return parent.list { dir, name ->
+                name.lowercase().startsWith("scan") && name.lowercase().endsWith(".zip")
+            }?.isNotEmpty() == true
+        }
+        return false
     }
 
     private fun updateUSBconnectionText() {

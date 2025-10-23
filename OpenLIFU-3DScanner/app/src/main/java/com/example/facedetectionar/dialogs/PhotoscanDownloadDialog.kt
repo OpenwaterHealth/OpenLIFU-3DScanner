@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.ProgressBar
 import android.widget.TextView
+import androidx.core.os.bundleOf
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -47,6 +48,7 @@ class PhotoscanDownloadDialog(
         val continueButton = view.findViewById<Button>(R.id.continueBtn)
 
         continueButton.setOnClickListener {
+            parentFragmentManager.setFragmentResult(TAG, bundleOf(KEY_RESULT to true))
             dismiss()
         }
 
@@ -81,5 +83,10 @@ class PhotoscanDownloadDialog(
         if (!reconstructionRepository.downloadPhotoscanZip(photoscan.id, name, outputDir))
             return null
         return name
+    }
+
+    companion object {
+        val TAG = PhotoscanDownloadDialog::class.java.simpleName
+        const val KEY_RESULT = "KEY_RESULT"
     }
 }

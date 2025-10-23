@@ -31,22 +31,18 @@ class ReconstructionRepository(
     private val websocketService: WebsocketService
 ) {
     private var currentPhotocollection: Photocollection? = null
-    private var autoUpload: Boolean = false
     private val imageUploadProgressFlow = MutableStateFlow<ImageUploadProgress?>(null)
     private var reconstructionProgressFlow = MutableStateFlow<ReconstructionProgress?>(null)
 
     var currentReferenceNumber: String? = null
     var totalImageCount: String? = null
+    var autoUpload: Boolean = false
 
     fun reset() {
         currentReferenceNumber = null
         currentPhotocollection = null
         totalImageCount = null
         imageUploadProgressFlow.value = null
-    }
-
-    fun setAutoUpload(autoUpload: Boolean) {
-        this.autoUpload = autoUpload
     }
 
     fun getImageUploadProgress(): StateFlow<ImageUploadProgress?> = imageUploadProgressFlow
