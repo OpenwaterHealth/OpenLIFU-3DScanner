@@ -9,6 +9,7 @@
     <color name="white">#FFFFFFFF</color>
     <color name="colorAccent">#03DAC5</color>
     <color name="row_default_bg">#D3D3D3</color>
+    <color name="transparent">#00000000</color>
 
 <!--    adding doc colors-->
     <color name="algae">#537371</color>

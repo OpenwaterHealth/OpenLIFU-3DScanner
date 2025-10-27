@@ -17,6 +17,8 @@
         android:gravity="center_vertical"
         android:layout_height="140dp">
 
+
+
         <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
@@ -297,6 +299,17 @@
 
             />
 
+        <ImageButton
+            android:id="@+id/cubeSettingsIcon"
+            android:layout_width="wrap_content"
+            android:backgroundTint="@color/transparent"
+            android:layout_height="wrap_content"
+            android:src="@drawable/control_selector"
+           android:visibility="gone"
+            android:layout_gravity="right"
+
+            />
+
 
 
 
@@ -332,13 +345,18 @@
             <View
                 android:id="@+id/captureOverlay"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
+                android:layout_height="209dp"
                 android:alpha="0.0"
 
                 android:background="#40FFFFFF"
                 android:elevation="100dp"
                 android:visibility="invisible" />
         </FrameLayout>
+
+
+
+
+
 
 
     </FrameLayout>
@@ -350,20 +368,26 @@
         android:layout_width="match_parent"
         android:orientation="vertical"
         android:layout_gravity="bottom"
-        android:layout_height="140dp">
+        android:layout_height="wrap_content">
+
+
+
+
+
 
         <Button
             android:id="@+id/confirmButtonInMain"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Confirm"
+            android:layout_marginTop="10dp"
             android:textAllCaps="false"
             android:enabled="false"
             android:textStyle="bold"
             app:backgroundTint="@null"
             android:background="@drawable/round_green_button"
             android:layout_marginHorizontal="40dp"
-            android:layout_marginVertical="10dp"
+
             android:visibility="visible"
             android:textColor="@color/disable_button_text"/>
 
@@ -373,6 +397,7 @@
             android:layout_height="wrap_content"
             android:text="Cancel"
             android:textStyle="bold"
+            android:layout_marginTop="10dp"
             android:textAllCaps="false"
             app:backgroundTint="@null"
             android:background="@drawable/round_cancel_ok"
@@ -451,6 +476,241 @@
             android:layout_marginVertical="10dp"
             android:visibility="gone"
             android:textColor="@color/white"/>
+
+        <LinearLayout
+            android:id="@+id/allSliders"
+
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="8dp"
+            android:visibility="gone"
+            android:layout_gravity="bottom">
+
+
+            <!-- 1️⃣ Front Back -->
+            <LinearLayout
+                 android:layout_marginTop="10dp"
+
+                android:layout_width="match_parent"
+                android:layout_height="27dp"
+                android:orientation="horizontal"
+
+                android:gravity="center_vertical">
+                <Button
+                    android:id="@+id/BackBtn"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/left_capsule"
+                    android:gravity="center"
+                    android:layout_weight="1"
+                    android:includeFontPadding="false"
+                    android:padding="0dp"
+                    android:text="Back"
+                    android:textAllCaps="false"
+                    android:textColor="@color/white"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    app:backgroundTint="@null" />
+
+                <Button
+                    android:id="@+id/frontBtn"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/right_capsule"
+                    android:gravity="center"
+                    android:layout_weight="1"
+                    android:includeFontPadding="false"
+                    android:padding="0dp"
+                    android:text="Front"
+                    android:textAllCaps="false"
+                    android:textColor="@color/white"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    app:backgroundTint="@null" />
+
+
+            </LinearLayout>
+
+            <!-- 2️⃣ Left Right -->
+            <LinearLayout
+                 android:layout_marginTop="10dp"
+                android:layout_width="match_parent"
+                android:layout_height="27dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+                <Button
+                    android:id="@+id/LeftBtn"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/left_capsule"
+                    android:gravity="center"
+                    android:includeFontPadding="false"
+                    android:padding="0dp"
+                    android:text="Left"
+                    android:textAllCaps="false"
+                    android:textColor="@color/white"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    app:backgroundTint="@null" />
+
+                <Button
+                    android:id="@+id/RightBtn"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/right_capsule"
+                    android:gravity="center"
+                    android:includeFontPadding="false"
+                    android:padding="0dp"
+                    android:text="Right"
+                    android:textAllCaps="false"
+                    android:textColor="@color/white"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    app:backgroundTint="@null" />
+
+
+            </LinearLayout>
+
+
+
+            <!-- 2️⃣ up down -->
+            <LinearLayout
+                 android:layout_marginTop="10dp"
+                android:layout_width="match_parent"
+                android:layout_height="27dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+                <Button
+                    android:id="@+id/DownBtn"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/left_capsule"
+                    android:gravity="center"
+                    android:includeFontPadding="false"
+                    android:padding="0dp"
+                    android:text="Down"
+                    android:textAllCaps="false"
+                    android:textColor="@color/white"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    app:backgroundTint="@null" />
+
+                <Button
+                    android:id="@+id/UpBtn"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/right_capsule"
+                    android:gravity="center"
+                    android:includeFontPadding="false"
+                    android:padding="0dp"
+                    android:text="Up"
+                    android:textAllCaps="false"
+                    android:textColor="@color/white"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    app:backgroundTint="@null" />
+
+
+            </LinearLayout>
+
+
+
+
+            <!-- 3️⃣ Rotation left right-->
+
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="27dp"
+                android:orientation="horizontal"
+                 android:layout_marginTop="10dp"
+                android:gravity="center_vertical">
+                <Button
+                    android:id="@+id/RotateLeftBtn"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/left_capsule"
+                    android:gravity="center"
+                    android:includeFontPadding="false"
+                    android:padding="0dp"
+                    android:text="Rotate-L"
+                    android:textAllCaps="false"
+                    android:textColor="@color/white"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    app:backgroundTint="@null" />
+
+                <Button
+                    android:id="@+id/RotateRightBtn"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/right_capsule"
+                    android:gravity="center"
+                    android:includeFontPadding="false"
+                    android:padding="0dp"
+                    android:text="Rotate-R"
+                    android:textAllCaps="false"
+                    android:textColor="@color/white"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    app:backgroundTint="@null" />
+
+
+            </LinearLayout>
+
+            <!-- 3️⃣ measurements-->
+
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="27dp"
+                android:orientation="horizontal"
+                 android:layout_marginTop="10dp"
+                android:gravity="center_vertical">
+                <Button
+                    android:id="@+id/coarseBtn"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/left_capsule_selector"
+                    android:gravity="center"
+                    android:includeFontPadding="false"
+                    android:padding="0dp"
+                    android:text="Coarse"
+                    android:textAllCaps="false"
+                    android:textColor="@color/white"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    app:backgroundTint="@null" />
+
+                <Button
+                    android:id="@+id/FineBtn"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/right_capsule_selector"
+                    android:gravity="center"
+                    android:includeFontPadding="false"
+                    android:padding="0dp"
+                    android:text="Fine"
+                    android:textAllCaps="false"
+                    android:textColor="@color/white"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    app:backgroundTint="@null" />
+
+
+            </LinearLayout>
+
+
+        </LinearLayout>
 
     </LinearLayout>
 

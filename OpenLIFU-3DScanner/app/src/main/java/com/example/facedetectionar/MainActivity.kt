@@ -38,7 +38,9 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.FrameLayout
+import android.widget.ImageButton
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
@@ -79,6 +81,7 @@ import java.io.File
 import java.io.FileOutputStream
 import kotlin.math.sqrt
 import androidx.core.graphics.toColorInt
+import androidx.transition.Visibility
 import com.google.ar.core.Session
 import io.github.sceneview.math.Direction
 
@@ -111,8 +114,7 @@ class MainActivity : AppCompatActivity() {
     private var previousTime: Long = 0
     private var lastToastTime: Long = 0
     private val toastCooldown = 2000L
-    private var maxAllowedSpeed = 0.6f
-    private var delayCaptureBy = 1000
+
     private lateinit var startButton: Button
     private lateinit var confirmButton: Button
     private lateinit var BackInStartCapture: Button
@@ -136,12 +138,32 @@ class MainActivity : AppCompatActivity() {
     private var isFaceDetected = false
     private var hasResetForCurrentFace = false
 
+    private var isFine: Boolean = true
+
 
     private var faceCamDistance=0f
+    private var pivotUpDownPose=0.131244386f
+    private var pivotLeftRightPose= 0.07934329f
+    private var pivotCloseFarPose:Float=0f;
+    private var globalHorizontalRotaion=0f
+    private var globalVerticalRotaion=0f
+
+
+    private var globalCloseFar:Float=0f;
+    private var globalUpDown:Float=0.131244386f;
+    private var globalLeftRight:Float=0.07934329f;
+
 
     data class CameraConfig(
         val minDistance: Float,
         val maxDistance: Float
+    )
+
+    data class CubeOffsets(
+        val positionOffsetFine: Float,
+        val rotationOffsetFine: Float,
+        val positionOffsetCoarse: Float,
+        val rotationOffsetCoarse: Float
     )
 
     data class CubeConfig(
@@ -171,13 +193,17 @@ class MainActivity : AppCompatActivity() {
         Bucket(-37f, -35f, -0.74133946f),
     )
 
-
+    private lateinit var cubeOffset: CubeOffsets
+    private var maxAllowedSpeed = 0.6f
+    private var delayCaptureBy = 1000
     private lateinit var cameraConfigCapture: CameraConfig
     private lateinit var cameraConfigDetection: CameraConfig
     private lateinit var cubeConfig: CubeConfig
     private lateinit var faceRingConfig: FaceRingConfig
     private lateinit var cameraRingConfig: CameraRingConfig
     private var isCaptureInProgress = false
+
+
 
 
 
@@ -213,9 +239,13 @@ class MainActivity : AppCompatActivity() {
             super.onCreate(savedInstanceState)
             setContentView(R.layout.activity_main)
             // Load arrow data from JSON
-            loadsDataFromJson()
+            loadDefaultConfigurations()
+            loadsconfigurationsFromJson();
 
-            loadsCameraConfigFromJson();
+
+            loadsRingArrayFromJson()
+
+
 
 
 
@@ -259,15 +289,156 @@ class MainActivity : AppCompatActivity() {
             val mainScreenTitle = findViewById<TextView>(R.id.mainScreenTitle)
             val mainScreenSubTitle = findViewById<TextView>(R.id.mainScreenSubTitle)
             val imageCountText = findViewById<TextView>(R.id.imageCountText)
+
             val faceOutline = findViewById<ImageView>(R.id.faceOutline)
             val moveBackText = findViewById<TextView>(R.id.MoveBackText)
             val angleContainer = findViewById<ConstraintLayout>(R.id.angleContainer)
             faceRing=findViewById<ImageView>(R.id.faceRing)
 
+
+
+            // Find the settings icon
+            val controlIcon = findViewById<ImageButton>(R.id.cubeSettingsIcon)
+
+// Find the sliders container
+            val allSliders = findViewById<LinearLayout>(R.id.allSliders)
+
+// Set click listener for settings icon to toggle sliders visibility
+            controlIcon.setOnClickListener {
+                if (allSliders.visibility == View.VISIBLE) {
+                    allSliders.visibility = View.GONE
+
+                    startButton.visibility=View.VISIBLE
+                    BackInStartCapture.visibility=View.VISIBLE
+                    controlIcon.isSelected=false
+                    mainScreenTitle.text = "Review AR Box"
+                    mainScreenSubTitle.text = "Review the Planned Camera Poses. \n You can adjust the box center by \n tapping the control button."
+                } else {
+                    allSliders.visibility = View.VISIBLE
+                    startButton.visibility=View.GONE
+                    BackInStartCapture.visibility=View.GONE
+                    controlIcon.isSelected=true
+                    mainScreenTitle.text = "Adjust Box Position"
+                    mainScreenSubTitle.text = "Use controls to move the box so that it is \n centered on the subject`s head.Tap the \n control button to finish."
+                }
+            }
+
+
+            val frontBtn = findViewById<Button>(R.id.frontBtn)
+
+            val BackBtn = findViewById<Button>(R.id.BackBtn)
+
+            val LeftBtn = findViewById<Button>(R.id.LeftBtn)
+            val RightBtn = findViewById<Button>(R.id.RightBtn)
+
+            val DownBtn = findViewById<Button>(R.id.DownBtn)
+            val UpBtn = findViewById<Button>(R.id.UpBtn)
+
+            val RotateLeftBtn = findViewById<Button>(R.id.RotateLeftBtn)
+            val RotateRightBtn = findViewById<Button>(R.id.RotateRightBtn)
+
+            val coarseBtn = findViewById<Button>(R.id.coarseBtn)
+            val FineBtn = findViewById<Button>(R.id.FineBtn)
+            FineBtn.isSelected=true
+
+
+
+
+
             fun Int.toPx(): Int {
                 val scale = resources.displayMetrics.density
                 return (this * scale + 0.5f).toInt()
             }
+
+
+
+            BackBtn.setOnClickListener {
+
+                var newValue=globalCloseFar-(if(isFine) cubeOffset.positionOffsetFine else cubeOffset.positionOffsetCoarse)
+                val pivotOffset = Float3(globalUpDown,globalLeftRight,newValue)
+                pivotNode.transform(position = pivotOffset)
+                globalCloseFar=newValue
+
+            }
+
+            coarseBtn.setOnClickListener {
+                isFine=false
+                coarseBtn.isSelected=true
+                FineBtn.isSelected=false
+            }
+
+            FineBtn.setOnClickListener {
+                isFine=true
+                FineBtn.isSelected=true
+                coarseBtn.isSelected=false
+            }
+
+            frontBtn.setOnClickListener {
+
+                var newValue = globalCloseFar + (if (isFine) cubeOffset.positionOffsetFine else cubeOffset.positionOffsetCoarse)
+
+                val pivotOffset = Float3(globalUpDown,globalLeftRight,newValue)
+                pivotNode.transform(position = pivotOffset)
+                globalCloseFar=newValue
+            }
+
+
+
+
+
+
+            LeftBtn.setOnClickListener {
+                var newLR=globalLeftRight-(if(isFine) cubeOffset.positionOffsetFine else cubeOffset.positionOffsetCoarse)
+
+                val pivotOffset = Float3(globalUpDown,newLR,globalCloseFar)
+                pivotNode.transform(position = pivotOffset)
+                globalLeftRight=newLR
+                Log.d("CheckJsonLoadedValues","left -fine-coarse       ${cubeOffset.positionOffsetFine}  ${cubeOffset.positionOffsetCoarse} ")
+            }
+
+            RightBtn.setOnClickListener {
+                var newLR=globalLeftRight+(if(isFine) cubeOffset.positionOffsetFine else cubeOffset.positionOffsetCoarse)
+                Log.d("PoOSSSSSSSSS","${cubeOffset.positionOffsetFine}    ${cubeOffset.positionOffsetCoarse}   ")
+                val pivotOffset = Float3(globalUpDown,newLR,globalCloseFar)
+                pivotNode.transform(position = pivotOffset)
+                globalLeftRight=newLR
+            }
+
+
+
+
+            DownBtn.setOnClickListener {
+                var newUD=globalUpDown+(if(isFine) cubeOffset.positionOffsetFine else cubeOffset.positionOffsetCoarse)
+
+                val pivotOffset = Float3(newUD,globalLeftRight,globalCloseFar)
+                pivotNode.transform(position = pivotOffset)
+                globalUpDown=newUD
+            }
+
+            UpBtn.setOnClickListener {
+                var newUD=globalUpDown-(if(isFine) cubeOffset.positionOffsetFine else cubeOffset.positionOffsetCoarse)
+
+
+                val pivotOffset = Float3(newUD,globalLeftRight,globalCloseFar)
+                pivotNode.transform(position = pivotOffset)
+                globalUpDown=newUD
+            }
+
+
+
+            RotateLeftBtn.setOnClickListener {
+
+
+                globalHorizontalRotaion=globalHorizontalRotaion-(if(isFine) cubeOffset.rotationOffsetFine else cubeOffset.rotationOffsetCoarse)
+                applyVericalRotaion()
+            }
+
+            RotateRightBtn.setOnClickListener {
+                globalHorizontalRotaion=globalHorizontalRotaion+(if(isFine) cubeOffset.rotationOffsetFine else cubeOffset.rotationOffsetCoarse)
+                applyVericalRotaion()
+            }
+
+
 
             val params = faceRing.layoutParams
             params.width = cameraRingConfig.ringSize.toPx()
@@ -306,7 +477,9 @@ class MainActivity : AppCompatActivity() {
                     cubeNode?.isVisible =true
                     faceOutline.visibility = View.GONE;
                     confirmButton.visibility = View.GONE;
-                    mainScreenSubTitle.text = "Review the Planned Camera Poses"
+                    controlIcon.visibility=View.VISIBLE
+                    mainScreenTitle.text = "Review AR Box"
+                    mainScreenSubTitle.text = "Review the Planned Camera Poses. \n You can adjust the box center by \n tapping the control button."
                     initialCancelButton.visibility = View.GONE;
                     BackInStartCapture.visibility = View.VISIBLE
                     startButton.visibility = View.VISIBLE;
@@ -386,14 +559,19 @@ class MainActivity : AppCompatActivity() {
             }
 
 
+
+
             BackInStartCapture.setOnClickListener {
                 // Hide UI elements
+
                 BackInStartCapture.visibility = View.GONE
+                mainScreenTitle.text = "Start Capture"
                 mainScreenSubTitle.text = "Position the Subject in the Frame"
                 startButton.visibility = View.GONE
                 confirmButton.visibility = View.VISIBLE
+                controlIcon.visibility=View.GONE
                 faceOverlayView.visibility = View.VISIBLE
-                resetARSession()
+
 
                 // Clear face detection state
                 isFaceDetected = false
@@ -412,8 +590,6 @@ class MainActivity : AppCompatActivity() {
                 updateDistanceLabel("Subject not in Frame")
 
                 clearAnchorsAndNodes()
-
-
 
             }
 
@@ -448,6 +624,7 @@ class MainActivity : AppCompatActivity() {
                 imageCountText.visibility = View.VISIBLE
                 imageCountText.setText("${capturedModelList.size}/${nonCapturedModelList.size}")
                 startButton.visibility = View.GONE
+                controlIcon.visibility=View.GONE
                 BackInStartCapture.visibility = View.GONE
                 stopButton.visibility = View.VISIBLE
                 leftArrowInstruction.visibility = View.VISIBLE
@@ -576,12 +753,17 @@ class MainActivity : AppCompatActivity() {
 
 
 
-    private fun applyOrbitYaw(deg: Float) {
-        Log.d("NewPositionIS","Angle was $deg")
-        val yawQ = Quaternion.fromAxisAngle(Direction(0f, 1f, 0f), deg)
-        val finalQ = pivotBaseQ * yawQ
+
+
+    private fun applyVericalRotaion() {
+
+        val pitchQ = Quaternion.fromAxisAngle(Direction(1f, 0f, 0f), globalVerticalRotaion)
+        val yawQ = Quaternion.fromAxisAngle(Direction(0f, 1f, 0f), globalHorizontalRotaion)
+
+        val finalQ = pivotBaseQ * pitchQ *yawQ
         pivotNode?.transform(quaternion = finalQ)
     }
+
 
 
     fun placeWhenTracking(
@@ -589,53 +771,64 @@ class MainActivity : AppCompatActivity() {
         onError: (String) -> Unit
     ) {
 
-        Log.d("PlacementFlow", "Done 1")
+        Log.d("PlacementFlow","Done 1")
         val frame = sceneView.session?.frame ?: return onError("Camera frame not available")
-        Log.d("PlacementFlow", "Done 2")
+        Log.d("PlacementFlow","Done 2")
         if (frame.camera.trackingState != TrackingState.TRACKING) {
             sceneView.postDelayed({ placeWhenTracking(onSuccess, onError) }, 200)
             return
         }
 
-        Log.d("PlacementFlow", "Done 3")
+        Log.d("PlacementFlow","Done 3")
 
         try {
-            Log.d("PlacementFlow", "Done 4")
+            Log.d("PlacementFlow","Done 4")
             val session = sceneView.session ?: return onError("No AR session")
             val cameraPose = frame.camera.pose
 
             // Anchor at camera position WITH yaw baked in
             val anchorPose = Pose(
                 floatArrayOf(cameraPose.tx(), cameraPose.ty(), cameraPose.tz()),
-                floatArrayOf(0f,0f,0f,1f),
+                floatArrayOf(cameraPose.qx(), cameraPose.qy(), cameraPose.qz(),cameraPose.qw()),
             )
             val anchor = session.createAnchor(anchorPose)
             anchorNode = AnchorNode(sceneView.engine, anchor).apply { isEditable = true }
             sceneView.addChildNode(anchorNode)
 
+            pivotCloseFarPose=approxFromRange(cameraConfigDetection.minDistance,cameraConfigDetection.minDistance)
+            globalCloseFar=pivotCloseFarPose
+
             //computeHere
-            val xPoint =0.081244386f     //LR
-            val yPoint =-0.20065671f          //  up down
-            val zPoint = approxFromRange(
-                cameraConfigDetection.minDistance,
-                cameraConfigDetection.minDistance
-            )+0.03f  // Push cube slightly further back to match ring depth
+            val xPoint =pivotUpDownPose            //up down
+            val yPoint =pivotLeftRightPose            //left right
+            val zPoint =pivotCloseFarPose
+
+
+
+
+
+
+
+
 
 
             // 🟡 Position offset for this circle
             val offsetVector = Vector3(
-                xPoint.toFloat(),         //up down
-                yPoint.toFloat(),         //left right
+                xPoint.toFloat(),
+                yPoint.toFloat(),
                 zPoint.toFloat()
             )
             val offsetFloat3 = Float3(offsetVector.x, offsetVector.y, offsetVector.z)
 
 
-            val orbitNode = Node(sceneView.engine).apply { parent = anchorNode }
+
+
+
+            val orbitNode = Node(sceneView.engine).apply {parent = anchorNode }
             pivotNode = orbitNode
-            val correctionQ = createQuaternionFromAxisAngle(Vector3(0f, 0f, 1f), 0f)
+            val correctionQ = createQuaternionFromAxisAngle(Vector3(0f, 0f, 1f), 90f)
             pivotBaseQ = correctionQ
-            pivotNode.transform(position = offsetFloat3)
+            pivotNode.transform(position = offsetFloat3, quaternion = correctionQ)
 
 
             pivotNode.transform(
@@ -645,7 +838,7 @@ class MainActivity : AppCompatActivity() {
 
 
 
-//            applyOrbitYaw(0f)
+
 
 
 
@@ -674,32 +867,17 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun resetARSession() {
-        try {
-            showLoading("Repositioning models...")
-
-            val restartIntent = intent
-            restartIntent.putExtra(EXTRA_ALREADY_RESET, true) // mark that we reset
-            finish()
-            startActivity(restartIntent)
-//            hideLoading()
-
-        } catch (e: Exception) {
-            Log.e("ARSession", "Failed to reset AR session: ${e.message}")
-        }
-    }
-
 
 
     // Function to place the cube model on head
     private fun placeCube() {
-        try {
+        try {{}
             // Keep any orientation you want for the cube
             val rotationX = createQuaternionFromAxisAngle(Vector3(1f, 0f, 0f), 0f)
             val rotationY = createQuaternionFromAxisAngle(Vector3(0f, 1f, 0f), 0f)
             val rotationZ = createQuaternionFromAxisAngle(Vector3(0f, 0f, 1f), 0f)
             val combinedRotation3 = (rotationZ * rotationY * rotationX).toEulerAngles()
-
+            Log.d("CheckJsonLoadedValues","cubeConfig.cubeSize       ${cubeConfig.cubeSize}")
             lifecycleScope.launch {
                 try {
                     sceneView.modelLoader.loadModelInstance(faceCubeUri)?.let { modelInstance ->
@@ -709,10 +887,12 @@ class MainActivity : AppCompatActivity() {
                                 scaleToUnits = cubeConfig.cubeSize,
                                 autoAnimate = true,
                                 centerOrigin = null
+
                             ).apply {
                                 isPositionEditable = false
+
                                 isVisible = true  //hides the modal
-                                // ⬇️ No offset. Cube sits at pivot origin.
+
                                 transform(position = Float3(0f, 0f, 0f), rotation = combinedRotation3)
                             }
 
@@ -738,10 +918,10 @@ class MainActivity : AppCompatActivity() {
                 // Position offset for this circle
 
                 //computeHere
-                val offsetVector = Vector3(
-                    bulletObj.xPoint.toFloat(),
-                    bulletObj.yPoint.toFloat(),
-                    bulletObj.zPoint.toFloat()
+val offsetVector = Vector3(
+                    bulletObj.xPoint.toFloat()-0.06f,
+                    bulletObj.yPoint.toFloat()+0.18f,
+                    bulletObj.zPoint.toFloat()+0.15f
                 )
                 val offsetFloat3 = Float3(offsetVector.x, offsetVector.y, offsetVector.z)
 
@@ -1486,21 +1666,12 @@ class MainActivity : AppCompatActivity() {
                                                     vibrateShort(100)
                                                     hasVibratedForCenter = true
                                                 }
-
-                                                Handler(Looper.getMainLooper()).postDelayed({
-
-                                                    if (!hasResetForCurrentFace) {  // double check after delay
-                                                        resetARSession()
-                                                        hasResetForCurrentFace = true
-                                                    }
-                                                }, 1500)
                                             } else {
                                                 faceRing.setBackgroundResource(R.drawable.circle_ring)
                                                 updateDistanceLabel("Face Not Aligned")
                                                 Log.d("FaceAlignment", "$hint")
                                                 faceOverlayView.setMeshDetected(false)
                                                 hasVibratedForCenter = false
-                                                hasResetForCurrentFace = false
                                             }
                                         }
 
@@ -1910,9 +2081,40 @@ class MainActivity : AppCompatActivity() {
 
 
 
+    private fun loadDefaultRingArray() {
+        arrowList.clear()
+
+        arrowList.add(bulletPointConfig(0,  -0.01131267, 0.0,  0.1981966,  30, 0))
+        arrowList.add(bulletPointConfig(1,  -0.07311607, 0.0,  0.1884079,  26, 18))
+        arrowList.add(bulletPointConfig(2,  -0.12886973, 0.0,  0.16,       27, 36))
+        arrowList.add(bulletPointConfig(3,  -0.17311606, 0.0,  0.11575366, 24, 54))
+        arrowList.add(bulletPointConfig(4,  -0.20152398, 0.0,  0.06,       28, 72))
+        arrowList.add(bulletPointConfig(5,  -0.21131267, 0.0, -0.00180339, 34, 90))
+        arrowList.add(bulletPointConfig(6,  -0.20152398, 0.0, -0.06360679, 27, 108))
+        arrowList.add(bulletPointConfig(7,  -0.17311606, 0.0, -0.11936044, 39, 126))
+        arrowList.add(bulletPointConfig(8,  -0.12886973, 0.0, -0.16360683, 40, 144))
+        arrowList.add(bulletPointConfig(9,  -0.07311607, 0.0, -0.19201469, 34, 162))
+        arrowList.add(bulletPointConfig(10, -0.01131267, 0.0, -0.20180338, 10, 180))
+        arrowList.add(bulletPointConfig(11,  0.050490728, 0.0, -0.19201469, 30, 198))
+        arrowList.add(bulletPointConfig(12,  0.106244375, 0.0, -0.16360683, 40, 216))
+        arrowList.add(bulletPointConfig(13,  0.15049072,  0.0, -0.11936044, 41, 234))
+        arrowList.add(bulletPointConfig(14,  0.17889865,  0.0, -0.06360679, 20, 252))
+        arrowList.add(bulletPointConfig(15,  0.18868734,  0.0, -0.00180339, 14, 270))
+        arrowList.add(bulletPointConfig(16,  0.17889865,  0.0,  0.06,       27, 288))
+        arrowList.add(bulletPointConfig(17,  0.15049072,  0.0,  0.11575366, 11, 306))
+        arrowList.add(bulletPointConfig(18,  0.106244375, 0.0,  0.16,       12, 324))
+        arrowList.add(bulletPointConfig(19,  0.050490728, 0.0,  0.1884079,  10, 342))
+//        arrowList.add(bulletPointConfig(20,  0.0,         0.0,  0.0,        90, 0))
+
+        Log.d("RingArray", "Loaded ${arrowList.size} default ring points")
+    }
+
+
+
+
 
     //The data from config json file is loaded to the app and stored in a list which is iterated to show models in scene
-    private fun loadsDataFromJson() {
+    private fun loadsRingArrayFromJsonOG() {
         try {
             val jsonFile =
                 File(Environment.getExternalStorageDirectory(), "OpenLIFU-Config/ringConfig.json")
@@ -1946,78 +2148,185 @@ class MainActivity : AppCompatActivity() {
 
 
         } catch (e: Exception) {
-            Log.e("loadsDataFromJson", "Error: ${e.message}")
+            Log.e("loadsRingArrayFromJson", "Error: ${e.message}")
         }
     }
 
 
-
-    //The data from config json file is loaded to the app and define where camera will be positiooned
-    //The data from config json file is loaded to the app and define where camera will be positiooned
-    private fun loadsCameraConfigFromJson() {
+    private fun loadsRingArrayFromJson() {
         try {
             val configFile = File(
                 Environment.getExternalStorageDirectory(),
                 "OpenLIFU-Config/ringConfig.json"
             )
+
             if (!configFile.exists()) {
-                Log.e("RingConfig", "Config file not found")
+                Log.e("RingArray", "File not found — loading default ring data")
+                loadDefaultRingArray()
+                return
+            }
+
+            val content = configFile.readText().trim()
+            if (content.isEmpty()) {
+                Log.e("RingArray", "Config file empty — loading default ring data")
+                loadDefaultRingArray()
+                return
+            }
+
+            val root = JSONObject(content)
+            val arrowArray = root.optJSONArray("bulletCoordinates")
+
+            if (arrowArray == null || arrowArray.length() == 0) {
+                Log.e("RingArray", "No bulletCoordinates found — loading default ring data")
+                loadDefaultRingArray()
+                return
+            }
+
+            // Clear previous data
+            arrowList.clear()
+
+            for (i in 0 until arrowArray.length()) {
+                val obj = arrowArray.optJSONObject(i) ?: continue
+                val seqID = obj.optInt("seqID", i)
+                val xPoint = obj.optDouble("xPoint", 0.0)
+                val yPoint = obj.optDouble("yPoint", 0.0)
+                val zPoint = obj.optDouble("zPoint", 0.0)
+                val verticalAngle = obj.optInt("verticalAngle", 0)
+                val horizontalAngle = obj.optInt("horizontalAngle", 0)
+
+                arrowList.add(
+                    bulletPointConfig(
+                        seqID = obj.getInt("seqID"),
+                        xPoint = obj.getDouble("xPoint"),
+                        yPoint = obj.getDouble("yPoint"),
+                        zPoint = obj.getDouble("zPoint"),
+                        verticalAngle = obj.getInt("verticalAngle"),
+                        horizontalAngle = obj.getInt("horizontalAngle"),
+
+                        )
+                )
+            }
+
+            Log.d("RingArray", "Loaded ${arrowList.size} ring points from JSON")
+
+        } catch (e: Exception) {
+            Log.e("RingArray", "Error loading ring array: ${e.message}")
+            loadDefaultRingArray()
+        }
+    }
+
+
+    private fun loadDefaultConfigurations() {
+        cameraConfigCapture = CameraConfig(0.32f, 0.34f)
+        cameraConfigDetection = CameraConfig(-70.0f, -68.0f)
+        cubeConfig = CubeConfig(0.32f)
+        faceRingConfig = FaceRingConfig(0.05f, 3.2f)
+        cameraRingConfig = CameraRingConfig(250)
+        maxAllowedSpeed = 0.6f
+        delayCaptureBy = 1000
+        cubeOffset = CubeOffsets(0.01f, 1.0f, 0.05f, 3.0f)
+
+        Log.d("RingConfig", "Loaded default fallback configurations")
+    }
+
+    //The data from config json file is loaded to the app and define where camera will be positiooned
+    //The data from config json file is loaded to the app and define where camera will be positiooned
+    private fun loadsconfigurationsFromJson() {
+        try {
+            val configFile = File(
+                Environment.getExternalStorageDirectory(),
+                "OpenLIFU-Config/ringConfig.json"
+            )
+
+            if (!configFile.exists()) {
+                Log.e("DATALOADFAILED", "file absent ")
                 Toast.makeText(this, "Config file not found!", Toast.LENGTH_LONG).show()
                 return
             }
 
-            val root = JSONObject(configFile.readText())
+            val content = configFile.readText().trim()
 
-            // Load cameraDistanceForCapture
-            root.optJSONObject("cameraDistanceForCapture")?.let { obj ->
-                cameraConfigCapture = CameraConfig(
-                    minDistance = obj.optDouble("minDistance", 0.32).toFloat(),
-                    maxDistance = obj.optDouble("maxDistance",0.34).toFloat()
-                )
+            if (content.isEmpty()) {
+                Log.e("DATALOADFAILED", "file empty ")
+                loadDefaultConfigurations()
+                return
             }
 
-            // Load cameraDistanceForFaceDetection
-            root.optJSONObject("cameraDistanceForFaceDetection")?.let { obj ->
-                cameraConfigDetection = CameraConfig(
-                    minDistance = obj.optDouble("minDistance", -70.0).toFloat(),
-                    maxDistance = obj.optDouble("maxDistance", -68.0).toFloat()
-                )
+            val root = JSONObject(content)
+
+            // load normally as before...
+            // (keep all your parsing code here)
+            // --- start insertion ---
+            try {
+                // existing 'root' JSONObject already created above
+                // Camera capture distances
+                root.optJSONObject("cameraDistanceForCapture")?.let { c ->
+                    val minD = c.optDouble("minDistance", cameraConfigCapture.minDistance.toDouble()).toFloat()
+                    val maxD = c.optDouble("maxDistance", cameraConfigCapture.maxDistance.toDouble()).toFloat()
+                    cameraConfigCapture = CameraConfig(minD, maxD)
+                }
+
+                // Face detection distances (your file uses negative ranges)
+                root.optJSONObject("cameraDistanceForFaceDetection")?.let { c ->
+                    val minD = c.optDouble("minDistance", cameraConfigDetection.minDistance.toDouble()).toFloat()
+                    val maxD = c.optDouble("maxDistance", cameraConfigDetection.maxDistance.toDouble()).toFloat()
+                    cameraConfigDetection = CameraConfig(minD, maxD)
+                }
+
+                // cubeConfig (size)
+                root.optJSONObject("cubeConfig")?.let { c ->
+                    val cubeSize = c.optDouble("cubeSize", cubeConfig.cubeSize.toDouble()).toFloat()
+                    cubeConfig = CubeConfig(cubeSize)
+                }
+
+                // ringAroundFaceConfig
+                root.optJSONObject("ringAroundFaceConfig")?.let { r ->
+                    val initial = r.optDouble("initialRingSize", faceRingConfig.initialRingSize.toDouble()).toFloat()
+                    val scale = r.optDouble("ringScaleFactor", faceRingConfig.ringScaleFactor.toDouble()).toFloat()
+                    faceRingConfig = FaceRingConfig(initial, scale)
+                }
+
+                // ringWithCamera
+                root.optJSONObject("ringWithCamera")?.let { rw ->
+                    val size = rw.optInt("ringSize", cameraRingConfig.ringSize)
+                    cameraRingConfig = CameraRingConfig(size)
+                }
+
+                // cameraCaptureDelayAndSpeed
+                root.optJSONObject("cameraCaptureDelayAndSpeed")?.let { cs ->
+                    maxAllowedSpeed = cs.optDouble("maxAllowedSpeed", maxAllowedSpeed.toDouble()).toFloat()
+                    delayCaptureBy = cs.optInt("captureDelayTime", delayCaptureBy)
+                }
+
+                // IMPORTANT: parse CubePositonOffsets (this was missing)
+                root.optJSONObject("CubePositonOffsets")?.let { co ->
+                    val posFine = co.optDouble("positionOffsetFine", cubeOffset.positionOffsetFine.toDouble()).toFloat()
+                    val rotFine = co.optDouble("rotationOffsetFine", cubeOffset.rotationOffsetFine.toDouble()).toFloat()
+                    val posCoarse = co.optDouble("positionOffsetCoarse", cubeOffset.positionOffsetCoarse.toDouble()).toFloat()
+                    val rotCoarse = co.optDouble("rotationOffsetCoarse", cubeOffset.rotationOffsetCoarse.toDouble()).toFloat()
+
+                    cubeOffset = CubeOffsets(posFine, rotFine, posCoarse, rotCoarse)
+                }
+
+                // load bulletCoordinates as before (you already have loadsRingArrayFromJson() but ensure arrowList loaded)
+                loadsRingArrayFromJson()
+
+                Log.d("RingConfigLoaded", "cameraCapture=${cameraConfigCapture}, cameraDetect=${cameraConfigDetection}, cubeOffset=${cubeOffset}, cubeSize=${cubeConfig.cubeSize}")
+            } catch (e: Exception) {
+                Log.e("DATALOADFAILED", "Error parsing config keys: ${e.message}")
+                loadDefaultConfigurations()
             }
+// --- end insertion ---
 
-            // Load cubeConfig
-            root.optJSONObject("cubeConfig")?.let { obj ->
-                cubeConfig = CubeConfig(
-                    cubeSize = obj.optDouble("cubeSize", 0.32).toFloat()
-                )
-            }
-
-            // Load faceRingConfig
-            root.optJSONObject("ringAroundFaceConfig")?.let { obj ->
-                faceRingConfig = FaceRingConfig(
-                    initialRingSize = obj.optDouble("initialRingSize", 0.05).toFloat(),
-                    ringScaleFactor = obj.optDouble("ringScaleFactor", 3.2).toFloat()
-                )
-            }
-
-            // Load cameraRingConfig (safe)
-            root.optJSONObject("ringWithCamera")?.let { obj ->
-                cameraRingConfig = CameraRingConfig(
-                    ringSize = obj.optInt("ringSize", 250)
-                )
-            }
-
-            root.optJSONObject("cameraCaptureDelayAndSpeed")?.let { obj ->
-                maxAllowedSpeed =obj.optDouble("maxAllowedSpeed", 0.6).toFloat()
-                delayCaptureBy=obj.optInt("captureDelayTime",1000)
-
-            }
-
-            Log.d("RingConfig", "Configs loaded successfully")
 
         } catch (e: Exception) {
-            Log.e("RingConfig", "Error loading config: ${e.message}")
+            Log.e("DATALOADFAILED", "Error loading config: ${e.message}")
+            Toast.makeText(this, "Invalid config file!", Toast.LENGTH_LONG).show()
+            loadDefaultConfigurations() // fallback
         }
     }
+
+
 
 
 

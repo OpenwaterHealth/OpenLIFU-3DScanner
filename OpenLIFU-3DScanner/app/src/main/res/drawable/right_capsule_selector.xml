@@ -1,0 +1,9 @@
+<!-- res/drawable/left_capsule_selector.xml -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- pressed state (optional) -->
+    <item android:state_pressed="true" android:drawable="@drawable/right_capsule_selected"/>
+    <!-- selected state -->
+    <item android:state_selected="true" android:drawable="@drawable/right_capsule_selected"/>
+    <!-- default (NOT selected) -->
+    <item android:drawable="@drawable/right_capsule_unselected"/>
+</selector>
