@@ -1,13 +1,9 @@
 package com.example.facedetectionar
 
-import android.content.Context
-import android.os.VibrationEffect
-import android.os.Vibrator
-import android.os.VibratorManager
-
 import android.Manifest
 import android.animation.ValueAnimator
 import android.app.Dialog
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
@@ -29,8 +25,9 @@ import android.os.Build
 import android.os.Bundle
 import android.os.CountDownTimer
 import android.os.Environment
-import android.os.Handler
-import android.os.Looper
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
 import android.util.Log
 import android.util.SparseIntArray
 import android.view.Surface
@@ -41,18 +38,18 @@ import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
-import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
-import androidx.collection.ObjectLongMap
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.toColorInt
 import androidx.exifinterface.media.ExifInterface
 import androidx.lifecycle.lifecycleScope
 import com.example.facedetectionar.Modals.bulletPointConfig
+import com.example.facedetectionar.api.repository.ReconstructionRepository
 import com.google.android.filament.Colors
 import com.google.ar.core.ArCoreApk
 import com.google.ar.core.Config
@@ -63,12 +60,14 @@ import com.google.ar.core.exceptions.UnavailableException
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.facemesh.FaceMeshDetection
 import com.google.mlkit.vision.facemesh.FaceMeshDetectorOptions
+import dagger.hilt.android.AndroidEntryPoint
 import dev.romainguy.kotlin.math.Float3
 import dev.romainguy.kotlin.math.Quaternion
 import io.github.sceneview.ar.ARSceneView
 import io.github.sceneview.ar.node.AnchorNode
 import io.github.sceneview.collision.Vector3
 import io.github.sceneview.material.setColor
+import io.github.sceneview.math.Direction
 import io.github.sceneview.math.Position
 import io.github.sceneview.math.toVector3
 import io.github.sceneview.node.ModelNode
@@ -79,16 +78,15 @@ import org.json.JSONObject
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
+import javax.inject.Inject
 import kotlin.math.sqrt
-import androidx.core.graphics.toColorInt
-import androidx.transition.Visibility
-import com.google.ar.core.Session
-import io.github.sceneview.math.Direction
-import dagger.hilt.android.AndroidEntryPoint
-
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
+
+    @Inject
+    lateinit var reconstructionRepository: ReconstructionRepository
+
     private companion object {
         private const val CAMERA_PERMISSION_CODE = 1
         const val EXTRA_ALREADY_RESET = "EXTRA_ALREADY_RESET"
@@ -1923,6 +1921,7 @@ val offsetVector = Vector3(
 
             image.close() // Release the image
 
+            reconstructionRepository.onImageCaptured()
 
             // COORDINATES SAVE Camera pose
             val cameraPose = frame.camera.pose

@@ -12,14 +12,12 @@ import com.example.facedetectionar.api.dto.Photoscan
 import com.example.facedetectionar.api.dto.StartPhotoscanRequest
 import com.example.facedetectionar.api.model.ImageUploadProgress
 import com.example.facedetectionar.api.model.ReconstructionProgress
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.ResponseBody
 import java.io.File
 import java.io.FileOutputStream
@@ -30,73 +28,95 @@ class ReconstructionRepository(
     private val photoscanService: PhotoscanService,
     private val websocketService: WebsocketService
 ) {
+    private val scope = CoroutineScope(Dispatchers.IO)
+
     private var currentPhotocollection: Photocollection? = null
     private val imageUploadProgressFlow = MutableStateFlow<ImageUploadProgress?>(null)
     private var reconstructionProgressFlow = MutableStateFlow<ReconstructionProgress?>(null)
 
+    private var imageUploader: ImageUploader? = null
+    private var autoUpload: Boolean = false
+
     var currentReferenceNumber: String? = null
+        private set
+
     var totalImageCount: String? = null
-    var autoUpload: Boolean = false
 
     fun reset() {
+        if (imageUploader?.isUploadComplete() == false) {
+            deletePhotocollection()
+        }
+        imageUploader?.stop()
+        imageUploader = null
         currentReferenceNumber = null
+        autoUpload = false
         currentPhotocollection = null
         totalImageCount = null
         imageUploadProgressFlow.value = null
+        reconstructionProgressFlow.value = null
+        Log.d(TAG, "reset")
     }
 
     fun getImageUploadProgress(): StateFlow<ImageUploadProgress?> = imageUploadProgressFlow
     fun getReconstructionProgress(): StateFlow<ReconstructionProgress?> = reconstructionProgressFlow
 
-    suspend fun uploadImages() = withContext(Dispatchers.IO) {
-        val referenceNumber = currentReferenceNumber ?: return@withContext
-        val imagesDir = getImagesDir(referenceNumber)
+    fun createPhotocollection(name: String, autoUpload: Boolean) {
+        this.currentReferenceNumber = name
+        this.autoUpload = autoUpload
+        val uid = authService.getCurrentUser()?.uid ?: return
 
-        val files = imagesDir.list()
-            ?.filter {
-                it.lowercase().endsWith(".jpeg") || it.lowercase().endsWith(".jpg")
-            } ?: listOf()
-        imageUploadProgressFlow.emit(ImageUploadProgress(0, 0, files.size))
-
-        currentPhotocollection = createPhotocollection(referenceNumber) ?: run {
-            imageUploadProgressFlow.emit(
-                ImageUploadProgress(0, 0, files.size, failed = true)
-            )
-            return@withContext
-        }
-
-        var progress = 0
-        files.forEachIndexed { idx, filename ->
-            if (!isActive) return@withContext
-
-            var retries = 3
-            while (isActive && retries > 0) {
-                try {
-                    photocollectionService.uploadPhoto(
-                        currentPhotocollection?.id ?: 0,
-                        filename,
-                        File(
-                            imagesDir,
-                            filename
-                        ).asRequestBody("application/octet-stream".toMediaType())
+        scope.launch {
+            try {
+                val response = photocollectionService.createPhotocollection(
+                    CreatePhotocollectionRequest(
+                        accountId = uid,
+                        name = name
                     )
-                    break
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                    delay(5000)
-                    if (--retries == 0) {
-                        imageUploadProgressFlow.emit(
-                            ImageUploadProgress(progress, idx, files.size, failed = true)
+                )
+                if (response.isSuccessful) {
+                    currentPhotocollection = response.body()
+                    currentPhotocollection?.id?.let { id ->
+                        Log.d(TAG, "Photocollection created: $id")
+                        imageUploader = ImageUploader(
+                            id,
+                            getImagesDir(name),
+                            imageUploadProgressFlow,
+                            photocollectionService,
+                            scope
                         )
-                        return@withContext
+                        if (autoUpload) {
+                            imageUploader?.start(waitForCaptureEvents = true)
+                        }
                     }
                 }
+            } catch (e: Exception) {
+                Log.e(TAG, e.message ?: "Can't create photo collection")
             }
-            progress = ((idx+1) / files.size.toFloat() * 100).toInt()
-            imageUploadProgressFlow.emit(
-                ImageUploadProgress(progress, idx+1, files.size)
-            )
         }
+    }
+
+    fun deletePhotocollection() {
+        currentPhotocollection?.let {
+            Log.d(TAG, "Deleting photocollection: $it")
+            scope.launch {
+                try {
+                    val response = photocollectionService.deletePhotocollection(it.id)
+                    if (response.isSuccessful) {
+                        Log.d(TAG, "Photocollection deleted: ${it.id}")
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        }
+    }
+
+    fun onImageCaptured() {
+        imageUploader?.onImageCaptured()
+    }
+
+    fun uploadRemainingPhotos() {
+        imageUploader?.start(waitForCaptureEvents = false)
     }
 
     suspend fun startReconstruction(): Long? {
@@ -176,25 +196,6 @@ class ReconstructionRepository(
             }
             return@withContext false
         }
-    }
-
-    private suspend fun createPhotocollection(name: String): Photocollection? {
-        val uid = authService.getCurrentUser()?.uid ?: return null
-
-        try {
-            val respsonse = photocollectionService.createPhotocollection(
-                CreatePhotocollectionRequest(
-                    accountId = uid,
-                    name = name
-                )
-            )
-            if (respsonse.isSuccessful) {
-                return respsonse.body()
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, e.message ?: "Can't create photo collection")
-        }
-        return null
     }
 
     fun getImagesDir(referenceNumber: String) = File(

@@ -164,7 +164,7 @@ class completeCapture : AppCompatActivity() {
                 dialog.dismiss()
 
                 reconstructionRepository.totalImageCount = totalImageCount
-                val intent = if (!userRepository.authService.isSignedIn() || !reconstructionRepository.autoUpload) {
+                val intent = if (!userRepository.authService.isSignedIn()) {
                     Intent(this, UsbScreenActivity::class.java)
                         .putExtra("REFERENCE_NUMBER", referenceNumber)
                         .putExtra("TOTAL_IMAGE_COUNT", totalImageCount)
