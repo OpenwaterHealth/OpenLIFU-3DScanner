@@ -60,11 +60,6 @@ class welcomeActivity : AppCompatActivity() {
         handleNoticeModal()
 
         subscribeToCloudStatus()
-        reconstructionRepository.reset()
-
-
-
-
 
 
 
@@ -187,6 +182,11 @@ appVersionText.text="VER:${versionName}";
                 userRepository.refreshUserInfo()
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        reconstructionRepository.reset()
     }
 
 }

@@ -197,8 +197,7 @@ class New_capture : AppCompatActivity() {
             } else if (hasAllPermissions()) {
                 //LogFileUtil.appendLog("Moving to face detection screen")
 
-                reconstructionRepository.currentReferenceNumber = referenceNumber
-                reconstructionRepository.autoUpload = autoUploadCheckbox.isChecked
+                reconstructionRepository.createPhotocollection(referenceNumber, autoUploadCheckbox.isChecked)
                 navigateToFaceDetection(referenceNumber)
             } else {
                 showToastAndLog("Permissions are required to proceed")

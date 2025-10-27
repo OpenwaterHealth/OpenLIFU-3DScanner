@@ -124,9 +124,8 @@ class ImageUploadActivity : AppCompatActivity() {
                 progressBar.setProgress(progress.progress, true)
             }
         }
-        lifecycleScope.launch {
-            reconstructionRepository.uploadImages()
-        }
+
+        reconstructionRepository.uploadRemainingPhotos()
     }
 
     private fun refreshUI() {

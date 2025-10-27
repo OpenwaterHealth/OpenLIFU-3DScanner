@@ -1,11 +1,13 @@
 package com.example.facedetectionar.api.dto
 
+import com.example.facedetectionar.api.repository.ImageUploader
+
 data class StartPhotoscanRequest(
-    val pipelineName: String? = null,
-    val inputResizeWidth: Int? = null,
+    val pipelineName: String? = "default_pipeline",
+    val inputResizeWidth: Int? = ImageUploader.IMAGE_WIDTH,
     val useMasks: Boolean? = null,
-    val matchingMode: String? = null,
-    val windowRadius: Int? = null,
+    val matchingMode: String? = "sequential_loop",
+    val windowRadius: Int? = 3,
     val numNeighbors: Int? = null,
     val locations: List<List<Float>>? = null,
     val returnDurations: Boolean? = null

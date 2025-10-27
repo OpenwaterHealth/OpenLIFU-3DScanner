@@ -69,6 +69,7 @@ import java.io.File
 import java.io.FileOutputStream
 import kotlin.math.sqrt
 import androidx.core.graphics.toColorInt
+import com.example.facedetectionar.api.repository.ReconstructionRepository
 import com.google.mediapipe.framework.image.BitmapImageBuilder
 import com.google.mlkit.vision.facemesh.FaceMesh
 // MediaPipe Tasks
@@ -82,10 +83,15 @@ import io.github.sceneview.math.Direction
 import org.opencv.core.Mat
 import org.opencv.core.MatOfDouble
 import java.util.Locale
+import javax.inject.Inject
 
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
+
+    @Inject
+    lateinit var reconstructionRepository: ReconstructionRepository
+
     private companion object {
         private const val CAMERA_PERMISSION_CODE = 1
         const val EXTRA_ALREADY_RESET = "EXTRA_ALREADY_RESET"
@@ -2140,6 +2146,7 @@ class MainActivity : AppCompatActivity() {
 
             image.close() // Release the image
 
+            reconstructionRepository.onImageCaptured()
 
             // COORDINATES SAVE Camera pose
             val cameraPose = frame.camera.pose

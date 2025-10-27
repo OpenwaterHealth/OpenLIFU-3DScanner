@@ -7,6 +7,7 @@ import com.example.facedetectionar.api.dto.StartPhotoscanResponse
 import okhttp3.RequestBody
 import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Path
@@ -25,6 +26,11 @@ interface PhotocollectionService {
         @Path("id") photocollectionId: Long,
         @Query("join_photos") joinPhotos: Boolean = false
     ): Response<Photocollection>
+
+    @DELETE("photocollection/{id}")
+    suspend fun deletePhotocollection(
+        @Path("id") photocollectionId: Long
+    ): Response<Void>
 
     @POST("photocollection/{id}/photo/{name}")
     suspend fun uploadPhoto(
