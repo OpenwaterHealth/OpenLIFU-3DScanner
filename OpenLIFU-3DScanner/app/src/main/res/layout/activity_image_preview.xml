@@ -4,7 +4,8 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/screen_background">
+    android:background="@drawable/screen_background"
+    android:animateLayoutChanges="true">
 
 
 
@@ -72,7 +73,7 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_marginTop="20dp"
-        app:layout_constraintBottom_toTopOf="@id/deleteButton"
+        app:layout_constraintBottom_toTopOf="@id/optionsButton"
         app:layout_constraintEnd_toStartOf="@id/btnNextForReview"
         app:layout_constraintHeight_percent="0.55"
         app:layout_constraintStart_toEndOf="@id/btnPreviousForReview"
@@ -113,20 +114,80 @@
         app:layout_constraintBottom_toBottomOf="@id/imageFrame"
         app:layout_constraintEnd_toEndOf="parent" />
 
-
     <Button
-        android:id="@+id/deleteButton"
+        android:id="@+id/optionsButton"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="50dp"
         android:layout_marginTop="20dp"
-        android:background="@drawable/round_red"
-        android:text="Delete"
-        android:textColor="@android:color/white"
+        android:text="@string/options"
+        android:textColor="@color/disable_button_text"
+        android:background="@drawable/selector_round_green_button"
         app:backgroundTint="@null"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/imageFrame" />
+        app:layout_constraintTop_toBottomOf="@id/imageFrame"/>
+
+    <LinearLayout
+        android:id="@+id/optionsLayout"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@drawable/round_black_background"
+        android:elevation="10dp"
+        android:visibility="gone"
+        app:layout_constraintStart_toStartOf="@+id/optionsButton"
+        app:layout_constraintEnd_toEndOf="@+id/optionsButton"
+        app:layout_constraintBottom_toBottomOf="@+id/optionsButton">
+
+        <Button
+            android:id="@+id/reconstructMeshButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/reconstruct_mesh"
+            android:textColor="@color/disable_button_text"
+            android:background="@drawable/selector_round_green_button"
+            app:backgroundTint="@null"
+            android:layout_marginTop="16dp"
+            android:layout_marginHorizontal="16dp"/>
+
+        <Button
+            android:id="@+id/downloadMeshButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/download_mesh"
+            android:textColor="@color/disable_button_text"
+            android:background="@drawable/selector_round_green_button"
+            app:backgroundTint="@null"
+            android:layout_marginTop="16dp"
+            android:layout_marginHorizontal="16dp"/>
+
+        <Button
+            android:id="@+id/deleteScanButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/delete_scan"
+            android:textColor="@color/disable_button_text"
+            android:background="@drawable/selector_round_green_button"
+            app:backgroundTint="@null"
+            android:layout_marginTop="16dp"
+            android:layout_marginHorizontal="16dp"/>
+
+        <Button
+            android:id="@+id/hideReviewOptionsButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/options"
+            android:textColor="@color/disable_button_text"
+            android:background="@drawable/selector_round_green_button"
+            app:backgroundTint="@null"
+            app:icon="@drawable/ic_arrow_down"
+            app:iconTint="@color/white"
+            app:iconGravity="textStart"
+            app:iconPadding="8dp"
+            android:layout_marginTop="16dp"/>
+
+    </LinearLayout>
 
     <Button
         android:id="@+id/reviewDoneButton"
@@ -135,12 +196,12 @@
         android:layout_marginHorizontal="50dp"
         android:layout_marginTop="20dp"
         android:background="@drawable/round_green_button"
-        android:text="Done"
+        android:text="@string/done"
         android:textColor="@android:color/white"
         app:backgroundTint="@null"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.52"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/deleteButton" />
+        app:layout_constraintTop_toBottomOf="@id/optionsButton" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

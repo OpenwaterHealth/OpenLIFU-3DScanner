@@ -12,7 +12,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import com.example.facedetectionar.api.dto.Photoscan
-import com.example.facedetectionar.api.repository.ReconstructionRepository
+import com.example.facedetectionar.api.repository.CloudRepository
 import com.example.facedetectionar.api.repository.UserRepository
 import com.example.facedetectionar.dialogs.PhotoscanDownloadDialog
 import dagger.hilt.android.AndroidEntryPoint
@@ -23,7 +23,7 @@ import javax.inject.Inject
 class ReconstructionActivity : AppCompatActivity() {
 
     @Inject
-    lateinit var reconstructionRepository: ReconstructionRepository
+    lateinit var cloudRepository: CloudRepository
     @Inject
     lateinit var userRepository: UserRepository
 
@@ -64,33 +64,33 @@ class ReconstructionActivity : AppCompatActivity() {
 
         supportFragmentManager.setFragmentResultListener(PhotoscanDownloadDialog.TAG, this) { requestKey, bundle ->
             val intent = Intent(this, UsbScreenActivity::class.java)
-                .putExtra("REFERENCE_NUMBER", reconstructionRepository.currentReferenceNumber)
-                .putExtra("TOTAL_IMAGE_COUNT", reconstructionRepository.totalImageCount)
+                .putExtra("REFERENCE_NUMBER", cloudRepository.currentReferenceNumber)
+                .putExtra("TOTAL_IMAGE_COUNT", cloudRepository.totalImageCount)
             startActivity(intent)
             finish()
         }
 
         buttonDownload.setOnClickListener {
             photoscan?.let {
-                val dialog = PhotoscanDownloadDialog(it)
+                val dialog = PhotoscanDownloadDialog(it.id)
                 dialog.show(supportFragmentManager, PhotoscanDownloadDialog::class.simpleName)
             }
         }
 
         subscribeToProgress()
         lifecycleScope.launch {
-            photoscan = reconstructionRepository.startReconstructionProgressListener(photoscanId)
+            photoscan = cloudRepository.startReconstructionProgressListener(photoscanId)
         }
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        reconstructionRepository.stopReconstructionProgressListener(photoscanId)
+        cloudRepository.stopReconstructionProgressListener(photoscanId)
     }
 
     private fun subscribeToProgress() {
         lifecycleScope.launch {
-            reconstructionRepository.getReconstructionProgress().flowWithLifecycle(lifecycle).collect { progress ->
+            cloudRepository.getReconstructionProgress().flowWithLifecycle(lifecycle).collect { progress ->
                 if (progress == null) return@collect
 
                 when (progress.status) {

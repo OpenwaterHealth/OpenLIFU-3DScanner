@@ -22,7 +22,7 @@ import com.bumptech.glide.Glide
 import com.example.facedetectionar.Adapters.ImageDiscardAdapter
 import com.example.facedetectionar.Modals.ImageDiscardModal
 import com.example.facedetectionar.Adapters.OnImageClickListener
-import com.example.facedetectionar.api.repository.ReconstructionRepository
+import com.example.facedetectionar.api.repository.CloudRepository
 import com.example.facedetectionar.api.repository.UserRepository
 import dagger.hilt.android.AndroidEntryPoint
 import org.json.JSONObject
@@ -35,7 +35,7 @@ class completeCapture : AppCompatActivity() {
     @Inject
     lateinit var userRepository: UserRepository
     @Inject
-    lateinit var reconstructionRepository: ReconstructionRepository
+    lateinit var cloudRepository: CloudRepository
 
     private lateinit var adapter: ImageDiscardAdapter
     private lateinit var imageList: ArrayList<ImageDiscardModal>
@@ -163,7 +163,7 @@ class completeCapture : AppCompatActivity() {
             captureSaveYesButton.setOnClickListener {
                 dialog.dismiss()
 
-                reconstructionRepository.totalImageCount = totalImageCount
+                cloudRepository.totalImageCount = totalImageCount
                 val intent = if (!userRepository.authService.isSignedIn()) {
                     Intent(this, UsbScreenActivity::class.java)
                         .putExtra("REFERENCE_NUMBER", referenceNumber)

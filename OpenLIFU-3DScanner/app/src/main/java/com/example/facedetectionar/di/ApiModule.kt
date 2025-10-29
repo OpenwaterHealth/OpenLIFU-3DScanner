@@ -6,7 +6,7 @@ import com.example.facedetectionar.api.PhotocollectionService
 import com.example.facedetectionar.api.PhotoscanService
 import com.example.facedetectionar.api.UserService
 import com.example.facedetectionar.api.WebsocketService
-import com.example.facedetectionar.api.repository.ReconstructionRepository
+import com.example.facedetectionar.api.repository.CloudRepository
 import com.example.facedetectionar.api.repository.UserRepository
 import com.google.gson.FieldNamingPolicy
 import com.google.gson.Gson
@@ -18,7 +18,6 @@ import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
-import okhttp3.Dispatcher
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -47,10 +46,11 @@ class ApiModule {
         authService: AuthService,
         photocollectionService: PhotocollectionService,
         photoscanService: PhotoscanService,
-        websocketService: WebsocketService
-    ): ReconstructionRepository {
-        return ReconstructionRepository(
-            authService, photocollectionService, photoscanService, websocketService
+        websocketService: WebsocketService,
+        userRepository: UserRepository
+    ): CloudRepository {
+        return CloudRepository(
+            authService, photocollectionService, photoscanService, websocketService, userRepository
         )
     }
 

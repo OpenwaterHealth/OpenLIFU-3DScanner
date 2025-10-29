@@ -54,7 +54,7 @@
     <string name="ok">Ok</string>
     <string name="download_successful">Download\nSuccessful</string>
     <string name="scan_s">Scan %1$s</string>
-    <string name="download_failed">Download\\nFailed</string>
+    <string name="download_failed">Download\nFailed</string>
     <string name="try_again_later">Try Again Later</string>
     <string name="photocollection_available">Photocollection Available</string>
     <string name="photoscan_available">Photoscan Available</string>
@@ -62,5 +62,24 @@
     <string name="capture_has_been_transferred_successfully">Capture has been transferred successfully !</string>
     <string name="photoscan_not_available">Photoscan Not Available</string>
     <string name="photoscan_transferred">Photoscan Transferred</string>
+    <string name="show_online_scans">Show Online Scans</string>
+    <string name="date">Date</string>
+    <string name="id">ID</string>
+    <string name="count">#</string>
+    <string name="options">Options</string>
+    <string name="delete_scan">Delete Scan</string>
+    <string name="download_mesh">Download Mesh</string>
+    <string name="reconstruct_mesh">Reconstruct Mesh</string>
+    <string name="done">Done</string>
+    <string name="delete">Delete</string>
+    <string name="delete_capture">Delete Capture</string>
+    <string name="delete_capture_description"><![CDATA[<font color="#488C75">The scan is available in the cloud. </font><font color="#FFFFFF">Would you like to delete the local copy, the cloud copy, or both?</font>]]></string>
+    <string name="delete_capture_description_local_only_offline"><![CDATA[<font color="#FFFFFF">This will delete the current scan from the local device. </font><font color="#8D0808">The scan is not available in the cloud and this cannot be undone. </font><font color="#FFFFFF">Are you sure you want to continue?</font>]]></string>
+    <string name="delete_capture_description_local_only_online"><![CDATA[<font color="#FFFFFF">This will delete the current scan from the local device. </font><font color="#488C75">The scan will remain available in the cloud. </font><font color="#FFFFFF">Are you sure you want to continue?</font>]]></string>
+    <string name="delete_capture_description_both"><![CDATA[<font color="#FFFFFF">This will delete the current scan from both the local device and the cloud. </font><font color="#8D0808">This cannot be undone. </font><font color="#FFFFFF">Are you sure you want to continue?</font>]]></string>
+    <string name="delete_capture_description_cloud_only"><![CDATA[<font color="#FFFFFF">This will delete the current scan from the cloud. </font><font color="#8D0808">This cannot be undone. </font><font color="#FFFFFF">Are you sure you want to continue?</font>]]></string>
+    <string name="delete_local_only">Delete Local Only</string>
+    <string name="delete_both">Delete Both</string>
+    <string name="delete_cloud_only">Delete Cloud Only</string>
 
 </resources>

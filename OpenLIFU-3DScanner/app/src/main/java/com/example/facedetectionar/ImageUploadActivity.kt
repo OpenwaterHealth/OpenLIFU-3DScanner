@@ -12,7 +12,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
-import com.example.facedetectionar.api.repository.ReconstructionRepository
+import com.example.facedetectionar.api.repository.CloudRepository
 import com.example.facedetectionar.api.repository.UserRepository
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.sceneview.utils.setKeepScreenOn
@@ -23,7 +23,7 @@ import javax.inject.Inject
 class ImageUploadActivity : AppCompatActivity() {
 
     @Inject
-    lateinit var reconstructionRepository: ReconstructionRepository
+    lateinit var cloudRepository: CloudRepository
     @Inject
     lateinit var userRepository: UserRepository
 
@@ -68,7 +68,7 @@ class ImageUploadActivity : AppCompatActivity() {
             loadingLayout.visibility = View.VISIBLE
 
             lifecycleScope.launch {
-                val photoscanId = reconstructionRepository.startReconstruction()
+                val photoscanId = cloudRepository.startReconstruction()
                 loadingLayout.visibility = View.GONE
                 if (photoscanId != null) {
                     val intent = Intent(this@ImageUploadActivity, ReconstructionActivity::class.java)
@@ -103,7 +103,7 @@ class ImageUploadActivity : AppCompatActivity() {
 
     private fun subscribeToImageUploadingProgress() {
         lifecycleScope.launch {
-            reconstructionRepository.getImageUploadProgress().flowWithLifecycle(lifecycle).collect { progress ->
+            cloudRepository.getImageUploadProgress().flowWithLifecycle(lifecycle).collect { progress ->
                 if (progress == null) return@collect
 
                 if (progress.progress < 100) {
@@ -125,11 +125,11 @@ class ImageUploadActivity : AppCompatActivity() {
             }
         }
 
-        reconstructionRepository.uploadRemainingPhotos()
+        cloudRepository.uploadRemainingPhotos()
     }
 
     private fun refreshUI() {
-        val uploadFinished = reconstructionRepository.getImageUploadProgress().value?.progress == 100
+        val uploadFinished = cloudRepository.getImageUploadProgress().value?.progress == 100
         val enoughCredits = (userRepository.getUserInfo().value?.credits ?: 0) >= REQUIRED_CREDITS
 
         when {

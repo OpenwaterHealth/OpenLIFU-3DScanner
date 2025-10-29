@@ -1,15 +1,11 @@
 package com.example.facedetectionar;
 
-import static com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.with;
-
 import android.annotation.SuppressLint;
 import android.app.Dialog;
 import android.content.Intent;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -23,25 +19,35 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.DataSource;
-import com.bumptech.glide.request.transition.DrawableCrossFadeFactory;
-import com.bumptech.glide.request.transition.Transition;
 import com.example.facedetectionar.Adapters.ImagePreviewAdapter;
-import com.example.facedetectionar.Adapters.OnImageClickListener;
 import com.example.facedetectionar.Modals.ImagePreviewModal;
+import com.example.facedetectionar.api.repository.CloudRepository;
+import com.example.facedetectionar.dialogs.DeleteCaptureDialog;
+import com.example.facedetectionar.dialogs.PhotoscanDownloadDialog;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import javax.inject.Inject;
+
+import dagger.hilt.android.AndroidEntryPoint;
+import kotlin.coroutines.CoroutineContext;
+
+@AndroidEntryPoint
 public class ImagePreview extends AppCompatActivity {
+
+    @Inject
+    CloudRepository cloudRepository;
 
     private RecyclerView recyclerView;
     private ImagePreviewAdapter adapter;
     private int currentPosition = 0; // 🧠 Track current image position
     private ImageView imageViewPreview;
     private String referenceNumber;
+    private long photoscanId;
+    private long photocollectionId;
 
     @SuppressLint("SetTextI18n")
     @Override
@@ -49,22 +55,36 @@ public class ImagePreview extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_image_preview);
 
+        referenceNumber = getIntent().getStringExtra("REFERENCE_ID");
+        photocollectionId = getIntent().getLongExtra("PHOTOCOLLECTION_ID", -1);
+        photoscanId = getIntent().getLongExtra("PHOTOSCAN_ID", -1);
+
         recyclerView = findViewById(R.id.recyclerViewImagePreview);
         imageViewPreview = findViewById(R.id.imageViewInReview);
 
         Button reviewDoneBtn = findViewById(R.id.reviewDoneButton);
-        Button deleteButton = findViewById(R.id.deleteButton);
+        Button optionsButton = findViewById(R.id.optionsButton);
         ImageButton btnPreviousForReview = findViewById(R.id.btnPreviousForReview);
         ImageButton btnNextForReview = findViewById(R.id.btnNextForReview);
         TextView referenceIdText = findViewById(R.id.referenceIdText);
 
-        recyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
+        //options
+        View optionsLayout = findViewById(R.id.optionsLayout);
+        Button hideOptionsButton = findViewById(R.id.hideReviewOptionsButton);
+        Button deleteScanButton = findViewById(R.id.deleteScanButton);
+        Button downloadMeshButton = findViewById(R.id.downloadMeshButton);
+        Button reconstructMeshButton = findViewById(R.id.reconstructMeshButton);
 
-        referenceNumber = getIntent().getStringExtra("REFERENCE_ID");
+        if (!cloudRepository.isLoggedInAndOnline() || photocollectionId == -1) {
+            reconstructMeshButton.setEnabled(false);
+            downloadMeshButton.setEnabled(false);
+        }
+        if (photoscanId == -1) downloadMeshButton.setEnabled(false);
+
+        recyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
 
 
         referenceIdText.setText(referenceNumber != null ? referenceNumber : "No Ref");
-
 
         List<File> imageFiles = getImagesForReference(referenceNumber);
         ArrayList<ImagePreviewModal> list = new ArrayList<>();
@@ -90,12 +110,31 @@ public class ImagePreview extends AppCompatActivity {
         }
 
         reviewDoneBtn.setOnClickListener(v ->{
-            Intent intent = new Intent(this, ReviewCaptures.class);
+            Intent intent = new Intent(this, ReviewCapturesActivity.class);
             startActivity(intent);
             finish();
         });
 
-        deleteButton.setOnClickListener(v -> showDeleteDialog());
+        optionsButton.setOnClickListener(v -> optionsLayout.setVisibility(View.VISIBLE));
+        hideOptionsButton.setOnClickListener(v -> optionsLayout.setVisibility(View.GONE));
+        deleteScanButton.setOnClickListener(v -> {
+            DeleteCaptureDialog dialog = new DeleteCaptureDialog(referenceNumber, photocollectionId);
+            dialog.show(getSupportFragmentManager(), DeleteCaptureDialog.class.getSimpleName());
+        });
+
+        downloadMeshButton.setOnClickListener(v -> {
+            PhotoscanDownloadDialog dialog = new PhotoscanDownloadDialog(photoscanId);
+            dialog.show(getSupportFragmentManager(), PhotoscanDownloadDialog.class.getSimpleName());
+        });
+        reconstructMeshButton.setOnClickListener(v -> {
+            Long newPhotoscanId = CoroutineHelper.startReconstruction(cloudRepository, photocollectionId);
+            if (newPhotoscanId != null) {
+                Intent intent = new Intent(getApplicationContext(), ReconstructionActivity.class)
+                        .putExtra(ReconstructionActivity.EXTRA_PHOTOSCAN_ID, newPhotoscanId);
+                startActivity(intent);
+                finish();
+            }
+        });
 
         btnPreviousForReview.setOnClickListener(v -> {
             if (currentPosition > 0) {
@@ -127,61 +166,6 @@ public class ImagePreview extends AppCompatActivity {
         }
     }
 
-    private void showDeleteDialog() {
-        Dialog dialog = new Dialog(this);
-        View view = getLayoutInflater().inflate(R.layout.modal_capture_delete, null);
-
-        Button deleteYesBtn = view.findViewById(R.id.deleteYesBtn);
-        Button deleteNoBtn = view.findViewById(R.id.deleteNoBtn);
-        TextView deleteWarningText = view.findViewById(R.id.deleteWarningText);
-
-        String text = getString(R.string.deleteText, referenceNumber != null ? referenceNumber.split("_")[0] : "Scan ID");
-
-        deleteWarningText.setText(text);
-
-        deleteNoBtn.setOnClickListener(v -> dialog.dismiss());
-
-        deleteYesBtn.setOnClickListener(v -> {
-            File selectedImage = adapter.getSelectedImageFile();
-            if (selectedImage != null && selectedImage.exists()) {
-                boolean deleted = selectedImage.delete();
-                if (deleted) {
-                    adapter.removeSelectedImage();
-                    updateCaptureCount();
-                    Toast.makeText(this, "Image deleted successfully", Toast.LENGTH_SHORT).show();
-
-                    // Adjust current position
-                    if (currentPosition >= adapter.getItemCount()) {
-                        currentPosition = Math.max(adapter.getItemCount() - 1, 0);
-                    }
-
-                    updatePreviewAndSelection();
-                } else {
-                    Toast.makeText(this, "Failed to delete image", Toast.LENGTH_SHORT).show();
-                }
-            } else {
-                Toast.makeText(this, "No image selected", Toast.LENGTH_SHORT).show();
-            }
-
-            dialog.dismiss();
-        });
-
-        dialog.setContentView(view);
-        if (dialog.getWindow() != null) {
-            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
-            DisplayMetrics metrics = getResources().getDisplayMetrics();
-            int screenWidth = metrics.widthPixels;
-            int marginInPx = (int) (20 * metrics.density); // 20dp to pixels
-            int dialogWidth = screenWidth - (marginInPx * 2);
-
-            dialog.getWindow().setLayout(dialogWidth, ViewGroup.LayoutParams.WRAP_CONTENT);
-
-        }
-
-        dialog.setCancelable(false);
-        dialog.setCanceledOnTouchOutside(false);
-        dialog.show();
-    }
 
     public void updateCaptureCount() {
         TextView captureCountText = findViewById(R.id.CaptureCountTextOnReview);

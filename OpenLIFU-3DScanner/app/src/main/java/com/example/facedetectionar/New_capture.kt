@@ -29,7 +29,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import com.example.facedetectionar.api.repository.ReconstructionRepository
+import com.example.facedetectionar.api.repository.CloudRepository
 import com.example.facedetectionar.api.repository.UserRepository
 import com.google.ar.core.ArCoreApk
 import com.google.ar.core.exceptions.UnavailableDeviceNotCompatibleException
@@ -41,7 +41,7 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class New_capture : AppCompatActivity() {
     @Inject
-    lateinit var reconstructionRepository: ReconstructionRepository
+    lateinit var cloudRepository: CloudRepository
     @Inject
     lateinit var userRepository: UserRepository
 
@@ -197,7 +197,7 @@ class New_capture : AppCompatActivity() {
             } else if (hasAllPermissions()) {
                 //LogFileUtil.appendLog("Moving to face detection screen")
 
-                reconstructionRepository.createPhotocollection(referenceNumber, autoUploadCheckbox.isChecked)
+                cloudRepository.createPhotocollection(referenceNumber, autoUploadCheckbox.isChecked)
                 navigateToFaceDetection(referenceNumber)
             } else {
                 showToastAndLog("Permissions are required to proceed")

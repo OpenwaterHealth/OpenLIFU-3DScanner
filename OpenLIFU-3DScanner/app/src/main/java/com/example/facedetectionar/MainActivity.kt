@@ -49,7 +49,7 @@ import androidx.core.graphics.toColorInt
 import androidx.exifinterface.media.ExifInterface
 import androidx.lifecycle.lifecycleScope
 import com.example.facedetectionar.Modals.bulletPointConfig
-import com.example.facedetectionar.api.repository.ReconstructionRepository
+import com.example.facedetectionar.api.repository.CloudRepository
 import com.google.android.filament.Colors
 import com.google.ar.core.ArCoreApk
 import com.google.ar.core.Config
@@ -85,7 +85,7 @@ import kotlin.math.sqrt
 class MainActivity : AppCompatActivity() {
 
     @Inject
-    lateinit var reconstructionRepository: ReconstructionRepository
+    lateinit var cloudRepository: CloudRepository
 
     private companion object {
         private const val CAMERA_PERMISSION_CODE = 1
@@ -1921,7 +1921,7 @@ val offsetVector = Vector3(
 
             image.close() // Release the image
 
-            reconstructionRepository.onImageCaptured()
+            cloudRepository.onImageCaptured()
 
             // COORDINATES SAVE Camera pose
             val cameraPose = frame.camera.pose
