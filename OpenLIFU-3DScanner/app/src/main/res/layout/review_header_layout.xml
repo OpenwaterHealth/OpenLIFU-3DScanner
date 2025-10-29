@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:background="@color/dark_green"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal">
+
+    <TextView
+        android:id="@+id/dateText"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="2"
+        android:layout_gravity="center_vertical"
+        android:textSize="18sp"
+        android:padding="5dp"
+        android:gravity="center_vertical"
+        android:textColor="@color/white"
+        android:textStyle="bold"
+        android:text="@string/date"
+        android:drawablePadding="5dp"
+        app:drawableStartCompat="@drawable/ic_arrow_down"
+        app:drawableTint="@color/white" />
+
+    <View
+        android:layout_width="1dp"
+        android:layout_height="match_parent"
+        android:background="@color/white" />
+
+    <TextView
+        android:id="@+id/idText"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="2"
+        android:layout_gravity="center_vertical"
+        android:textColor="@color/white"
+        android:textSize="18sp"
+        android:padding="5dp"
+        android:textStyle="bold"
+        android:text="@string/id"/>
+
+    <View
+        android:layout_width="1dp"
+        android:layout_height="match_parent"
+        android:background="@color/white" />
+
+    <TextView
+        android:id="@+id/imageCountText"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_gravity="center_vertical"
+        android:textColor="@color/white"
+        android:textSize="18sp"
+        android:padding="5dp"
+        android:text="@string/count"/>
+
+    <View
+        android:layout_width="1dp"
+        android:layout_height="match_parent"
+        android:background="@color/white" />
+
+    <FrameLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:layout_weight="1">
+
+        <ImageView
+            android:id="@+id/photoStatusImage"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@drawable/ic_download"
+            app:tint="@color/white"
+            android:layout_gravity="center"
+            android:padding="5dp"/>
+
+    </FrameLayout>
+
+    <View
+        android:layout_width="1dp"
+        android:layout_height="match_parent"
+        android:background="@color/white" />
+
+    <FrameLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:layout_weight="1">
+
+        <ImageView
+            android:id="@+id/meshStatusImage"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@drawable/ic_cube"
+            app:tint="@color/white"
+            android:paddingTop="4dp"
+            android:layout_gravity="center"/>
+
+    </FrameLayout>
+
+</LinearLayout>

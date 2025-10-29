@@ -22,7 +22,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import com.example.facedetectionar.api.repository.ReconstructionRepository
+import com.example.facedetectionar.api.repository.CloudRepository
 import com.example.facedetectionar.api.repository.UserRepository
 import com.example.facedetectionar.dialogs.CloudStatusDialog
 import dagger.hilt.android.AndroidEntryPoint
@@ -37,7 +37,7 @@ class welcomeActivity : AppCompatActivity() {
     @Inject
     lateinit var userRepository: UserRepository
     @Inject
-    lateinit var reconstructionRepository: ReconstructionRepository
+    lateinit var cloudRepository: CloudRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
 
@@ -81,7 +81,7 @@ appVersionText.text="VER:${versionName}";
         }
 
         reviewButton.setOnClickListener {
-            val intent = Intent(this, ReviewCaptures::class.java)
+            val intent = Intent(this, ReviewCapturesActivity::class.java)
             startActivity(intent)
         }
 
@@ -186,7 +186,7 @@ appVersionText.text="VER:${versionName}";
 
     override fun onResume() {
         super.onResume()
-        reconstructionRepository.reset()
+        cloudRepository.resetCurrentPhotocollection()
     }
 
 }

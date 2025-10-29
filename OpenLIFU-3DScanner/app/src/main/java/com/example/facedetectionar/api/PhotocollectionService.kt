@@ -5,6 +5,7 @@ import com.example.facedetectionar.api.dto.Photocollection
 import com.example.facedetectionar.api.dto.StartPhotoscanRequest
 import com.example.facedetectionar.api.dto.StartPhotoscanResponse
 import okhttp3.RequestBody
+import okhttp3.ResponseBody
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
@@ -27,6 +28,12 @@ interface PhotocollectionService {
         @Query("join_photos") joinPhotos: Boolean = false
     ): Response<Photocollection>
 
+    @GET("photocollection/account/{uid}")
+    suspend fun getPhotocollections(
+        @Path("uid") uid: String,
+        @Query("join_photos") joinPhotos: Boolean = false
+    ): Response<List<Photocollection>>
+
     @DELETE("photocollection/{id}")
     suspend fun deletePhotocollection(
         @Path("id") photocollectionId: Long
@@ -38,6 +45,12 @@ interface PhotocollectionService {
         @Path("name") fileName: String,
         @Body body: RequestBody
     ): Response<Void>
+
+    @GET("photocollection/{id}/photo/{name}")
+    suspend fun downloadPhoto(
+        @Path("id") photocollectionId: Long,
+        @Path("name") fileName: String,
+    ): Response<ResponseBody>
 
     @POST("photocollection/{id}/start_photoscan")
     suspend fun startPhotoscan(

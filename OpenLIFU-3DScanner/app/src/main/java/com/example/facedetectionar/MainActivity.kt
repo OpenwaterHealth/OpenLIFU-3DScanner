@@ -69,7 +69,7 @@ import java.io.File
 import java.io.FileOutputStream
 import kotlin.math.sqrt
 import androidx.core.graphics.toColorInt
-import com.example.facedetectionar.api.repository.ReconstructionRepository
+import com.example.facedetectionar.api.repository.CloudRepository
 import com.google.mediapipe.framework.image.BitmapImageBuilder
 import com.google.mlkit.vision.facemesh.FaceMesh
 // MediaPipe Tasks
@@ -90,7 +90,7 @@ import javax.inject.Inject
 class MainActivity : AppCompatActivity() {
 
     @Inject
-    lateinit var reconstructionRepository: ReconstructionRepository
+    lateinit var cloudRepository: CloudRepository
 
     private companion object {
         private const val CAMERA_PERMISSION_CODE = 1
@@ -2146,7 +2146,7 @@ class MainActivity : AppCompatActivity() {
 
             image.close() // Release the image
 
-            reconstructionRepository.onImageCaptured()
+            cloudRepository.onImageCaptured()
 
             // COORDINATES SAVE Camera pose
             val cameraPose = frame.camera.pose

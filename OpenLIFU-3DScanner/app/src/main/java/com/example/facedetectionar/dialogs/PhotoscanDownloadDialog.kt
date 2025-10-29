@@ -13,17 +13,17 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import com.example.facedetectionar.R
 import com.example.facedetectionar.api.dto.Photoscan
-import com.example.facedetectionar.api.repository.ReconstructionRepository
+import com.example.facedetectionar.api.repository.CloudRepository
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @AndroidEntryPoint
 class PhotoscanDownloadDialog(
-    private val photoscan: Photoscan
+    private val photoscanId: Long
 ): DialogFragment() {
     @Inject
-    lateinit var reconstructionRepository: ReconstructionRepository
+    lateinit var cloudRepository: CloudRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -78,9 +78,11 @@ class PhotoscanDownloadDialog(
     }
 
     private suspend fun download(): String? {
-        val name = reconstructionRepository.getPhotocollection(photoscan.photocollectionId)?.name ?: return null
-        val outputDir = reconstructionRepository.getImagesDir(name)
-        if (!reconstructionRepository.downloadPhotoscanZip(photoscan.id, name, outputDir))
+        val photoscan = cloudRepository.getPhotoscan(photoscanId) ?: return null
+        val name = cloudRepository.getPhotocollection(photoscan.photocollectionId)?.name ?: return null
+        val outputDir = cloudRepository.getImagesDir(name)
+        if (!outputDir.exists()) outputDir.mkdirs()
+        if (!cloudRepository.downloadPhotoscanZip(photoscan.id, name, outputDir))
             return null
         return name
     }

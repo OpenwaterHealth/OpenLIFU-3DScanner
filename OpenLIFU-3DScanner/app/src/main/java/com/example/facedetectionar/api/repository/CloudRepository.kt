@@ -10,39 +10,57 @@ import com.example.facedetectionar.api.dto.CreatePhotocollectionRequest
 import com.example.facedetectionar.api.dto.Photocollection
 import com.example.facedetectionar.api.dto.Photoscan
 import com.example.facedetectionar.api.dto.StartPhotoscanRequest
+import com.example.facedetectionar.api.model.DownloadResult
+import com.example.facedetectionar.api.model.DownloadingItem
 import com.example.facedetectionar.api.model.ImageUploadProgress
 import com.example.facedetectionar.api.model.ReconstructionProgress
+import com.example.facedetectionar.api.model.Type
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.runBlocking
 import okhttp3.ResponseBody
 import java.io.File
 import java.io.FileOutputStream
+import java.util.concurrent.LinkedBlockingQueue
 
-class ReconstructionRepository(
+class CloudRepository(
     private val authService: AuthService,
     private val photocollectionService: PhotocollectionService,
     private val photoscanService: PhotoscanService,
-    private val websocketService: WebsocketService
+    private val websocketService: WebsocketService,
+    private val userRepository: UserRepository
 ) {
     private val scope = CoroutineScope(Dispatchers.IO)
 
     private var currentPhotocollection: Photocollection? = null
     private val imageUploadProgressFlow = MutableStateFlow<ImageUploadProgress?>(null)
-    private var reconstructionProgressFlow = MutableStateFlow<ReconstructionProgress?>(null)
+    private val reconstructionProgressFlow = MutableStateFlow<ReconstructionProgress?>(null)
+    private val downloadResultsFlow = MutableStateFlow<DownloadResult?>(null)
 
     private var imageUploader: ImageUploader? = null
     private var autoUpload: Boolean = false
+
+    private val downloadQueue = LinkedBlockingQueue<DownloadingItem>()
+    private var downloaderJob: Job? = null
 
     var currentReferenceNumber: String? = null
         private set
 
     var totalImageCount: String? = null
 
-    fun reset() {
+    fun isLoggedInAndOnline(): Boolean {
+        return runBlocking {
+            authService.isSignedIn() && userRepository.isCloudAvailable()
+        }
+    }
+
+    fun resetCurrentPhotocollection() {
         if (imageUploader?.isUploadComplete() == false) {
             deletePhotocollection()
         }
@@ -59,6 +77,16 @@ class ReconstructionRepository(
 
     fun getImageUploadProgress(): StateFlow<ImageUploadProgress?> = imageUploadProgressFlow
     fun getReconstructionProgress(): StateFlow<ReconstructionProgress?> = reconstructionProgressFlow
+
+    fun download(item: DownloadingItem) {
+        if (!downloadQueue.contains(item)) {
+            downloadQueue.add(item)
+            startDownloaderJob()
+        }
+    }
+
+    fun getDownloadingItems(): List<DownloadingItem> = downloadQueue.toList()
+    fun getDownloadResultsFlow(): Flow<DownloadResult?> = downloadResultsFlow
 
     fun createPhotocollection(name: String, autoUpload: Boolean) {
         this.currentReferenceNumber = name
@@ -97,17 +125,21 @@ class ReconstructionRepository(
 
     fun deletePhotocollection() {
         currentPhotocollection?.let {
-            Log.d(TAG, "Deleting photocollection: $it")
             scope.launch {
-                try {
-                    val response = photocollectionService.deletePhotocollection(it.id)
-                    if (response.isSuccessful) {
-                        Log.d(TAG, "Photocollection deleted: ${it.id}")
-                    }
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
+                deletePhotocollection(it.id)
             }
+        }
+    }
+
+    suspend fun deletePhotocollection(id: Long) {
+        Log.d(TAG, "Deleting photocollection: $id")
+        try {
+            val response = photocollectionService.deletePhotocollection(id)
+            if (response.isSuccessful) {
+                Log.d(TAG, "Photocollection deleted: $id")
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 
@@ -176,26 +208,24 @@ class ReconstructionRepository(
     }
 
     suspend fun downloadPhotoscanZip(id: Long, name: String, outputDir: File): Boolean {
-        return withContext(Dispatchers.IO) {
-            try {
-                val response = photoscanService.getMesh(id)
+        try {
+            val response = photoscanService.getMesh(id)
 
-                if (response.isSuccessful) {
-                    response.body()?.let { body ->
-                        val fileName = "scan_$name.zip"
-                        val file = File(outputDir, fileName)
-                        saveResponseBodyToDisk(body, file)
-                        Log.d(TAG, "Photoscan saved to ${file.absolutePath}")
-                        return@withContext true
-                    }
-                } else {
-                    Log.e(TAG, "Error: ${response.code()} ${response.message()}")
+            if (response.isSuccessful) {
+                response.body()?.let { body ->
+                    val fileName = "scan_$name.zip"
+                    val file = File(outputDir, fileName)
+                    saveResponseBodyToDisk(body, file)
+                    Log.d(TAG, "Photoscan saved to ${file.absolutePath}")
+                    return true
                 }
-            } catch (e: Exception) {
-                e.printStackTrace()
+            } else {
+                Log.e(TAG, "Error: ${response.code()} ${response.message()}")
             }
-            return@withContext false
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
+        return false
     }
 
     fun getImagesDir(referenceNumber: String) = File(
@@ -216,8 +246,64 @@ class ReconstructionRepository(
         }
     }
 
+    private fun startDownloaderJob() {
+        if (downloaderJob == null || downloaderJob?.isCompleted == true) {
+            downloaderJob = scope.launch {
+                while (isActive && downloadQueue.isNotEmpty()) {
+                    val item = downloadQueue.poll() ?: return@launch
+                    val success = when (item.type) {
+                        Type.PHOTOCOLLECTION -> downloadPhotocollection(item.id)
+                        Type.PHOTOSCAN -> downloadPhotoscan(item.id)
+                    }
+                    downloadResultsFlow.emit(DownloadResult(item, success))
+                }
+            }
+        }
+    }
+
+    private suspend fun downloadPhotocollection(id: Long): Boolean {
+        try {
+            val response = photocollectionService.getPhotocollection(id, joinPhotos = true)
+            if (response.isSuccessful) {
+                Log.d(TAG, "Loading photocollection $id")
+
+                response.body()?.let { photocollection ->
+                    val photos = photocollection.photos ?: listOf()
+                    val outputDir = getImagesDir(photocollection.name ?: return false)
+                    if (!outputDir.exists()) outputDir.mkdirs()
+
+                    for (photo in photos) {
+                        Log.d(TAG, "Loading photo ${photo.fileName}")
+                        val photoResponse = photocollectionService.downloadPhoto(photocollection.id, photo.fileName)
+                        if (!photoResponse.isSuccessful) return false
+
+                        photoResponse.body()?.let {
+                            val file = File(outputDir, photo.fileName)
+                            saveResponseBodyToDisk(it, file)
+                            Log.d(TAG, "Photo saved to ${file.absolutePath}")
+                        }
+                    }
+                    return true
+                }
+            } else {
+                Log.e(TAG, "Error: ${response.code()} ${response.message()}")
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Download failed", e)
+        }
+        return false
+    }
+
+    private suspend fun downloadPhotoscan(id: Long): Boolean {
+        val photoscan = getPhotoscan(id) ?: return false
+        val photocollection = getPhotocollection(photoscan.photocollectionId) ?: return false
+        val outputDir = getImagesDir(photocollection.name ?: return false)
+        if (!outputDir.exists()) outputDir.mkdirs()
+        return downloadPhotoscanZip(photoscan.id, photocollection.name, outputDir)
+    }
+
     companion object {
-        private val TAG = ReconstructionRepository::class.simpleName
+        private val TAG = CloudRepository::class.simpleName
     }
 
 }

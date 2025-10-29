@@ -1,0 +1,24 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="96dp"
+    android:height="96dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+  <!-- Front face -->
+  <path
+      android:pathData="M6,8H14V16H6Z"
+      android:strokeWidth="1"
+      android:strokeColor="#FFFFFF"
+      android:fillColor="#00000000"
+      android:strokeLineJoin="round"
+      android:strokeLineCap="round"/>
+
+  <!-- Visible top/right edges + connectors (no hidden lines) -->
+  <path
+      android:pathData="M14,8L18,5L18,13 M14,16L18,13 M6,8L10,5L18,5"
+      android:strokeWidth="1"
+      android:strokeColor="#FFFFFF"
+      android:fillColor="#00000000"
+      android:strokeLineJoin="round"
+      android:strokeLineCap="round"/>
+</vector>

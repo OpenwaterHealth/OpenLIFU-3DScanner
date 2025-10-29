@@ -20,4 +20,7 @@
     <color name='ripple_red'>#cc2626</color>
     <color name='ripple_light_green'>#4eb792</color>
     <color name="dark_green">#272F2F</color>
+
+    <color name="light_gray">#E7E9EA</color>
+    <color name="gray">#CBCFD2</color>
 </resources>
