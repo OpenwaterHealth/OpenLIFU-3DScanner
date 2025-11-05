@@ -1,4 +1,4 @@
-package com.example.facedetectionar
+package health.openwater.openlifu3dscanner
 
 import org.junit.Test
 

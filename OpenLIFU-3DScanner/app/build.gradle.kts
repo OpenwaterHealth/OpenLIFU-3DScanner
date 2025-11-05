@@ -1,20 +1,23 @@
+import org.ajoberstar.grgit.Grgit
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
     alias(libs.plugins.google.devtools.ksp)
     alias(libs.plugins.dagger.hilt)
     alias(libs.plugins.google.services)
+    alias(libs.plugins.grgit)
 }
 
 android {
-    namespace = "com.example.facedetectionar"
+    namespace = "health.openwater.openlifu3dscanner"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.example.facedetectionar"
+        applicationId = "health.openwater.openlifu3dscanner"
         minSdk = 28
         targetSdk = 35
-        versionCode = 1
+        versionCode = 1_0_0_0000 + getCommitNumber()
         versionName = "0.5.9"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -61,8 +64,6 @@ dependencies {
     implementation("androidx.cardview:cardview:1.0.0")
     implementation ("com.google.mlkit:barcode-scanning:17.2.0")
 
-
-
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -105,15 +106,15 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
 
 
-
-
-
     // CameraX
     implementation("androidx.camera:camera-camera2")
 
     //image loader
     implementation ("com.github.bumptech.glide:glide:4.14.2")
     annotationProcessor ("com.github.bumptech.glide:compiler:4.14.2")
+}
 
-
+fun getCommitNumber(): Int {
+    val grgit = Grgit.open(mapOf("dir" to project.rootDir.parent))
+    return grgit.log(mapOf("includes" to listOf("HEAD"))).size
 }

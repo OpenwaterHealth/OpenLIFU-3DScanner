@@ -19,6 +19,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "FaceDetectionAR"
+rootProject.name = "OpenLIFU-3DScanner"
 include(":app")
  
