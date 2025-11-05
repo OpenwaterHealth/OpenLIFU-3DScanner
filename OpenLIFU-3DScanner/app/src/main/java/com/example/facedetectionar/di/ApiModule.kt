@@ -77,8 +77,13 @@ class ApiModule {
                     requestBuilder = requestBuilder.header("Authorization", "Bearer $it")
                 }
             }
+            val response = chain.proceed(requestBuilder.build())
 
-            chain.proceed(requestBuilder.build())
+            if (response.code == 401) {
+                authService.signOut()
+            }
+
+            response
         }
             .addInterceptor(logging)
 

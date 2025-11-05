@@ -6,6 +6,7 @@ import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import com.google.firebase.auth.FirebaseUser
 import kotlinx.coroutines.tasks.await
+import java.util.Date
 
 class AuthService {
     enum class AuthResponse {
@@ -18,6 +19,7 @@ class AuthService {
 
     private val auth = FirebaseAuth.getInstance()
     private var idToken: String? = null
+    private var tokenExpirationTimestamp: Long = 0
 
     init {
         auth.addIdTokenListener { auth: FirebaseAuth ->
@@ -44,6 +46,7 @@ class AuthService {
     fun signOut() {
         auth.signOut()
         idToken = null
+        tokenExpirationTimestamp = 0
     }
 
     fun isSignedIn(): Boolean {
@@ -55,15 +58,21 @@ class AuthService {
     }
 
     suspend fun getToken(): String? {
-        return idToken ?: run {
+        val now = Date().time / 1000
+        if (now > tokenExpirationTimestamp || idToken == null) {
             try {
-                auth.currentUser?.getIdToken(true)?.await()?.token
+                val response = auth.currentUser?.getIdToken(true)?.await()
+                tokenExpirationTimestamp = response?.expirationTimestamp ?: 0L
+                idToken = response?.token
+                Log.d(TAG, "Token expire in ${tokenExpirationTimestamp - now} seconds")
             } catch (e: FirebaseAuthInvalidUserException) {
                 Log.w(TAG, e.message ?: "Invalid user")
                 signOut()
-                null
+                idToken = null
+                tokenExpirationTimestamp = 0
             }
         }
+        return idToken
     }
 
     companion object {
