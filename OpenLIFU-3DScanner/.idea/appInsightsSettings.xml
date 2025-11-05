@@ -22,10 +22,10 @@
             <InsightsFilterSettings>
               <option name="connection">
                 <ConnectionSetting>
-                  <option name="appId" value="PLACEHOLDER" />
-                  <option name="mobileSdkAppId" value="" />
-                  <option name="projectId" value="" />
-                  <option name="projectNumber" value="" />
+                  <option name="appId" value="health.openwater.openlifu3dscanner" />
+                  <option name="mobileSdkAppId" value="1:341318872140:android:0c3ffd4b3d6fb5be7b18e9" />
+                  <option name="projectId" value="openwater-cloud" />
+                  <option name="projectNumber" value="341318872140" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />
