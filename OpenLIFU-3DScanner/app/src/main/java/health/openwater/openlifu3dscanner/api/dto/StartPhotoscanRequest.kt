@@ -7,7 +7,7 @@ data class StartPhotoscanRequest(
     val inputResizeWidth: Int? = ImageUploader.IMAGE_WIDTH,
     val useMasks: Boolean? = null,
     val matchingMode: String? = "sequential_loop",
-    val windowRadius: Int? = 3,
+    val windowRadius: Int? = 8,
     val numNeighbors: Int? = null,
     val locations: List<List<Float>>? = null,
     val returnDurations: Boolean? = null

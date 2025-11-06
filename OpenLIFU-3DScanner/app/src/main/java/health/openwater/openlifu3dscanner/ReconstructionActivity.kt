@@ -78,13 +78,17 @@ class ReconstructionActivity : AppCompatActivity() {
         }
 
         subscribeToProgress()
+    }
+
+    override fun onResume() {
+        super.onResume()
         lifecycleScope.launch {
             photoscan = cloudRepository.startReconstructionProgressListener(photoscanId)
         }
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
+    override fun onPause() {
+        super.onPause()
         cloudRepository.stopReconstructionProgressListener(photoscanId)
     }
 
