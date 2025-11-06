@@ -32,44 +32,45 @@ fun File.resizeJpegAsByteArray(
     targetWidth: Int,
     jpegQuality: Int
 ): ByteArray {
+    // 1) Read dimensions only
     val optsBounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
     FileInputStream(this).use { BitmapFactory.decodeStream(it, null, optsBounds) }
-    var srcW = optsBounds.outWidth
-    var srcH = optsBounds.outHeight
+    val srcW = optsBounds.outWidth
+    val srcH = optsBounds.outHeight
     if (srcW <= 0 || srcH <= 0) error("Not a valid image")
 
-    // Account for rotation when choosing sample size
+    // 2) Handle EXIF rotation
     val rotate = exifRotationDegrees(absolutePath)
     val logicalW = if (rotate == 90 || rotate == 270) srcH else srcW
     val logicalH = if (rotate == 90 || rotate == 270) srcW else srcH
 
-    // 2) Compute sample size for memory-friendly decode
-    // We aim to decode near the target width to save RAM
-    val desiredW = minOf(targetWidth, logicalW)
+    // 3) Compute sampling for memory-friendly decode
+    // Decode near target size, but don't oversample if image is already small
     var inSampleSize = 1
-    while ((logicalW / (inSampleSize * 2)) >= desiredW) {
-        inSampleSize *= 2
+    if (logicalW > targetWidth) {
+        while ((logicalW / (inSampleSize * 2)) >= targetWidth) {
+            inSampleSize *= 2
+        }
     }
 
-    // 3) Decode with sampling
+    // 4) Decode with sampling
     val opts = BitmapFactory.Options().apply { inSampleSize = inSampleSize }
     val sampled = FileInputStream(this).use {
         BitmapFactory.decodeStream(it, null, opts) ?: error("Decode failed")
     }
 
-    // 4) Rotate for EXIF orientation
+    // 5) Apply EXIF rotation
     val rotated = sampled.rotate(rotate).also { if (it !== sampled) sampled.recycle() }
 
-    // 5) Final scale to exact target width (no upscaling)
-    val finalW = minOf(targetWidth, rotated.width)
-    val scale = finalW.toFloat() / rotated.width
+    // 6) Scale to ensure *at least* targetWidth (upscale if needed)
+    val scale = targetWidth.toFloat() / rotated.width
+    val finalW = targetWidth
     val finalH = (rotated.height * scale).roundToInt()
-    val scaled =
-        if (scale < 1f) rotated.scale(finalW, finalH).also {
-            if (it !== rotated) rotated.recycle()
-        } else rotated
+    val scaled = if (scale != 1f) {
+        rotated.scale(finalW, finalH).also { if (it !== rotated) rotated.recycle() }
+    } else rotated
 
-    // 6) Compress to JPEG -> ByteArray -> RequestBody
+    // 7) Compress to JPEG → ByteArray
     val baos = ByteArrayOutputStream()
     scaled.compress(Bitmap.CompressFormat.JPEG, jpegQuality, baos)
     scaled.recycle()
