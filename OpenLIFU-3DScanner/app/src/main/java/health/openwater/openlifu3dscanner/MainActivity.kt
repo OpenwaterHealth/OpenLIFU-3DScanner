@@ -82,7 +82,7 @@ import javax.inject.Inject
 import kotlin.math.sqrt
 
 @AndroidEntryPoint
-class MainActivity : AppCompatActivity() {
+class MainActivity : BaseActivity() {
 
     @Inject
     lateinit var cloudRepository: CloudRepository

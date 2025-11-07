@@ -39,7 +39,7 @@ import org.json.JSONObject
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class New_capture : AppCompatActivity() {
+class New_capture : BaseActivity() {
     @Inject
     lateinit var cloudRepository: CloudRepository
     @Inject
@@ -62,7 +62,6 @@ class New_capture : AppCompatActivity() {
     private lateinit var newCaptureCheckbox: CheckBox
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         setContentView(R.layout.activity_new_capture)
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())

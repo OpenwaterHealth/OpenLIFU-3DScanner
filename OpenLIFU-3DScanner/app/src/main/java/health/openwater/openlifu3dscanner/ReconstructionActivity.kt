@@ -20,7 +20,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class ReconstructionActivity : AppCompatActivity() {
+class ReconstructionActivity : BaseActivity() {
 
     @Inject
     lateinit var cloudRepository: CloudRepository
@@ -38,7 +38,6 @@ class ReconstructionActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         setContentView(R.layout.activity_reconstruction)
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
@@ -109,7 +108,13 @@ class ReconstructionActivity : AppCompatActivity() {
                     "FAILED" -> {
                         textTitle.text = getString(R.string.reconstruction_failed)
                         textTitle.setTextColor(getColor(R.color.red))
-                        buttonDownload.isEnabled = true
+                        buttonDownload.isEnabled = false
+                    }
+
+                    "STOPPED" -> {
+                        textTitle.text = getString(R.string.reconstruction_stopped)
+                        textTitle.setTextColor(getColor(R.color.red))
+                        buttonDownload.isEnabled = false
                     }
                 }
 

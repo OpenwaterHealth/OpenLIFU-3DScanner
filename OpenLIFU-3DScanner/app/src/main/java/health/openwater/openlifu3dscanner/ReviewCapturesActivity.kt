@@ -23,7 +23,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
-class ReviewCapturesActivity : AppCompatActivity() {
+class ReviewCapturesActivity : BaseActivity() {
 
     private val viewmodel: ReviewCapturesViewModel by viewModels()
 
@@ -44,7 +44,6 @@ class ReviewCapturesActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         setContentView(R.layout.activity_review_captures)
 
         // Handle window insets

@@ -22,7 +22,7 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
 @AndroidEntryPoint
-class FaceDetectionActivity : AppCompatActivity() {
+class FaceDetectionActivity : BaseActivity() {
 
     private lateinit var faceStatusTextView: TextView
     private lateinit var previewView: PreviewView

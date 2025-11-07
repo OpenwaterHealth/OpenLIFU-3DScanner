@@ -49,6 +49,7 @@
     <string name="reconstruction_will_continue_running_in_the_cloud_results_can_also_be_downloaded_later_once_complete">Reconstruction will continue running in the cloud. Results can also be downloaded later once complete</string>
     <string name="reconstruction_complete">Reconstruction Complete</string>
     <string name="reconstruction_failed">Reconstruction Failed</string>
+    <string name="reconstruction_stopped">Reconstruction Stopped</string>
     <string name="results_can_also_be_downloaded_later">Results can also be downloaded later</string>
     <string name="downloading">Downloading...</string>
     <string name="ok">Ok</string>

@@ -18,14 +18,13 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class LoginActivity: AppCompatActivity() {
+class LoginActivity: BaseActivity() {
 
     @Inject
     lateinit var userRepository: UserRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         setContentView(R.layout.activity_login)
 
         val cancelButton = findViewById<Button>(R.id.cancelBtn)

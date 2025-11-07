@@ -12,8 +12,6 @@ import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
-import androidx.activity.enableEdgeToEdge
-import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -21,15 +19,15 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import dagger.hilt.android.AndroidEntryPoint
 import health.openwater.openlifu3dscanner.api.repository.CloudRepository
 import health.openwater.openlifu3dscanner.api.repository.UserRepository
 import health.openwater.openlifu3dscanner.dialogs.CloudStatusDialog
-import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class welcomeActivity : AppCompatActivity() {
+class welcomeActivity : BaseActivity() {
 
     @Inject
     lateinit var userRepository: UserRepository
@@ -37,10 +35,7 @@ class welcomeActivity : AppCompatActivity() {
     lateinit var cloudRepository: CloudRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
-
-
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         setContentView(R.layout.activity_welcome)
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())

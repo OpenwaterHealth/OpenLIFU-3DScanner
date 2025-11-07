@@ -19,7 +19,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import java.io.File
 
 @AndroidEntryPoint
-class UsbScreenActivity : AppCompatActivity() {
+class UsbScreenActivity : BaseActivity() {
 
     private lateinit var imageCountTextView: TextView
     private val handler = Handler(Looper.getMainLooper())

@@ -31,7 +31,7 @@ import javax.inject.Inject;
 import dagger.hilt.android.AndroidEntryPoint;
 
 @AndroidEntryPoint
-public class ImagePreview extends AppCompatActivity {
+public class ImagePreview extends BaseActivity {
 
     @Inject
     CloudRepository cloudRepository;

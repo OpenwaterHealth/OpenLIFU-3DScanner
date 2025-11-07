@@ -30,7 +30,7 @@ import java.io.File
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class completeCapture : AppCompatActivity() {
+class completeCapture : BaseActivity() {
 
     @Inject
     lateinit var userRepository: UserRepository
@@ -45,7 +45,6 @@ class completeCapture : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         setContentView(R.layout.activity_complete_capture)
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
