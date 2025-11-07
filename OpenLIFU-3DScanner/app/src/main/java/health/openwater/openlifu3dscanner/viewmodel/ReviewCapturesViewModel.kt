@@ -46,12 +46,20 @@ class ReviewCapturesViewModel
 
                 val newStatus = if (result.success) Status.LOCAL else Status.CLOUD
 
-                downloadStatusChangeFlow.emit(
-                    when (result.item.type) {
-                        Type.PHOTOCOLLECTION -> item.copy(photoStatus = newStatus)
-                        Type.PHOTOSCAN -> item.copy(meshStatus = newStatus)
+                val newItem = when (result.item.type) {
+                    Type.PHOTOCOLLECTION -> item.copy(photoStatus = newStatus)
+                    Type.PHOTOSCAN -> item.copy(meshStatus = newStatus)
+                }
+
+                dataFlow.value = dataFlow.value.toMutableList().apply {
+                    val idx = indexOf(item)
+                    if (idx >= 0) {
+                        remove(item)
+                        add(idx, newItem)
                     }
-                )
+                }
+
+                downloadStatusChangeFlow.emit(newItem)
             }
         }
     }
