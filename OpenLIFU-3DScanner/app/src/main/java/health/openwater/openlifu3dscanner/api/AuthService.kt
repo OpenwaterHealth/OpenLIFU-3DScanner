@@ -70,6 +70,9 @@ class AuthService {
                 signOut()
                 idToken = null
                 tokenExpirationTimestamp = 0
+            } catch (e: Exception) {
+                Log.d(TAG, "Error: $e")
+                idToken = null
             }
         }
         return idToken

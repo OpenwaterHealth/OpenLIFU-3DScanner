@@ -55,10 +55,10 @@
         android:textAllCaps="false"
         android:textSize="18sp"
         app:backgroundTint="@null"
-        android:background="@drawable/round_green_button"
+        android:background="@drawable/selector_round_green_button"
         android:layout_marginHorizontal="20dp"
         android:layout_marginTop="20dp"
-        android:textColor="@color/white"/>
+        android:textColor="@color/disable_button_text"/>
 
     <Button
         android:id="@+id/cancelBtn"
