@@ -29,3 +29,9 @@ jobs:
     - name: Build with Gradle
       working-directory: OpenLIFU-3DScanner
       run: ./gradlew assembleRelease
+
+    - name: Upload release APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: app-release
+        path: OpenLIFU-3DScanner/app/build/outputs/apk/release/*.apk
