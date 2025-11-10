@@ -5,6 +5,7 @@ on:
     branches: [ "v0.5_arcore_cloud" ]
   pull_request:
     branches: [ "main" ]
+  workflow_dispatch:
 
 jobs:
   build:
