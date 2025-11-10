@@ -141,30 +141,46 @@ public class ImagePreview extends AppCompatActivity {
 
         deleteNoBtn.setOnClickListener(v -> dialog.dismiss());
 
-        deleteYesBtn.setOnClickListener(v -> {
-            File selectedImage = adapter.getSelectedImageFile();
-            if (selectedImage != null && selectedImage.exists()) {
-                boolean deleted = selectedImage.delete();
-                if (deleted) {
-                    adapter.removeSelectedImage();
-                    updateCaptureCount();
-                    Toast.makeText(this, "Image deleted successfully", Toast.LENGTH_SHORT).show();
 
-                    // Adjust current position
-                    if (currentPosition >= adapter.getItemCount()) {
-                        currentPosition = Math.max(adapter.getItemCount() - 1, 0);
-                    }
 
-                    updatePreviewAndSelection();
-                } else {
-                    Toast.makeText(this, "Failed to delete image", Toast.LENGTH_SHORT).show();
+        try {
+            deleteYesBtn.setOnClickListener(v -> {
+                File selectedImage = adapter.getSelectedImageFile();
+                if (selectedImage==null){
+                    Intent intent = new Intent(this, ReviewCaptures.class);
+                    startActivity(intent);
+                    finish();
+
                 }
-            } else {
-                Toast.makeText(this, "No image selected", Toast.LENGTH_SHORT).show();
-            }
+                if (selectedImage != null && selectedImage.exists()) {
+                    boolean deleted = selectedImage.delete();
+                    if (deleted) {
+                        adapter.removeSelectedImage();
+                        updateCaptureCount();
+                        Toast.makeText(this, "Image deleted successfully", Toast.LENGTH_SHORT).show();
 
-            dialog.dismiss();
-        });
+
+
+
+
+                        // Adjust current position
+                        if (currentPosition >= adapter.getItemCount()) {
+                            currentPosition = Math.max(adapter.getItemCount() - 1, 0);
+                        }
+
+                        updatePreviewAndSelection();
+                    } else {
+                        Toast.makeText(this, "Failed to delete image", Toast.LENGTH_SHORT).show();
+                    }
+                } else {
+                    Toast.makeText(this, "No image selected", Toast.LENGTH_SHORT).show();
+                }
+
+                dialog.dismiss();
+            });
+        } catch (Exception e) {
+         Log.d("ErrorDeleting","${e.message}");
+        }
 
         dialog.setContentView(view);
         if (dialog.getWindow() != null) {
@@ -189,6 +205,12 @@ public class ImagePreview extends AppCompatActivity {
             int imageCount = adapter.getItemCount();
 
             captureCountText.setText(String.valueOf(imageCount));
+            if (imageCount==0){
+                Intent intent = new Intent(this, ReviewCaptures.class);
+                startActivity(intent);
+                finish();
+
+            }
         }
     }
 

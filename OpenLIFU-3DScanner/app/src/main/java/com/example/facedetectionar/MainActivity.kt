@@ -94,6 +94,8 @@ class MainActivity : AppCompatActivity() {
     }
 
 
+
+
     private var cubeNode: ModelNode? = null
     private lateinit var sceneView: ARSceneView
     private lateinit var anchorNode: AnchorNode;
@@ -605,6 +607,7 @@ class MainActivity : AppCompatActivity() {
                 //activating the first ring 0
 
                 nonCapturedModelList.forEachIndexed {index, node ->
+                    Log.d("LastRing","${nonCapturedModelList.size}")
                     if(node.name=="0"){
 
                         node.scale=Float3(
@@ -2045,7 +2048,7 @@ val offsetVector = Vector3(
     private fun saveBitmapToStorage(bitmap: Bitmap) {
         try {
             val fixedBitmap = fixImageRotation(bitmap)
-            val filename = "${referenceNumber}_${imageCounter}.jpeg"
+            val filename = "${referenceNumber}_${String.format("%04d", imageCounter)}.jpeg"
             imageCounter++
 
 
@@ -2084,27 +2087,27 @@ val offsetVector = Vector3(
     private fun loadDefaultRingArray() {
         arrowList.clear()
 
-        arrowList.add(bulletPointConfig(0,  -0.01131267, 0.0,  0.1981966,  30, 0))
-        arrowList.add(bulletPointConfig(1,  -0.07311607, 0.0,  0.1884079,  26, 18))
-        arrowList.add(bulletPointConfig(2,  -0.12886973, 0.0,  0.16,       27, 36))
-        arrowList.add(bulletPointConfig(3,  -0.17311606, 0.0,  0.11575366, 24, 54))
-        arrowList.add(bulletPointConfig(4,  -0.20152398, 0.0,  0.06,       28, 72))
-        arrowList.add(bulletPointConfig(5,  -0.21131267, 0.0, -0.00180339, 34, 90))
-        arrowList.add(bulletPointConfig(6,  -0.20152398, 0.0, -0.06360679, 27, 108))
-        arrowList.add(bulletPointConfig(7,  -0.17311606, 0.0, -0.11936044, 39, 126))
-        arrowList.add(bulletPointConfig(8,  -0.12886973, 0.0, -0.16360683, 40, 144))
-        arrowList.add(bulletPointConfig(9,  -0.07311607, 0.0, -0.19201469, 34, 162))
-        arrowList.add(bulletPointConfig(10, -0.01131267, 0.0, -0.20180338, 10, 180))
-        arrowList.add(bulletPointConfig(11,  0.050490728, 0.0, -0.19201469, 30, 198))
-        arrowList.add(bulletPointConfig(12,  0.106244375, 0.0, -0.16360683, 40, 216))
-        arrowList.add(bulletPointConfig(13,  0.15049072,  0.0, -0.11936044, 41, 234))
+        arrowList.add(bulletPointConfig(0,  -0.01131267, 0.0,  0.1981966,  24, 0))
+        arrowList.add(bulletPointConfig(1,  -0.07311607, 0.0,  0.1884079,  25, 18))
+        arrowList.add(bulletPointConfig(2,  -0.12886973, 0.0,  0.16,       24, 36))
+        arrowList.add(bulletPointConfig(3,  -0.17311606, 0.0,  0.11575366, 16, 54))
+        arrowList.add(bulletPointConfig(4,  -0.20152398, 0.0,  0.06,       16, 72))
+        arrowList.add(bulletPointConfig(5,  -0.21131267, 0.0, -0.00180339, 17, 90))
+        arrowList.add(bulletPointConfig(6,  -0.20152398, 0.0, -0.06360679, 17, 108))
+        arrowList.add(bulletPointConfig(7,  -0.17311606, 0.0, -0.11936044, 15, 126))
+        arrowList.add(bulletPointConfig(8,  -0.12886973, 0.0, -0.16360683, 17, 144))
+        arrowList.add(bulletPointConfig(9,  -0.07311607, 0.0, -0.19201469, 16, 162))
+        arrowList.add(bulletPointConfig(10, -0.01131267, 0.0, -0.20180338, 12, 180))
+        arrowList.add(bulletPointConfig(11,  0.050490728, 0.0, -0.19201469, 18, 198))
+        arrowList.add(bulletPointConfig(12,  0.106244375, 0.0, -0.16360683, 17, 216))
+        arrowList.add(bulletPointConfig(13,  0.15049072,  0.0, -0.11936044, 16, 234))
         arrowList.add(bulletPointConfig(14,  0.17889865,  0.0, -0.06360679, 20, 252))
-        arrowList.add(bulletPointConfig(15,  0.18868734,  0.0, -0.00180339, 14, 270))
+        arrowList.add(bulletPointConfig(15,  0.18868734,  0.0, -0.00180339, 16, 270))
         arrowList.add(bulletPointConfig(16,  0.17889865,  0.0,  0.06,       27, 288))
-        arrowList.add(bulletPointConfig(17,  0.15049072,  0.0,  0.11575366, 11, 306))
-        arrowList.add(bulletPointConfig(18,  0.106244375, 0.0,  0.16,       12, 324))
-        arrowList.add(bulletPointConfig(19,  0.050490728, 0.0,  0.1884079,  10, 342))
-//        arrowList.add(bulletPointConfig(20,  0.0,         0.0,  0.0,        90, 0))
+        arrowList.add(bulletPointConfig(17,  0.15049072,  0.0,  0.11575366, 25, 306))
+        arrowList.add(bulletPointConfig(18,  0.106244375, 0.0,  0.16,       24, 324))
+        arrowList.add(bulletPointConfig(19,  0.050490728, 0.0,  0.1884079,  25, 342))
+
 
         Log.d("RingArray", "Loaded ${arrowList.size} default ring points")
     }

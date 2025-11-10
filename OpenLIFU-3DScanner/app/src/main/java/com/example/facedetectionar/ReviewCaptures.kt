@@ -16,7 +16,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.facedetectionar.Adapters.reviewListAdapter
 import com.example.facedetectionar.Modals.reviewDataModal
-
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
@@ -35,8 +34,9 @@ class ReviewCaptures : AppCompatActivity(), reviewListAdapter.OnReviewClickListe
 
     override fun onResume() {
         super.onResume()
-        getReviewDataList() //
+        loadReviewData() //
     }
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
 
@@ -87,11 +87,13 @@ class ReviewCaptures : AppCompatActivity(), reviewListAdapter.OnReviewClickListe
         }
 
 
-        // Back button
-        backButton.setOnClickListener {
 
+
+        backButton.setOnClickListener(View.OnClickListener { v: View? ->
+            val intent = Intent(this, welcomeActivity::class.java)
+            startActivity(intent)
             finish()
-        }
+        })
     }
 
     private fun loadReviewData() {
