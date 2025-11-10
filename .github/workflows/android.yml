@@ -25,6 +25,7 @@ jobs:
         cache: gradle
 
     - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
+      run: chmod +x OpenLIFU-3DScanner/gradlew
     - name: Build with Gradle
+      working-directory: OpenLIFU-3DScanner
       run: ./gradlew assembleRelease
