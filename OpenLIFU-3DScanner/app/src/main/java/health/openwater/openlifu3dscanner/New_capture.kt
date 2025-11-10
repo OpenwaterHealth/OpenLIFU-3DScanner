@@ -430,7 +430,7 @@ class New_capture : BaseActivity() {
                     put("xPoint", -0.01131267)
                     put("yPoint", 0.0)
                     put("zPoint", 0.1981966)
-                    put("verticalAngle", 30)
+                    put("verticalAngle", 24)
                     put("horizontalAngle", 0)
                 })
                 put(JSONObject().apply {
@@ -438,7 +438,7 @@ class New_capture : BaseActivity() {
                     put("xPoint", -0.07311607)
                     put("yPoint", 0.0)
                     put("zPoint", 0.1884079)
-                    put("verticalAngle", 26)
+                    put("verticalAngle", 24)
                     put("horizontalAngle", 18)
                 })
                 put(JSONObject().apply {
@@ -446,7 +446,7 @@ class New_capture : BaseActivity() {
                     put("xPoint", -0.12886973)
                     put("yPoint", 0.0)
                     put("zPoint", 0.16)
-                    put("verticalAngle", 27)
+                    put("verticalAngle", 24)
                     put("horizontalAngle", 36)
                 })
                 put(JSONObject().apply {
@@ -454,7 +454,7 @@ class New_capture : BaseActivity() {
                     put("xPoint", -0.17311606)
                     put("yPoint", 0.0)
                     put("zPoint", 0.11575366)
-                    put("verticalAngle", 24)
+                    put("verticalAngle", 16)
                     put("horizontalAngle", 54)
                 })
                 put(JSONObject().apply {
@@ -462,7 +462,7 @@ class New_capture : BaseActivity() {
                     put("xPoint", -0.20152398)
                     put("yPoint", 0.0)
                     put("zPoint", 0.06)
-                    put("verticalAngle", 28)
+                    put("verticalAngle", 16)
                     put("horizontalAngle", 72)
                 })
                 put(JSONObject().apply {
@@ -470,7 +470,7 @@ class New_capture : BaseActivity() {
                     put("xPoint", -0.21131267)
                     put("yPoint", 0.0)
                     put("zPoint", -0.00180339)
-                    put("verticalAngle", 34)
+                    put("verticalAngle", 17)
                     put("horizontalAngle", 90)
                 })
                 put(JSONObject().apply {
@@ -478,7 +478,7 @@ class New_capture : BaseActivity() {
                     put("xPoint", -0.20152398)
                     put("yPoint", 0.0)
                     put("zPoint", -0.06360679)
-                    put("verticalAngle", 27)
+                    put("verticalAngle", 17)
                     put("horizontalAngle", 108)
                 })
                 put(JSONObject().apply {
@@ -486,7 +486,7 @@ class New_capture : BaseActivity() {
                     put("xPoint", -0.17311606)
                     put("yPoint", 0.0)
                     put("zPoint", -0.11936044)
-                    put("verticalAngle", 39)
+                    put("verticalAngle", 15)
                     put("horizontalAngle", 126)
                 })
                 put(JSONObject().apply {
@@ -494,7 +494,7 @@ class New_capture : BaseActivity() {
                     put("xPoint", -0.12886973)
                     put("yPoint", 0.0)
                     put("zPoint", -0.16360683)
-                    put("verticalAngle", 40)
+                    put("verticalAngle", 16)
                     put("horizontalAngle", 144)
                 })
                 put(JSONObject().apply {
@@ -502,7 +502,7 @@ class New_capture : BaseActivity() {
                     put("xPoint", -0.07311607)
                     put("yPoint", 0.0)
                     put("zPoint", -0.19201469)
-                    put("verticalAngle", 34)
+                    put("verticalAngle", 18)
                     put("horizontalAngle", 162)
                 })
                 put(JSONObject().apply {
@@ -510,7 +510,7 @@ class New_capture : BaseActivity() {
                     put("xPoint", -0.01131267)
                     put("yPoint", 0.0)
                     put("zPoint", -0.20180338)
-                    put("verticalAngle", 10)
+                    put("verticalAngle", 15)
                     put("horizontalAngle", 180)
                 })
                 put(JSONObject().apply {
@@ -518,7 +518,7 @@ class New_capture : BaseActivity() {
                     put("xPoint", 0.050490728)
                     put("yPoint", 0.0)
                     put("zPoint", -0.19201469)
-                    put("verticalAngle", 30)
+                    put("verticalAngle", 17)
                     put("horizontalAngle", 198)
                 })
                 put(JSONObject().apply {
@@ -526,7 +526,7 @@ class New_capture : BaseActivity() {
                     put("xPoint", 0.106244375)
                     put("yPoint", 0.0)
                     put("zPoint", -0.16360683)
-                    put("verticalAngle", 40)
+                    put("verticalAngle", 20)
                     put("horizontalAngle", 216)
                 })
                 put(JSONObject().apply {
@@ -534,7 +534,7 @@ class New_capture : BaseActivity() {
                     put("xPoint", 0.15049072)
                     put("yPoint", 0.0)
                     put("zPoint", -0.11936044)
-                    put("verticalAngle", 41)
+                    put("verticalAngle", 17)
                     put("horizontalAngle", 234)
                 })
                 put(JSONObject().apply {
@@ -550,7 +550,7 @@ class New_capture : BaseActivity() {
                     put("xPoint", 0.18868734)
                     put("yPoint", 0.0)
                     put("zPoint", -0.00180339)
-                    put("verticalAngle", 14)
+                    put("verticalAngle", 16)
                     put("horizontalAngle", 270)
                 })
                 put(JSONObject().apply {
@@ -558,7 +558,7 @@ class New_capture : BaseActivity() {
                     put("xPoint", 0.17889865)
                     put("yPoint", 0.0)
                     put("zPoint", 0.06)
-                    put("verticalAngle", 27)
+                    put("verticalAngle", 17)
                     put("horizontalAngle", 288)
                 })
                 put(JSONObject().apply {
@@ -582,17 +582,10 @@ class New_capture : BaseActivity() {
                     put("xPoint", 0.050490728)
                     put("yPoint", 0.0)
                     put("zPoint", 0.1884079)
-                    put("verticalAngle", 10)
+                    put("verticalAngle", 20)
                     put("horizontalAngle", 342)
                 })
-//                put(JSONObject().apply {
-//                    put("seqID", 20)
-//                    put("xPoint", 0.0f)
-//                    put("yPoint", 0.0f)
-//                    put("zPoint", 0.0f)
-//                    put("verticalAngle", 90)
-//                    put("horizontalAngle", 0)
-//                })
+
             }
 
 

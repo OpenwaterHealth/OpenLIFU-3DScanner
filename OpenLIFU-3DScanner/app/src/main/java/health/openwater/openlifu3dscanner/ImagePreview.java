@@ -161,6 +161,77 @@ public class ImagePreview extends BaseActivity {
         }
     }
 
+    private void showDeleteDialog() {
+        Dialog dialog = new Dialog(this);
+        View view = getLayoutInflater().inflate(R.layout.modal_capture_delete, null);
+
+        Button deleteYesBtn = view.findViewById(R.id.deleteYesBtn);
+        Button deleteNoBtn = view.findViewById(R.id.deleteNoBtn);
+        TextView deleteWarningText = view.findViewById(R.id.deleteWarningText);
+
+        String text = getString(R.string.deleteText, referenceNumber != null ? referenceNumber.split("_")[0] : "Scan ID");
+
+        deleteWarningText.setText(text);
+
+        deleteNoBtn.setOnClickListener(v -> dialog.dismiss());
+
+
+
+        try {
+            deleteYesBtn.setOnClickListener(v -> {
+                File selectedImage = adapter.getSelectedImageFile();
+                if (selectedImage==null){
+                    Intent intent = new Intent(this, ReviewCaptures.class);
+                    startActivity(intent);
+                    finish();
+
+                }
+                if (selectedImage != null && selectedImage.exists()) {
+                    boolean deleted = selectedImage.delete();
+                    if (deleted) {
+                        adapter.removeSelectedImage();
+                        updateCaptureCount();
+                        Toast.makeText(this, "Image deleted successfully", Toast.LENGTH_SHORT).show();
+
+
+
+
+
+                        // Adjust current position
+                        if (currentPosition >= adapter.getItemCount()) {
+                            currentPosition = Math.max(adapter.getItemCount() - 1, 0);
+                        }
+
+                        updatePreviewAndSelection();
+                    } else {
+                        Toast.makeText(this, "Failed to delete image", Toast.LENGTH_SHORT).show();
+                    }
+                } else {
+                    Toast.makeText(this, "No image selected", Toast.LENGTH_SHORT).show();
+                }
+
+                dialog.dismiss();
+            });
+        } catch (Exception e) {
+         Log.d("ErrorDeleting","${e.message}");
+        }
+
+        dialog.setContentView(view);
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+            DisplayMetrics metrics = getResources().getDisplayMetrics();
+            int screenWidth = metrics.widthPixels;
+            int marginInPx = (int) (20 * metrics.density); // 20dp to pixels
+            int dialogWidth = screenWidth - (marginInPx * 2);
+
+            dialog.getWindow().setLayout(dialogWidth, ViewGroup.LayoutParams.WRAP_CONTENT);
+
+        }
+
+        dialog.setCancelable(false);
+        dialog.setCanceledOnTouchOutside(false);
+        dialog.show();
+    }
 
     public void updateCaptureCount() {
         TextView captureCountText = findViewById(R.id.CaptureCountTextOnReview);
@@ -168,6 +239,12 @@ public class ImagePreview extends BaseActivity {
             int imageCount = adapter.getItemCount();
 
             captureCountText.setText(String.valueOf(imageCount));
+            if (imageCount==0){
+                Intent intent = new Intent(this, ReviewCaptures.class);
+                startActivity(intent);
+                finish();
+
+            }
         }
     }
 

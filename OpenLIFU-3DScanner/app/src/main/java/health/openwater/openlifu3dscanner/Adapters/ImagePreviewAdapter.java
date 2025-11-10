@@ -80,13 +80,29 @@ public class ImagePreviewAdapter extends RecyclerView.Adapter<ImagePreviewAdapte
 
     // Get selected file from list
     public File getSelectedImageFile() {
-        Log.d("getSelectedImageFile", "Selected position: " + selectedPosition);
-        if (selectedPosition != RecyclerView.NO_POSITION) {
+        try {
             Log.d("getSelectedImageFile", "Selected position: " + selectedPosition);
-            Log.d("getSelectedImageFile", "Selected position: " + list.get(selectedPosition).getImageFile());
-            return list.get(selectedPosition).getImageFile();
+
+            // Check for empty or null list
+            if (list == null || list.isEmpty()) {
+                Log.e("getSelectedImageFile", "List is empty or null");
+                return null;
+            }
+
+            // Check if selectedPosition is valid
+            if (selectedPosition < 0 || selectedPosition >= list.size()) {
+                Log.e("getSelectedImageFile", "Invalid selected position: " + selectedPosition);
+                return null;
+            }
+
+            File imageFile = list.get(selectedPosition).getImageFile();
+            Log.d("getSelectedImageFile", "Selected file: " + imageFile.getAbsolutePath());
+            return imageFile;
+
+        } catch (Exception e) {
+            Log.e("getSelectedImageFile", "Error: " + e.getMessage());
+            return null;
         }
-        return null;
     }
 
     // Remove selected item from list
