@@ -1,14 +1,19 @@
 package health.openwater.openlifu3dscanner;
 
 import android.annotation.SuppressLint;
+import android.app.Dialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Environment;
+import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -181,7 +186,7 @@ public class ImagePreview extends BaseActivity {
             deleteYesBtn.setOnClickListener(v -> {
                 File selectedImage = adapter.getSelectedImageFile();
                 if (selectedImage==null){
-                    Intent intent = new Intent(this, ReviewCaptures.class);
+                    Intent intent = new Intent(this, ReviewCapturesActivity.class);
                     startActivity(intent);
                     finish();
 
@@ -240,7 +245,7 @@ public class ImagePreview extends BaseActivity {
 
             captureCountText.setText(String.valueOf(imageCount));
             if (imageCount==0){
-                Intent intent = new Intent(this, ReviewCaptures.class);
+                Intent intent = new Intent(this, ReviewCapturesActivity.class);
                 startActivity(intent);
                 finish();
 

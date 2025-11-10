@@ -83,6 +83,8 @@ class ReviewCapturesActivity : BaseActivity() {
 
         // Back button
         backButton.setOnClickListener {
+            val intent = Intent(this, welcomeActivity::class.java)
+            startActivity(intent)
             finish()
         }
 
