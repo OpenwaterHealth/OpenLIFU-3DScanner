@@ -230,8 +230,29 @@ class CloudRepository(
 
     fun getImagesDir(referenceNumber: String) = File(
         Environment.getExternalStorageDirectory(),
-        "OpenLIFU-3DScanner/$referenceNumber"
+        "$OPENLIFU_DIR/$referenceNumber"
     )
+
+    suspend fun getReferenceNumbers(localOnly: Boolean): Set<String> {
+        val result = mutableSetOf<String>()
+        val localDir = File(Environment.getExternalStorageDirectory(), OPENLIFU_DIR)
+        if (localDir.exists()) {
+            localDir.list()?.let {
+                result.addAll(it)
+            }
+        }
+        val uid = authService.getCurrentUser()?.uid
+        if (!localOnly && uid != null) {
+            try {
+                val names = photocollectionService.getPhotocollections(uid, joinPhotos = false)
+                    .body()?.mapNotNull { it.name } ?: listOf()
+                result.addAll(names)
+            } catch (e: Exception) {
+                Log.w(TAG, "Can't load photocollections: $e")
+            }
+        }
+        return result
+    }
 
     private fun saveResponseBodyToDisk(body: ResponseBody, file: File) {
         body.byteStream().use { input ->
@@ -304,6 +325,7 @@ class CloudRepository(
 
     companion object {
         private val TAG = CloudRepository::class.simpleName
+        private val OPENLIFU_DIR = "OpenLIFU-3DScanner"
     }
 
 }

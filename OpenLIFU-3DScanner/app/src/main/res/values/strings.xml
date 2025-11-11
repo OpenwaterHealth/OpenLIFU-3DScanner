@@ -82,5 +82,7 @@
     <string name="delete_local_only">Delete Local Only</string>
     <string name="delete_both">Delete Both</string>
     <string name="delete_cloud_only">Delete Cloud Only</string>
+    <string name="please_enter_a_scan_id">Please enter a Scan Id</string>
+    <string name="this_scan_id_already_exists">This Scan ID already exists</string>
 
 </resources>

@@ -20,11 +20,13 @@ import android.widget.VideoView
 import androidx.appcompat.app.AlertDialog
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.lifecycleScope
 import com.google.ar.core.ArCoreApk
 import com.google.ar.core.exceptions.UnavailableDeviceNotCompatibleException
 import dagger.hilt.android.AndroidEntryPoint
 import health.openwater.openlifu3dscanner.api.repository.CloudRepository
 import health.openwater.openlifu3dscanner.api.repository.UserRepository
+import kotlinx.coroutines.launch
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
@@ -91,13 +93,12 @@ class New_capture : BaseActivity() {
             newCaptureCheckbox.isChecked = false;
         }
 
-
-
-
-
-
-
-
+        val existingReferenceNumbers = mutableSetOf<String>()
+        lifecycleScope.launch {
+            cloudRepository.getReferenceNumbers(false).let { lst ->
+                existingReferenceNumbers.addAll(lst.map { it.lowercase() })
+            }
+        }
 
         Log.d("IDDDDD", "Launched ${fetchedQRText}")
         if (!fetchedQRText.isNullOrEmpty()) {
@@ -157,6 +158,11 @@ class New_capture : BaseActivity() {
 
                 errorText.visibility = View.VISIBLE
                 referenceNumberEditText.setBackgroundResource(R.drawable.input_border_red)
+                errorText.setText(R.string.please_enter_a_scan_id)
+            } else if (existingReferenceNumbers.contains(referenceNumber.lowercase())) {
+                errorText.visibility = View.VISIBLE
+                referenceNumberEditText.setBackgroundResource(R.drawable.input_border_red)
+                errorText.setText(R.string.this_scan_id_already_exists)
             } else if (hasAllPermissions()) {
                 //LogFileUtil.appendLog("Moving to face detection screen")
 

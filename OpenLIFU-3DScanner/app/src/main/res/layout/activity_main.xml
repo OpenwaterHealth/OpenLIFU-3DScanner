@@ -392,21 +392,21 @@
             android:visibility="visible"
             android:textColor="@color/disable_button_text"/>
 
+
         <Button
             android:id="@+id/initialRenderCancelButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Cancel"
-            android:textStyle="bold"
-            android:layout_marginTop="10dp"
-            android:textAllCaps="false"
-            app:backgroundTint="@null"
-            android:background="@drawable/round_cancel_ok"
             android:layout_marginHorizontal="40dp"
             android:layout_marginVertical="10dp"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/round_cancel_ok"
+            android:text="Cancel"
+            android:textAllCaps="false"
+            android:textColor="@color/white"
+            android:textStyle="bold"
             android:visibility="visible"
-            android:textColor="@color/white"/>
-
+            app:backgroundTint="@null" />
 
         <Button
             android:id="@+id/startButton"
