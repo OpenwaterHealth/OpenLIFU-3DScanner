@@ -14,6 +14,7 @@ import android.view.View
 import android.view.animation.LinearInterpolator
 import android.widget.ImageView
 import android.widget.Toast
+import androidx.activity.enableEdgeToEdge
 import androidx.annotation.OptIn
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.CameraSelector
@@ -29,7 +30,7 @@ import com.google.mlkit.vision.common.InputImage
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
-class QrActivity : BaseActivity() {
+class QrActivity : AppCompatActivity() {
 
     private lateinit var previewView: PreviewView
     private lateinit var scanLine: ImageView
@@ -40,6 +41,7 @@ class QrActivity : BaseActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_qr)
+        enableEdgeToEdge()
 
         previewView = findViewById(R.id.previewViewQR)
         scanLine = findViewById(R.id.scanLine)

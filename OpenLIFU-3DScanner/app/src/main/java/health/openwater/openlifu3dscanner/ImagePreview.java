@@ -244,12 +244,6 @@ public class ImagePreview extends BaseActivity {
             int imageCount = adapter.getItemCount();
 
             captureCountText.setText(String.valueOf(imageCount));
-            if (imageCount==0){
-                Intent intent = new Intent(this, ReviewCapturesActivity.class);
-                startActivity(intent);
-                finish();
-
-            }
         }
     }
 

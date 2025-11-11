@@ -690,6 +690,7 @@ class MainActivity : BaseActivity() {
                 yesButton.setOnClickListener {
                     dialog.dismiss()
                     if (capturedModelList.size== 0) {
+                        cloudRepository.resetCurrentPhotocollection()
                         val intent = Intent(this, New_capture::class.java)
                         startActivity(intent)
                         finish()

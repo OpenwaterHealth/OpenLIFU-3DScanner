@@ -53,6 +53,11 @@ class ReviewCapturesActivity : BaseActivity() {
             insets
         }
 
+        if (!hasAllPermissions()) {
+            requestPermissions()
+        }
+        checkAllFilesAccessPermission()
+
         // Initialize views
         reviewRecycler = findViewById(R.id.reviewRecycler)
         emptyView = findViewById(R.id.emptyView)
