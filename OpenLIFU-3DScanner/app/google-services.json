@@ -7,25 +7,6 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:341318872140:android:0c3ffd4b3d6fb5be7b18e9",
-        "android_client_info": {
-          "package_name": "health.openwater.openlifu3dscanner"
-        }
-      },
-      "oauth_client": [],
-      "api_key": [
-        {
-          "current_key": "AIzaSyBtfFuyGJeo8E8kUyMTPQ2uho6OmJW3xUQ"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": []
-        }
-      }
-    },
-    {
-      "client_info": {
         "mobilesdk_app_id": "1:341318872140:android:73e3bcd90afaba077b18e9",
         "android_client_info": {
           "package_name": "health.openwater.openlifu3dscanner"

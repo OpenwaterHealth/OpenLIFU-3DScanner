@@ -41,15 +41,12 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.RequiresApi
-import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.toColorInt
 import androidx.exifinterface.media.ExifInterface
 import androidx.lifecycle.lifecycleScope
-import health.openwater.openlifu3dscanner.Modals.bulletPointConfig
-import health.openwater.openlifu3dscanner.api.repository.CloudRepository
 import com.google.android.filament.Colors
 import com.google.ar.core.ArCoreApk
 import com.google.ar.core.Config
@@ -63,6 +60,8 @@ import com.google.mlkit.vision.facemesh.FaceMeshDetectorOptions
 import dagger.hilt.android.AndroidEntryPoint
 import dev.romainguy.kotlin.math.Float3
 import dev.romainguy.kotlin.math.Quaternion
+import health.openwater.openlifu3dscanner.Modals.bulletPointConfig
+import health.openwater.openlifu3dscanner.api.repository.CloudRepository
 import io.github.sceneview.ar.ARSceneView
 import io.github.sceneview.ar.node.AnchorNode
 import io.github.sceneview.collision.Vector3
@@ -689,6 +688,7 @@ class MainActivity : BaseActivity() {
                 }
 
                 yesButton.setOnClickListener {
+                    dialog.dismiss()
                     if (capturedModelList.size== 0) {
                         val intent = Intent(this, New_capture::class.java)
                         startActivity(intent)

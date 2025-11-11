@@ -117,6 +117,7 @@ class completeCapture : BaseActivity() {
             val discardNoBtn = view.findViewById<Button>(R.id.discardNoBtn)
 
             discardYesBtn.setOnClickListener {
+                dialog.dismiss()
                 deleteFolderAfterDiscard(this, referenceNumber)
             }
             discardNoBtn.setOnClickListener {
