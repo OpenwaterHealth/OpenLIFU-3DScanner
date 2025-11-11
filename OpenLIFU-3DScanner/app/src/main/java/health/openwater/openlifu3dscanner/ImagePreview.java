@@ -16,12 +16,15 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.Observer;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import health.openwater.openlifu3dscanner.Adapters.ImagePreviewAdapter;
 import health.openwater.openlifu3dscanner.Modals.ImagePreviewModal;
+import health.openwater.openlifu3dscanner.api.dto.Photocollection;
 import health.openwater.openlifu3dscanner.api.repository.CloudRepository;
 import health.openwater.openlifu3dscanner.dialogs.DeleteCaptureDialog;
 import health.openwater.openlifu3dscanner.dialogs.PhotoscanDownloadDialog;
@@ -34,6 +37,7 @@ import java.util.List;
 import javax.inject.Inject;
 
 import dagger.hilt.android.AndroidEntryPoint;
+import kotlinx.coroutines.CoroutineScope;
 
 @AndroidEntryPoint
 public class ImagePreview extends BaseActivity {
@@ -78,6 +82,17 @@ public class ImagePreview extends BaseActivity {
         if (!cloudRepository.isLoggedInAndOnline() || photocollectionId == -1) {
             reconstructMeshButton.setEnabled(false);
             downloadMeshButton.setEnabled(false);
+        } else {
+            reconstructMeshButton.setEnabled(false);
+
+            LiveData<Photocollection> photocollectionLiveData = CoroutineHelper.getPhotocollection(
+                    getLifecycle(), cloudRepository, photocollectionId, true
+            );
+            photocollectionLiveData.observe(this, photocollection -> {
+                if (photocollection != null && photocollection.getPhotos() != null) {
+                    reconstructMeshButton.setEnabled(photocollection.getPhotos().size() > 1);
+                }
+            });
         }
         if (photoscanId == -1) downloadMeshButton.setEnabled(false);
 

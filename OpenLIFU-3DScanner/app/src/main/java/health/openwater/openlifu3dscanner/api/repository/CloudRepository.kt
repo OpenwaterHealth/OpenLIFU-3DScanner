@@ -183,9 +183,9 @@ class CloudRepository(
         websocketService.disconnect(photoscanId)
     }
 
-    suspend fun getPhotocollection(id: Long): Photocollection? {
+    suspend fun getPhotocollection(id: Long, joinPhotos: Boolean = false): Photocollection? {
         try {
-            val response = photocollectionService.getPhotocollection(id)
+            val response = photocollectionService.getPhotocollection(id, joinPhotos)
             if (response.isSuccessful) {
                 return response.body()
             }
