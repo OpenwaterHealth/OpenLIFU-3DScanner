@@ -103,13 +103,13 @@ class ReconstructionActivity : BaseActivity() {
 
                     "FAILED" -> {
                         textTitle.text = getString(R.string.reconstruction_failed)
-                        textTitle.setTextColor(getColor(R.color.red))
+                        textTitle.setTextColor(getColor(R.color.ripple_red))
                         buttonDownload.isEnabled = false
                     }
 
                     "STOPPED" -> {
                         textTitle.text = getString(R.string.reconstruction_stopped)
-                        textTitle.setTextColor(getColor(R.color.red))
+                        textTitle.setTextColor(getColor(R.color.ripple_red))
                         buttonDownload.isEnabled = false
                     }
                 }
