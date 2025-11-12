@@ -11,10 +11,13 @@ import android.os.Environment
 import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
+import androidx.annotation.IdRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 
 open class BaseActivity: AppCompatActivity() {
 
@@ -22,6 +25,20 @@ open class BaseActivity: AppCompatActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+    }
+
+    protected fun applyWindowInsets(@IdRes mainViewId: Int, displayCutout: Boolean = false) {
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(mainViewId)) { v, insets ->
+            val padding = insets.getInsets(
+                when {
+                    displayCutout -> WindowInsetsCompat.Type.displayCutout() or
+                            WindowInsetsCompat.Type.systemBars()
+                    else -> WindowInsetsCompat.Type.systemBars()
+                }
+            )
+            v.setPadding(padding.left, padding.top, padding.right, padding.bottom)
+            insets
+        }
     }
 
     // Check if all permissions are granted

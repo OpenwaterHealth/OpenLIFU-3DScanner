@@ -58,6 +58,7 @@ public class ImagePreview extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_image_preview);
+        applyWindowInsets(R.id.main, true);
 
         referenceNumber = getIntent().getStringExtra("REFERENCE_ID");
         photocollectionId = getIntent().getLongExtra("PHOTOCOLLECTION_ID", -1);

@@ -43,7 +43,7 @@
         android:id="@+id/titleText"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="36dp"
+        android:layout_marginTop="10dp"
         android:text="Review Capture"
         android:textAlignment="center"
         android:textColor="@color/white"
