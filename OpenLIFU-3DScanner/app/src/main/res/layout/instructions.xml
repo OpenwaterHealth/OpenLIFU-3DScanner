@@ -1,0 +1,306 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:paddingHorizontal="15dp"
+    android:layout_marginHorizontal="20dp"
+    android:layout_gravity="center_horizontal"
+    android:background="@drawable/notice_background"
+    android:layout_height="wrap_content">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Instructions"
+        android:textColor="@color/white"
+        android:textSize="28sp"
+        android:gravity="center"
+        android:layout_marginTop="20dp"
+        android:textAlignment="center" />
+
+
+
+    <!-- Bullet Points -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/instuctions_radius"
+        android:orientation="vertical"
+        android:layout_marginTop="10dp"
+
+        android:padding="14dp"
+        android:layout_marginBottom="0dp">
+
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:layout_marginTop="5dp"
+            android:layout_marginBottom="15dp"
+            app:cardCornerRadius="10dp"
+            app:cardElevation="0dp"
+
+            app:cardUseCompatPadding="false"
+            android:layout_gravity="center">
+
+            <VideoView
+                android:id="@+id/instructionVideo"
+                android:layout_width="match_parent"
+              android:layout_gravity="center_horizontal"
+                android:layout_height="match_parent" />
+        </androidx.cardview.widget.CardView>
+
+        <ScrollView
+            android:layout_width="wrap_content"
+            android:fillViewport="true"
+            android:layout_height="250dp">
+            
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="10dp">
+
+                    <!-- Tick Icon -->
+                    <ImageView
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:src="@drawable/ic_tick"
+                        android:layout_marginEnd="8dp" />
+
+                    <!-- Text -->
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_marginTop="-3dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Choose a Well-Lit Area (Soft indoor lighting recommended)."
+                        android:textSize="13sp"
+                        android:textColor="#000000"
+                        android:lineSpacingExtra="4dp"
+                        />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="10dp">
+
+                    <ImageView
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:src="@drawable/ic_tick"
+                        android:layout_marginEnd="8dp" />
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_marginTop="-3dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Subject Should Stay Still with Eyes Closed and No Expression Changes."
+                        android:textSize="13sp"
+                        android:textColor="#000000"
+                        android:lineSpacingExtra="4dp" />
+                </LinearLayout>
+
+
+
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="10dp">
+
+                    <ImageView
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:src="@drawable/ic_tick"
+                        android:layout_marginEnd="8dp" />
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_marginTop="-3dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Hold the Camera at Eye Level, Directly in Front of the Subject’s Face."
+                        android:textSize="13sp"
+                        android:textColor="#000000"
+                        android:lineSpacingExtra="4dp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="10dp">
+
+                    <ImageView
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:src="@drawable/ic_tick"
+                        android:layout_marginEnd="8dp" />
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_marginTop="-3dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="The App Detects the Face and Measures Distance, Prompting Adjustments if Needed."
+                        android:textSize="13sp"
+                        android:textColor="#000000"
+                        android:lineSpacingExtra="4dp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="10dp">
+
+                    <ImageView
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:src="@drawable/ic_tick"
+                        android:layout_marginEnd="8dp" />
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_marginTop="-3dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Start the Scan to Generate Dots Around the Subject’s Head."
+                        android:textSize="13sp"
+                        android:textColor="#000000"
+                        android:lineSpacingExtra="4dp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="10dp">
+
+                    <ImageView
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:src="@drawable/ic_tick"
+                        android:layout_marginEnd="8dp" />
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_marginTop="-3dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Move Slowly and Align the Target with Each Dot for Steady Captures."
+                        android:textSize="13sp"
+                        android:textColor="#000000"
+                        android:lineSpacingExtra="4dp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="10dp">
+
+                    <ImageView
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:src="@drawable/ic_tick"
+                        android:layout_marginEnd="8dp" />
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_marginTop="-3dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="App Notifies if the Subject is Too Close or Far, Ensuring Perfect Frames Only."
+                        android:textSize="13sp"
+                        android:textColor="#000000"
+                        android:lineSpacingExtra="4dp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:background="@color/white"
+                    android:layout_marginBottom="10dp">
+
+                    <ImageView
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:src="@drawable/ic_tick"
+                        android:layout_marginEnd="8dp" />
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_marginTop="-3dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="After Circle Shots, Follow the App to Capture Vertical Photos from Chin to Top of Head."
+                        android:textSize="13sp"
+                        android:textColor="#000000"
+                        android:lineSpacingExtra="4dp" />
+                </LinearLayout>
+
+            </LinearLayout>
+            
+
+        </ScrollView>
+
+
+
+
+    </LinearLayout>
+
+
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="20dp"
+        android:layout_height="wrap_content">
+
+        <CheckBox
+            android:id="@+id/checkBoxInfo"
+            android:layout_width="38dp"
+            android:layout_height="32dp"
+            android:buttonTint="@color/algae"
+            android:backgroundTint="@color/algae"
+            android:text="CheckBox" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Do Not Show Again"
+            android:textColor="@color/white"/>
+
+    </LinearLayout>
+
+    <Button
+
+        android:id="@+id/instructionModalOK"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="OK"
+        app:backgroundTint="@null"
+
+        android:background="@drawable/round_green_button"
+        android:layout_marginHorizontal="40dp"
+        android:layout_marginVertical="20dp"
+
+        android:textColor="@color/white"/>
+
+
+
+</LinearLayout>
