@@ -124,6 +124,7 @@ class MainActivity : BaseActivity() {
     private var referenceNumber: String = "DEFAULT_REF"
     private var imageCounter: Int = 1
     private var IsCaptureStarted: Boolean = true
+    private var isCompleteCaptureDialogVisible = false
     private lateinit var distanceLabel: TextView
     private lateinit var faceOverlayView: FaceOverlayView
     private val arrowList = mutableListOf<bulletPointConfig>()
@@ -239,6 +240,8 @@ class MainActivity : BaseActivity() {
         try {
             super.onCreate(savedInstanceState)
             setContentView(R.layout.activity_main)
+            applyWindowInsets(R.id.main, displayCutout = true)
+
             // Load arrow data from JSON
             loadDefaultConfigurations()
             loadsconfigurationsFromJson();
@@ -663,6 +666,7 @@ class MainActivity : BaseActivity() {
             }
 
             endCaptureButton.setOnClickListener {
+                isCompleteCaptureDialogVisible = true
                 val dialog = Dialog(this)
 
                 val view = layoutInflater.inflate(R.layout.modal_capture_end, null)
@@ -707,6 +711,10 @@ class MainActivity : BaseActivity() {
                 }
 
                 dialog.setContentView(view)
+
+                dialog.setOnDismissListener {
+                    isCompleteCaptureDialogVisible = false
+                }
 
                 dialog.getWindow()?.setBackgroundDrawableResource(android.R.color.transparent)
                 val metrics = resources.displayMetrics
@@ -1042,13 +1050,15 @@ val offsetVector = Vector3(
 
                     if (speed > maxAllowedSpeed && currentTime - lastToastTime > toastCooldown) {
 
-                        runOnUiThread {
-                            Toast.makeText(
-                                this,
-                                "Please move slowly !",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                            lastToastTime = currentTime
+                        if (!isCompleteCaptureDialogVisible) {
+                            runOnUiThread {
+                                Toast.makeText(
+                                    this,
+                                    "Please move slowly !",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                                lastToastTime = currentTime
+                            }
                         }
                     }
                 }
@@ -1869,6 +1879,7 @@ val offsetVector = Vector3(
 
 
     private fun showCompletionDialog() {
+        isCompleteCaptureDialogVisible = true
         val dialog = Dialog(this).apply {
             setContentView(layoutInflater.inflate(R.layout.modal_capture_complete, null))
             window?.setBackgroundDrawableResource(android.R.color.transparent)
@@ -1886,7 +1897,12 @@ val offsetVector = Vector3(
                 navigateToCaptureCompleteScreen()
                 dismiss()
             }
+
+            setOnDismissListener {
+                isCompleteCaptureDialogVisible = false
+            }
         }
+
         dialog.show()
     }
 
