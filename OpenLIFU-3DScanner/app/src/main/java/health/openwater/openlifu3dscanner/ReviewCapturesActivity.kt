@@ -6,20 +6,16 @@ import android.view.View
 import android.widget.Button
 import android.widget.CheckBox
 import android.widget.TextView
-import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
-import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.content.ContextCompat
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import dagger.hilt.android.AndroidEntryPoint
 import health.openwater.openlifu3dscanner.Adapters.ReviewListAdapter
 import health.openwater.openlifu3dscanner.viewmodel.ReviewCapturesViewModel
-import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
@@ -36,6 +32,9 @@ class ReviewCapturesActivity : BaseActivity() {
     private lateinit var loadingProgress: View
     private lateinit var tableHeader: View
     private lateinit var dateHeader: TextView
+    private lateinit var idHeader: TextView
+    private lateinit var numHeader: TextView
+
 
     override fun onResume() {
         super.onResume()
@@ -61,6 +60,8 @@ class ReviewCapturesActivity : BaseActivity() {
         loadingProgress = findViewById(R.id.loadingProgress)
         tableHeader = findViewById(R.id.header)
         dateHeader = tableHeader.findViewById(R.id.dateText)
+        idHeader = tableHeader.findViewById(R.id.idText)
+        numHeader = tableHeader.findViewById(R.id.imageCountText)
 
         tableHeader.visibility = View.INVISIBLE
 
@@ -94,17 +95,38 @@ class ReviewCapturesActivity : BaseActivity() {
             loadData()
         }
 
-        dateHeader.setOnClickListener {
-            adapter.setSortOrder(!adapter.sortAsc)
+        lifecycleScope.launch {
+            adapter.getSortStateFlow().flowWithLifecycle(lifecycle).collect {
+                val column = it.first
+                val sortAsc = it.second
 
-            val drawable = AppCompatResources.getDrawable(
-                this,
-                if (adapter.sortAsc) R.drawable.ic_arrow_up else R.drawable.ic_arrow_down
-            )?.apply {
-                setBounds(0, 0, intrinsicWidth, intrinsicHeight)
-                setTint(ContextCompat.getColor(this@ReviewCapturesActivity, R.color.white))
+                val drawable = AppCompatResources.getDrawable(
+                    this@ReviewCapturesActivity,
+                    if (sortAsc) R.drawable.ic_arrow_up else R.drawable.ic_arrow_down
+                )?.apply {
+                    setBounds(0, 0, intrinsicWidth, intrinsicHeight)
+                    setTint(ContextCompat.getColor(this@ReviewCapturesActivity, R.color.white))
+                }
+
+                val view = when (column) {
+                    ReviewListAdapter.SortColumn.DATE -> dateHeader
+                    ReviewListAdapter.SortColumn.ID -> idHeader
+                    ReviewListAdapter.SortColumn.NUMBER -> numHeader
+                }
+                listOf(dateHeader, idHeader, numHeader).forEach { v ->
+                    v.setCompoundDrawablesRelative(if (v === view) drawable else null, null, null, null)
+                }
             }
-            dateHeader.setCompoundDrawablesRelative(drawable, null, null, null)
+        }
+
+        dateHeader.setOnClickListener {
+            adapter.toggleSortOrder(ReviewListAdapter.SortColumn.DATE)
+        }
+        idHeader.setOnClickListener {
+            adapter.toggleSortOrder(ReviewListAdapter.SortColumn.ID)
+        }
+        numHeader.setOnClickListener {
+            adapter.toggleSortOrder(ReviewListAdapter.SortColumn.NUMBER)
         }
 
         lifecycleScope.launch {

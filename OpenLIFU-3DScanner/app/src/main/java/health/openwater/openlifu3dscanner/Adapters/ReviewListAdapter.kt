@@ -15,6 +15,8 @@ import health.openwater.openlifu3dscanner.Modals.ReviewData
 import health.openwater.openlifu3dscanner.Modals.Status
 import health.openwater.openlifu3dscanner.R
 import health.openwater.openlifu3dscanner.viewmodel.ReviewCapturesViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -23,13 +25,24 @@ class ReviewListAdapter(
     private val viewModel: ReviewCapturesViewModel
 ) : RecyclerView.Adapter<ReviewListAdapter.ReviewViewHolder>() {
 
-    private var selectedPosition = RecyclerView.NO_POSITION
-    var sortAsc = false
-        private set
+    enum class SortColumn {
+        DATE,
+        ID,
+        NUMBER
+    }
 
-    private val dateFormatter = SimpleDateFormat("MMM d, yyyy", Locale.getDefault())
+    private var selectedPosition = RecyclerView.NO_POSITION
+
+    private var sortColumn = SortColumn.DATE
+    private var sortAsc = false
+
+    private val sortStateFlow = MutableStateFlow(sortColumn to sortAsc)
+
+    private val dateFormatter = SimpleDateFormat("MMM d, yyyy hh:mm a", Locale.getDefault())
 
     private val data = mutableListOf<ReviewData>()
+
+    fun getSortStateFlow(): StateFlow<Pair<SortColumn, Boolean>> = sortStateFlow
 
     fun setData(list: List<ReviewData>) {
         data.clear()
@@ -38,8 +51,13 @@ class ReviewListAdapter(
         notifyDataSetChanged()
     }
 
-    fun setSortOrder(ascending: Boolean) {
-        sortAsc = ascending
+    fun toggleSortOrder(column: SortColumn) {
+        if (sortColumn == column) {
+            sortAsc = !sortAsc
+        }
+
+        sortColumn = column
+        sortStateFlow.value = sortColumn to sortAsc
         sortData()
         selectedPosition = RecyclerView.NO_POSITION
         viewModel.setSelectedItem(null)
@@ -59,7 +77,12 @@ class ReviewListAdapter(
     }
 
     private fun sortData() {
-        val comparator = Comparator.comparing(ReviewData::date)
+        val comparator = when (sortColumn) {
+            SortColumn.DATE -> Comparator.comparing(ReviewData::date)
+            SortColumn.ID -> Comparator.comparing(ReviewData::id)
+            SortColumn.NUMBER -> Comparator.comparing(ReviewData::count)
+        }
+
         if (sortAsc) {
             data.sortWith(comparator)
         } else {
