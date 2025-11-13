@@ -25,6 +25,7 @@ import com.bumptech.glide.Glide;
 import health.openwater.openlifu3dscanner.Adapters.ImagePreviewAdapter;
 import health.openwater.openlifu3dscanner.Modals.ImagePreviewModal;
 import health.openwater.openlifu3dscanner.api.dto.Photocollection;
+import health.openwater.openlifu3dscanner.api.dto.PhotoscanStatus;
 import health.openwater.openlifu3dscanner.api.repository.CloudRepository;
 import health.openwater.openlifu3dscanner.dialogs.DeleteCaptureDialog;
 import health.openwater.openlifu3dscanner.dialogs.PhotoscanDownloadDialog;
@@ -41,6 +42,11 @@ import kotlinx.coroutines.CoroutineScope;
 
 @AndroidEntryPoint
 public class ImagePreview extends BaseActivity {
+    public static final String EXTRA_REFERENCE_ID = "REFERENCE_ID";
+    public static final String EXTRA_PHOTOCOLLECTION_ID = "PHOTOCOLLECTION_ID";
+    public static final String EXTRA_PHOTOSCAN_ID = "PHOTOSCAN_ID";
+    public static final String EXTRA_PHOTOSCAN_STATUS = "PHOTOSCAN_STATUS";
+
 
     @Inject
     CloudRepository cloudRepository;
@@ -52,6 +58,7 @@ public class ImagePreview extends BaseActivity {
     private String referenceNumber;
     private long photoscanId;
     private long photocollectionId;
+    private PhotoscanStatus photoscanStatus;
 
     @SuppressLint("SetTextI18n")
     @Override
@@ -60,9 +67,10 @@ public class ImagePreview extends BaseActivity {
         setContentView(R.layout.activity_image_preview);
         applyWindowInsets(R.id.main, true);
 
-        referenceNumber = getIntent().getStringExtra("REFERENCE_ID");
-        photocollectionId = getIntent().getLongExtra("PHOTOCOLLECTION_ID", -1);
-        photoscanId = getIntent().getLongExtra("PHOTOSCAN_ID", -1);
+        referenceNumber = getIntent().getStringExtra(EXTRA_REFERENCE_ID);
+        photocollectionId = getIntent().getLongExtra(EXTRA_PHOTOCOLLECTION_ID, -1);
+        photoscanId = getIntent().getLongExtra(EXTRA_PHOTOSCAN_ID, -1);
+        photoscanStatus = getIntent().getSerializableExtra(EXTRA_PHOTOSCAN_STATUS, PhotoscanStatus.class);
 
         recyclerView = findViewById(R.id.recyclerViewImagePreview);
         imageViewPreview = findViewById(R.id.imageViewInReview);
@@ -80,22 +88,26 @@ public class ImagePreview extends BaseActivity {
         Button downloadMeshButton = findViewById(R.id.downloadMeshButton);
         Button reconstructMeshButton = findViewById(R.id.reconstructMeshButton);
 
+        final boolean isPhotoscanAvailable = photoscanId != -1 &&
+                (photoscanStatus == PhotoscanStatus.FINISHED || photoscanStatus == PhotoscanStatus.RUNNING);
+
         if (!cloudRepository.isLoggedInAndOnline() || photocollectionId == -1) {
             reconstructMeshButton.setEnabled(false);
             downloadMeshButton.setEnabled(false);
         } else {
             reconstructMeshButton.setEnabled(false);
+            if (photoscanId == -1 || photoscanStatus != PhotoscanStatus.FINISHED)
+                downloadMeshButton.setEnabled(false);
 
             LiveData<Photocollection> photocollectionLiveData = CoroutineHelper.getPhotocollection(
                     getLifecycle(), cloudRepository, photocollectionId, true
             );
             photocollectionLiveData.observe(this, photocollection -> {
                 if (photocollection != null && photocollection.getPhotos() != null) {
-                    reconstructMeshButton.setEnabled(photocollection.getPhotos().size() > 1);
+                    reconstructMeshButton.setEnabled(photocollection.getPhotos().size() > 1 && !isPhotoscanAvailable);
                 }
             });
         }
-        if (photoscanId == -1) downloadMeshButton.setEnabled(false);
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
 
@@ -170,8 +182,6 @@ public class ImagePreview extends BaseActivity {
             }
         });
     }
-
-
 
     private void updatePreviewAndSelection() {
         recyclerView.smoothScrollToPosition(currentPosition);

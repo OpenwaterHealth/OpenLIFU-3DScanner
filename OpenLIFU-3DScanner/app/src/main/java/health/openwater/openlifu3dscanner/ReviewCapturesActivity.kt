@@ -71,10 +71,13 @@ class ReviewCapturesActivity : BaseActivity() {
 
         // Show Review button
         showReviewButton.setOnClickListener {
+            val item = viewmodel.getSelectedItemFlow().value
+
             val intent = Intent(this, ImagePreview::class.java)
-            intent.putExtra("REFERENCE_ID", viewmodel.getSelectedItemFlow().value?.id)
-            intent.putExtra("PHOTOCOLLECTION_ID", viewmodel.getSelectedItemFlow().value?.photocollectionId)
-            intent.putExtra("PHOTOSCAN_ID", viewmodel.getSelectedItemFlow().value?.photoscanId)
+            intent.putExtra(ImagePreview.EXTRA_REFERENCE_ID, item?.id)
+            intent.putExtra(ImagePreview.EXTRA_PHOTOCOLLECTION_ID, item?.photocollectionId)
+            intent.putExtra(ImagePreview.EXTRA_PHOTOSCAN_ID, item?.photoscanId)
+            intent.putExtra(ImagePreview.EXTRA_PHOTOSCAN_STATUS, item?.photoscanStatus)
 
             startActivity(intent)
             finish()

@@ -16,6 +16,7 @@ import health.openwater.openlifu3dscanner.api.repository.CloudRepository
 import health.openwater.openlifu3dscanner.api.repository.UserRepository
 import health.openwater.openlifu3dscanner.dialogs.PhotoscanDownloadDialog
 import dagger.hilt.android.AndroidEntryPoint
+import health.openwater.openlifu3dscanner.api.dto.PhotoscanStatus
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -93,7 +94,7 @@ class ReconstructionActivity : BaseActivity() {
                 if (progress == null) return@collect
 
                 when (progress.status) {
-                    "FINISHED" -> {
+                    PhotoscanStatus.FINISHED -> {
                         textTitle.text = getString(R.string.reconstruction_complete)
                         textDescription.text =
                             getString(R.string.results_can_also_be_downloaded_later)
@@ -101,17 +102,19 @@ class ReconstructionActivity : BaseActivity() {
                         buttonDownload.isEnabled = true
                     }
 
-                    "FAILED" -> {
+                    PhotoscanStatus.FAILED -> {
                         textTitle.text = getString(R.string.reconstruction_failed)
                         textTitle.setTextColor(getColor(R.color.ripple_red))
                         buttonDownload.isEnabled = false
                     }
 
-                    "STOPPED" -> {
+                    PhotoscanStatus.STOPPED -> {
                         textTitle.text = getString(R.string.reconstruction_stopped)
                         textTitle.setTextColor(getColor(R.color.ripple_red))
                         buttonDownload.isEnabled = false
                     }
+
+                    else -> {}
                 }
 
                 progressBar.setProgress(progress.progress, true)

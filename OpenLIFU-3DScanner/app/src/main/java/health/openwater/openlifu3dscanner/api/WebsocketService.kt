@@ -1,6 +1,7 @@
 package health.openwater.openlifu3dscanner.api
 
 import android.util.Log
+import health.openwater.openlifu3dscanner.api.dto.PhotoscanStatus
 import health.openwater.openlifu3dscanner.api.model.ReconstructionProgress
 import health.openwater.openlifu3dscanner.di.ApiModule
 import io.socket.client.IO
@@ -64,7 +65,11 @@ class WebsocketService(
                 val id = json.getLong("photoscan_id")
                 val progress = json.getInt("progress")
                 val message = json.getString("message")
-                val status = json.getString("status")
+                val status = try {
+                    PhotoscanStatus.valueOf(json.getString("status"))
+                } catch (_: Exception) {
+                    null
+                }
 
                 if (id == photoscanId) {
                     scope.launch {

@@ -12,6 +12,7 @@ import health.openwater.openlifu3dscanner.api.model.Type
 import health.openwater.openlifu3dscanner.api.repository.CloudRepository
 import health.openwater.openlifu3dscanner.api.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import health.openwater.openlifu3dscanner.api.dto.PhotoscanStatus
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -149,7 +150,9 @@ class ReviewCapturesViewModel
             val photoscans = photoscanService.getPhotoscans(uid).body() ?: listOf()
 
             for (photocollection in photocollections) {
-                val scan = photoscans.firstOrNull { it.photocollectionId == photocollection.id }
+                val scan = photoscans.firstOrNull {
+                    it.photocollectionId == photocollection.id && it.status == PhotoscanStatus.FINISHED
+                }
                 result.add(
                     ReviewData(
                         date = photocollection.creationDate,
@@ -158,7 +161,8 @@ class ReviewCapturesViewModel
                         photoStatus = Status.CLOUD,
                         meshStatus = if (scan != null) Status.CLOUD else Status.UNKNOWN,
                         photocollectionId = photocollection.id,
-                        photoscanId = scan?.id
+                        photoscanId = scan?.id,
+                        photoscanStatus = scan?.status
                     )
                 )
             }
