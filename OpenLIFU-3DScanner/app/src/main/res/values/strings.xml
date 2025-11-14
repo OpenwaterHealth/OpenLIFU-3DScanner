@@ -84,5 +84,6 @@
     <string name="delete_cloud_only">Delete Cloud Only</string>
     <string name="please_enter_a_scan_id">Please enter a Scan Id</string>
     <string name="this_scan_id_already_exists">This Scan ID already exists</string>
+    <string name="you_have_credits_please_contact_openwater">You have %1$d credits. Please contact Openwater.</string>
 
 </resources>

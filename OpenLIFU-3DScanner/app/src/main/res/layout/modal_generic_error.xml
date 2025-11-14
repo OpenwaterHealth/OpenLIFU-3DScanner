@@ -11,15 +11,16 @@
     android:background="@drawable/notice_background">
 
     <TextView
+        android:id="@+id/errorTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/could_not_log_in"
         android:textColor="@color/ripple_red"
         android:textSize="24sp"
         android:textStyle="bold"
         android:gravity="center"
         android:layout_marginTop="20dp"
-        android:textAlignment="center" />
+        android:textAlignment="center"
+        tools:text="Error"/>
 
     <TextView
         android:id="@+id/errorText"

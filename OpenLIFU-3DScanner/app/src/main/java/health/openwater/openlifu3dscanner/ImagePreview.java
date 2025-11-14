@@ -15,9 +15,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.LiveData;
-import androidx.lifecycle.Observer;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -28,6 +26,7 @@ import health.openwater.openlifu3dscanner.api.dto.Photocollection;
 import health.openwater.openlifu3dscanner.api.dto.PhotoscanStatus;
 import health.openwater.openlifu3dscanner.api.repository.CloudRepository;
 import health.openwater.openlifu3dscanner.dialogs.DeleteCaptureDialog;
+import health.openwater.openlifu3dscanner.dialogs.NotEnoughCreditsDialog;
 import health.openwater.openlifu3dscanner.dialogs.PhotoscanDownloadDialog;
 
 import java.io.File;
@@ -38,7 +37,6 @@ import java.util.List;
 import javax.inject.Inject;
 
 import dagger.hilt.android.AndroidEntryPoint;
-import kotlinx.coroutines.CoroutineScope;
 
 @AndroidEntryPoint
 public class ImagePreview extends BaseActivity {
@@ -161,6 +159,9 @@ public class ImagePreview extends BaseActivity {
                         .putExtra(ReconstructionActivity.EXTRA_PHOTOSCAN_ID, newPhotoscanId);
                 startActivity(intent);
                 finish();
+            } else {
+                NotEnoughCreditsDialog dialog = new NotEnoughCreditsDialog();
+                dialog.show(getSupportFragmentManager(), NotEnoughCreditsDialog.class.getSimpleName());
             }
         });
 
