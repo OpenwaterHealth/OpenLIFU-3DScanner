@@ -1,6 +1,6 @@
 package health.openwater.openlifu3dscanner.api.dto
 
-import java.sql.Date
+import java.util.Date
 
 data class Photocollection(
     val id: Long,

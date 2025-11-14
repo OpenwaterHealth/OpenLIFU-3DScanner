@@ -15,6 +15,7 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import health.openwater.openlifu3dscanner.api.adapter.DateTypeAdapter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -22,6 +23,7 @@ import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.util.Date
 import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
 
@@ -94,7 +96,7 @@ class ApiModule {
     fun provideGson(): Gson {
         return GsonBuilder()
             .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
-            .setDateFormat("yyyy-MM-dd'T'HH:mm:ss")
+            .registerTypeAdapter(Date::class.java, DateTypeAdapter)
             .create()
     }
 
