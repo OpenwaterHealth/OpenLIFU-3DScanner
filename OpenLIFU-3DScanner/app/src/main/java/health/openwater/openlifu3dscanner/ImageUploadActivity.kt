@@ -114,7 +114,7 @@ class ImageUploadActivity : BaseActivity() {
                     refreshUI()
                 } else if (progress.failed) {
                     textTitle.text = getString(R.string.upload_failed)
-                    textTitle.setTextColor(getColor(R.color.red))
+                    textTitle.setTextColor(getColor(R.color.ripple_red))
                 }
                 progressBar.setProgress(progress.progress, true)
             }
@@ -139,7 +139,7 @@ class ImageUploadActivity : BaseActivity() {
             }
 
             uploadFinished && !enoughCredits -> {
-                textTitle.setTextColor(getColor(R.color.red))
+                textTitle.setTextColor(getColor(R.color.ripple_red))
                 textTitle.text = getString(R.string.not_enough_credits)
                 textStatus.text = getString(R.string.cannot_start_reconstruction)
 
@@ -160,7 +160,7 @@ class ImageUploadActivity : BaseActivity() {
                 textCreditsAvailable.text = getString(R.string.credits_available_n, credits)
                 textCreditsRequired.text = getString(R.string.credits_required_n, REQUIRED_CREDITS)
 
-                val color = if (credits < REQUIRED_CREDITS) R.color.red else R.color.light_green
+                val color = if (credits < REQUIRED_CREDITS) R.color.ripple_red else R.color.light_green
                 textCreditsAvailable.setTextColor(getColor(color))
                 textCreditsRequired.setTextColor(getColor(color))
 
