@@ -757,6 +757,15 @@ class MainActivity : BaseActivity() {
 
     }
 
+    override fun onPause() {
+        super.onPause()
+        sceneView.session?.pause()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        sceneView.session?.resume()
+    }
 
     private fun showToast(message: String) {
         runOnUiThread {
