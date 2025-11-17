@@ -18,12 +18,11 @@
             android:layout_height="wrap_content"
             android:layout_weight="2"
             android:layout_gravity="center_vertical"
-            android:textSize="18sp"
+            android:textSize="16sp"
             android:padding="5dp"
-            android:gravity="center_vertical"
+            android:gravity="start|center_vertical"
             android:textColor="@color/black"
-            android:maxLines="2"
-            tools:text="Dec 25, 2024" />
+            tools:text="Dec 25, 2024\n05:00 pm" />
 
         <View
             android:layout_width="1dp"
@@ -37,7 +36,7 @@
             android:layout_weight="2"
             android:layout_gravity="center_vertical"
             android:textColor="@color/black"
-            android:textSize="18sp"
+            android:textSize="16sp"
             android:padding="5dp"
             tools:text="Test123" />
 
@@ -53,7 +52,7 @@
             android:layout_weight="1"
             android:layout_gravity="center_vertical"
             android:textColor="@color/black"
-            android:textSize="18sp"
+            android:textSize="16sp"
             android:padding="5dp"
             tools:text="120" />
 

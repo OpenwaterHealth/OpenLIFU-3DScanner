@@ -3,6 +3,7 @@ package health.openwater.openlifu3dscanner.Adapters
 import android.animation.ObjectAnimator
 import android.content.Context
 import android.graphics.drawable.Drawable
+import android.text.format.DateFormat
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -38,7 +39,10 @@ class ReviewListAdapter(
 
     private val sortStateFlow = MutableStateFlow(sortColumn to sortAsc)
 
-    private val dateFormatter = SimpleDateFormat("MMM d, yyyy hh:mm a", Locale.getDefault())
+    private val dateFormatter = SimpleDateFormat(
+        if (DateFormat.is24HourFormat(context)) "MMM d, yyyy\nHH:mm" else "MMM d, yyyy\nhh:mm a",
+        Locale.getDefault()
+    )
 
     private val data = mutableListOf<ReviewData>()
 
