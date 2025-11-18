@@ -25,9 +25,11 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import okhttp3.ResponseBody
+import java.io.BufferedInputStream
 import java.io.File
 import java.io.FileOutputStream
 import java.util.concurrent.LinkedBlockingQueue
+import java.util.zip.ZipInputStream
 
 class CloudRepository(
     private val authService: AuthService,
@@ -207,16 +209,16 @@ class CloudRepository(
         return null
     }
 
-    suspend fun downloadPhotoscanZip(id: Long, name: String, outputDir: File): Boolean {
+    suspend fun downloadPhotoscan(id: Long, outputDir: File): Boolean {
         try {
             val response = photoscanService.getMesh(id)
 
             if (response.isSuccessful) {
                 response.body()?.let { body ->
-                    val fileName = "scan_$name.zip"
-                    val file = File(outputDir, fileName)
-                    saveResponseBodyToDisk(body, file)
-                    Log.d(TAG, "Photoscan saved to ${file.absolutePath}")
+                    val dir = File(outputDir, SCAN_DIR)
+                    dir.mkdirs()
+                    extractZip(body, dir)
+                    Log.d(TAG, "Photoscan saved to ${dir.absolutePath}")
                     return true
                 }
             } else {
@@ -232,6 +234,11 @@ class CloudRepository(
         Environment.getExternalStorageDirectory(),
         "$OPENLIFU_DIR/$referenceNumber"
     )
+
+    fun isPhotoscanDownloaded(referenceNumber: String): Boolean {
+        val dir = File(getImagesDir(referenceNumber), SCAN_DIR)
+        return dir.exists() && (dir.list()?.count() ?: 0) > 0
+    }
 
     suspend fun getReferenceNumbers(localOnly: Boolean): Set<String> {
         val result = mutableSetOf<String>()
@@ -252,6 +259,33 @@ class CloudRepository(
             }
         }
         return result
+    }
+
+    private fun extractZip(body: ResponseBody, dir: File) {
+        body.byteStream().use { input ->
+            val zis = ZipInputStream(BufferedInputStream(input))
+            val buffer = ByteArray(1024)
+            var count = 0
+
+            while (true) {
+                val ze = zis.getNextEntry() ?: break
+                val filename = ze.name
+
+                val file = File(dir, filename)
+
+                if (ze.isDirectory) {
+                    file.mkdirs()
+                    continue
+                }
+                val fout = FileOutputStream(file)
+                while (zis.read(buffer).also { count = it } != -1) {
+                    fout.write(buffer, 0, count)
+                }
+                fout.close()
+                zis.closeEntry()
+            }
+            zis.close()
+        }
     }
 
     private fun saveResponseBodyToDisk(body: ResponseBody, file: File) {
@@ -320,12 +354,13 @@ class CloudRepository(
         val photocollection = getPhotocollection(photoscan.photocollectionId) ?: return false
         val outputDir = getImagesDir(photocollection.name ?: return false)
         if (!outputDir.exists()) outputDir.mkdirs()
-        return downloadPhotoscanZip(photoscan.id, photocollection.name, outputDir)
+        return downloadPhotoscan(photoscan.id, outputDir)
     }
 
     companion object {
         private val TAG = CloudRepository::class.simpleName
-        private val OPENLIFU_DIR = "OpenLIFU-3DScanner"
+        const val OPENLIFU_DIR = "OpenLIFU-3DScanner"
+        const val SCAN_DIR = "scan"
     }
 
 }

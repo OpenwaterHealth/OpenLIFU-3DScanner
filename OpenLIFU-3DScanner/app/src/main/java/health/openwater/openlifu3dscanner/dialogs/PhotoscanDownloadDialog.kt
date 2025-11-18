@@ -81,7 +81,7 @@ class PhotoscanDownloadDialog(
         val name = cloudRepository.getPhotocollection(photoscan.photocollectionId)?.name ?: return null
         val outputDir = cloudRepository.getImagesDir(name)
         if (!outputDir.exists()) outputDir.mkdirs()
-        if (!cloudRepository.downloadPhotoscanZip(photoscan.id, name, outputDir))
+        if (!cloudRepository.downloadPhotoscan(photoscan.id, outputDir))
             return null
         return name
     }

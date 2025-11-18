@@ -174,7 +174,7 @@ class ReviewCapturesViewModel
 
     private fun getLocalData(): List<ReviewData> {
         val reviewList = mutableListOf<ReviewData>()
-        val rootFolder = File(Environment.getExternalStorageDirectory(), "OpenLIFU-3DScanner")
+        val rootFolder = File(Environment.getExternalStorageDirectory(), CloudRepository.OPENLIFU_DIR)
 
         if (rootFolder.exists() && rootFolder.isDirectory) {
             val referenceFolders = rootFolder.listFiles { file -> file.isDirectory }
@@ -185,10 +185,7 @@ class ReviewCapturesViewModel
                     name.endsWith(".jpg") || name.endsWith(".jpeg") || name.endsWith(".png")
                 }?.size ?: 0
 
-                val mesh = folder.listFiles { file ->
-                    val name = file.name.lowercase()
-                    name.startsWith("scan") && name.endsWith(".zip")
-                }?.isNotEmpty() ?: false
+                val mesh = cloudRepository.isPhotoscanDownloaded(folder.name)
 
                 if (imageCount > 0) {
                     reviewList.add(
