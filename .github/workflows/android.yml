@@ -26,12 +26,10 @@ jobs:
         distribution: 'temurin'
         cache: gradle
 
-    - name: Decode service account json
-      run: |
-        echo "${{ secrets.FIREBASE_TOKEN_JSON }}" > $HOME/firebase.json
-
-    - name: Set GOOGLE_APPLICATION_CREDENTIALS env
-      run: echo "GOOGLE_APPLICATION_CREDENTIALS=$HOME/firebase.json" >> $GITHUB_ENV
+    - name: Authenticate with Google Cloud (ADC)
+      uses: google-github-actions/auth@v2
+      with:
+        credentials_json: ${{ secrets.FIREBASE_TOKEN_JSON }}
 
     - name: Install Firebase CLI
       run: |
