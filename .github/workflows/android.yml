@@ -26,8 +26,17 @@ jobs:
         distribution: 'temurin'
         cache: gradle
 
+    - name: Decode service account json
+      run: |
+        echo "${{ secrets.FIREBASE_TOKEN_JSON }}" > $HOME/firebase.json
+
+    - name: Install Firebase CLI
+      run: |
+        curl -sL https://firebase.tools | bash
+
     - name: Grant execute permission for gradlew
       run: chmod +x OpenLIFU-3DScanner/gradlew
+
     - name: Build with Gradle
       working-directory: OpenLIFU-3DScanner
       run: ./gradlew assembleRelease
@@ -37,3 +46,12 @@ jobs:
       with:
         name: app-release
         path: OpenLIFU-3DScanner/app/build/outputs/apk/release/*.apk
+
+    - name: Upload to Firebase App Distribution
+      run: |
+        firebase appdistribution:distribute \
+          OpenLIFU-3DScanner/app/build/outputs/apk/release/app-release.apk \
+          --app "1:341318872140:android:73e3bcd90afaba077b18e9" \
+          --groups "testers" \
+          --release-notes "Uploaded from GitHub Actions" \
+          --token "$(cat $HOME/firebase.json)"
