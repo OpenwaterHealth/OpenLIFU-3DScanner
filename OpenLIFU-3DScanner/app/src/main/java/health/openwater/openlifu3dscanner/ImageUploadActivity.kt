@@ -6,15 +6,11 @@ import android.view.View
 import android.widget.Button
 import android.widget.ProgressBar
 import android.widget.TextView
-import androidx.activity.enableEdgeToEdge
-import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
+import dagger.hilt.android.AndroidEntryPoint
 import health.openwater.openlifu3dscanner.api.repository.CloudRepository
 import health.openwater.openlifu3dscanner.api.repository.UserRepository
-import dagger.hilt.android.AndroidEntryPoint
 import io.github.sceneview.utils.setKeepScreenOn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -81,6 +77,7 @@ class ImageUploadActivity : BaseActivity() {
             lifecycleScope.launch {
                 userRepository.refreshUserInfo()
                 refreshUI()
+                if (!isUploadFinished()) cloudRepository.uploadRemainingPhotos()
             }
         }
 
@@ -123,11 +120,29 @@ class ImageUploadActivity : BaseActivity() {
         cloudRepository.uploadRemainingPhotos()
     }
 
+    private fun isUploadFinished(): Boolean {
+        return cloudRepository.getImageUploadProgress().value?.progress == 100
+    }
+
     private fun refreshUI() {
-        val uploadFinished = cloudRepository.getImageUploadProgress().value?.progress == 100
+        val online = cloudRepository.isLoggedInAndOnline()
+        val uploadFinished = isUploadFinished()
         val enoughCredits = (userRepository.getUserInfo().value?.credits ?: 0) >= REQUIRED_CREDITS
 
         when {
+            !online -> {
+                textTitle.setTextColor(getColor(R.color.ripple_red))
+                textTitle.text = getString(R.string.not_connected)
+                textStatus.text = getString(R.string.upload_failed)
+
+                textDescription.text = getString(
+                    R.string.check_internet_connection
+                )
+                buttonRefresh.isEnabled = true
+                buttonRefresh.visibility = View.VISIBLE
+                buttonStart.visibility = View.INVISIBLE
+            }
+
             uploadFinished && enoughCredits -> {
                 textTitle.text = getString(R.string.ready)
                 textTitle.setTextColor(getColor(R.color.white))
@@ -156,6 +171,11 @@ class ImageUploadActivity : BaseActivity() {
     private fun subscribeToUserCredits() {
         lifecycleScope.launch {
             userRepository.getUserInfo().flowWithLifecycle(lifecycle).collect {
+                val online = cloudRepository.isLoggedInAndOnline()
+
+                textCreditsAvailable.visibility = if (online) View.VISIBLE else View.INVISIBLE
+                textCreditsRequired.visibility = if (online) View.VISIBLE else View.INVISIBLE
+
                 val credits = it?.credits ?: 0
                 textCreditsAvailable.text = getString(R.string.credits_available_n, credits)
                 textCreditsRequired.text = getString(R.string.credits_required_n, REQUIRED_CREDITS)
