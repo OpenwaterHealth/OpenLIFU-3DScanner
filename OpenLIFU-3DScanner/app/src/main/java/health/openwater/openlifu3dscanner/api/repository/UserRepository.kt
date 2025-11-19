@@ -4,6 +4,7 @@ import android.util.Log
 import health.openwater.openlifu3dscanner.api.AuthService
 import health.openwater.openlifu3dscanner.api.PhotocollectionService
 import health.openwater.openlifu3dscanner.api.UserService
+import health.openwater.openlifu3dscanner.api.dto.ResetPasswordRequest
 import health.openwater.openlifu3dscanner.api.model.UserInfo
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -53,6 +54,15 @@ class UserRepository(
     fun signOut() {
         authService.signOut()
         userInfoFlow.value = null
+    }
+
+    suspend fun resetPassword(email: String): Boolean {
+        return try {
+            val response = userService.resetPassword(ResetPasswordRequest(email))
+            response.isSuccessful
+        } catch (_: Exception) {
+            false
+        }
     }
 
     companion object {

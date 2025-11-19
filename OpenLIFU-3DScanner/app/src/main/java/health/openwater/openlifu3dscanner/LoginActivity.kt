@@ -14,6 +14,7 @@ import health.openwater.openlifu3dscanner.api.repository.UserRepository
 import health.openwater.openlifu3dscanner.dialogs.LoginErrorDialog
 import health.openwater.openlifu3dscanner.dialogs.LoginSuccessfulDialog
 import dagger.hilt.android.AndroidEntryPoint
+import health.openwater.openlifu3dscanner.dialogs.ResetPasswordDialog
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -32,9 +33,15 @@ class LoginActivity: BaseActivity() {
         val usernameInput = findViewById<EditText>(R.id.usernameInput)
         val passwordInput = findViewById<EditText>(R.id.passwordInput)
         val loadingLayout = findViewById<FrameLayout>(R.id.layoutLoading)
+        val forgotPasswordText = findViewById<View>(R.id.forgotPasswordText)
 
         cancelButton.setOnClickListener {
             finishAndOpenWelcomeActivity()
+        }
+
+        forgotPasswordText.setOnClickListener {
+            val dialog = ResetPasswordDialog()
+            dialog.show(supportFragmentManager, ResetPasswordDialog::class.simpleName)
         }
 
         loginButton.setOnClickListener {
