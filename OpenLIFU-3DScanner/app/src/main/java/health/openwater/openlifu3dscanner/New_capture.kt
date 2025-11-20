@@ -45,6 +45,8 @@ class New_capture : BaseActivity() {
         setContentView(R.layout.activity_new_capture)
         applyWindowInsets(R.id.main)
 
+        Analytics.onNewCaptureScreenOpened()
+
         // Check required permissions
         if (!hasAllPermissions()) {
             requestPermissions()
@@ -160,6 +162,8 @@ class New_capture : BaseActivity() {
                 errorText.setText(R.string.this_scan_id_already_exists)
             } else if (hasAllPermissions()) {
                 //LogFileUtil.appendLog("Moving to face detection screen")
+
+                Analytics.onCaptureStarted()
 
                 cloudRepository.createPhotocollection(referenceNumber, autoUploadCheckbox.isChecked)
                 navigateToFaceDetection(referenceNumber)

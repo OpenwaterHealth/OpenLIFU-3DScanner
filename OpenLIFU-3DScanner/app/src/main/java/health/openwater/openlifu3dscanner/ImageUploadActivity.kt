@@ -62,6 +62,7 @@ class ImageUploadActivity : BaseActivity() {
                 val photoscanId = cloudRepository.startReconstruction()
                 loadingLayout.visibility = View.GONE
                 if (photoscanId != null) {
+                    Analytics.onStartReconstruction()
                     val intent = Intent(this@ImageUploadActivity, ReconstructionActivity::class.java)
                         .putExtra(ReconstructionActivity.EXTRA_PHOTOSCAN_ID, photoscanId)
                     startActivity(intent)

@@ -95,6 +95,7 @@ class ReconstructionActivity : BaseActivity() {
 
                 when (progress.status) {
                     PhotoscanStatus.FINISHED -> {
+                        Analytics.onReconstructionComplete()
                         textTitle.text = getString(R.string.reconstruction_complete)
                         textDescription.text =
                             getString(R.string.results_can_also_be_downloaded_later)
@@ -103,12 +104,14 @@ class ReconstructionActivity : BaseActivity() {
                     }
 
                     PhotoscanStatus.FAILED -> {
+                        Analytics.onReconstructionFailed()
                         textTitle.text = getString(R.string.reconstruction_failed)
                         textTitle.setTextColor(getColor(R.color.ripple_red))
                         buttonDownload.isEnabled = false
                     }
 
                     PhotoscanStatus.STOPPED -> {
+                        Analytics.onReconstructionFailed()
                         textTitle.text = getString(R.string.reconstruction_stopped)
                         textTitle.setTextColor(getColor(R.color.ripple_red))
                         buttonDownload.isEnabled = false

@@ -501,6 +501,7 @@ class MainActivity : BaseActivity() {
 
 
             initialCancelButton.setOnClickListener {
+                Analytics.onCaptureDiscarded()
                 cloudRepository.resetCurrentPhotocollection()
                 try {
                     val intent = Intent(this, New_capture::class.java).apply {
@@ -695,11 +696,14 @@ class MainActivity : BaseActivity() {
                 yesButton.setOnClickListener {
                     dialog.dismiss()
                     if (capturedModelList.size== 0) {
+                        Analytics.onCaptureDiscarded()
                         cloudRepository.resetCurrentPhotocollection()
                         val intent = Intent(this, New_capture::class.java)
                         startActivity(intent)
                         finish()
                     } else {
+                        Analytics.onCaptureFinished(capturedModelList.size)
+
                         val intent = Intent(this, completeCapture::class.java)
                         intent.putExtra("REFERENCE_NUMBER", referenceNumber)
                         intent.putExtra("IMAGE_COUNT", capturedModelList.size.toString())

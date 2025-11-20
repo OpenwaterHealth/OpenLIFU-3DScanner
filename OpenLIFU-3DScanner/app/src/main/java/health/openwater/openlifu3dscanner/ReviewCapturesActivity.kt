@@ -46,6 +46,8 @@ class ReviewCapturesActivity : BaseActivity() {
         setContentView(R.layout.activity_review_captures)
         applyWindowInsets(R.id.main, displayCutout = true)
 
+        Analytics.onOpenReviewCapturesScreen()
+
         if (!hasAllPermissions()) {
             requestPermissions()
         }

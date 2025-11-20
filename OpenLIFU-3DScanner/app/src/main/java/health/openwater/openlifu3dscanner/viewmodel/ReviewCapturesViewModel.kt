@@ -12,6 +12,7 @@ import health.openwater.openlifu3dscanner.api.model.Type
 import health.openwater.openlifu3dscanner.api.repository.CloudRepository
 import health.openwater.openlifu3dscanner.api.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import health.openwater.openlifu3dscanner.Analytics
 import health.openwater.openlifu3dscanner.api.dto.PhotoscanStatus
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -124,6 +125,7 @@ class ReviewCapturesViewModel
     fun downloadPhotocollection(item: ReviewData) {
         val id = item.photocollectionId ?: return
         if (item.photoStatus != Status.CLOUD) return
+        Analytics.onPhotocollectionDownloaded()
         downloadStatusChangeFlow.value = item.copy(photoStatus = Status.DOWNLOADING)
         cloudRepository.download(DownloadingItem(id, Type.PHOTOCOLLECTION))
     }
@@ -131,6 +133,7 @@ class ReviewCapturesViewModel
     fun downloadPhotoscan(item: ReviewData) {
         val id = item.photoscanId ?: return
         if (item.meshStatus != Status.CLOUD) return
+        Analytics.onPhotoscanDownloaded()
         downloadStatusChangeFlow.value = item.copy(meshStatus = Status.DOWNLOADING)
         cloudRepository.download(DownloadingItem(id, Type.PHOTOSCAN))
     }

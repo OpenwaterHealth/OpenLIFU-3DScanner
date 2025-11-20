@@ -55,6 +55,7 @@ class LoginActivity: BaseActivity() {
 
                 when (result) {
                     AuthService.AuthResponse.SUCCESS -> {
+                        Analytics.onLogin()
                         userRepository.refreshUserInfo()
                         loadingLayout.visibility = View.GONE
                         val dialog = LoginSuccessfulDialog()

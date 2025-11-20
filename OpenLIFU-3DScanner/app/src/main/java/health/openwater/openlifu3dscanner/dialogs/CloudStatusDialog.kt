@@ -14,6 +14,7 @@ import health.openwater.openlifu3dscanner.LoginActivity
 import health.openwater.openlifu3dscanner.R
 import health.openwater.openlifu3dscanner.api.repository.UserRepository
 import dagger.hilt.android.AndroidEntryPoint
+import health.openwater.openlifu3dscanner.Analytics
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -57,6 +58,7 @@ class CloudStatusDialog: DialogFragment() {
         logInButton.setOnClickListener {
             if (userRepository.authService.isSignedIn()) {
                 userRepository.signOut()
+                Analytics.onLogout()
             } else {
                 requireContext().startActivity(Intent(requireContext(), LoginActivity::class.java))
             }

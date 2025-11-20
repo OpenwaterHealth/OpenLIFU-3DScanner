@@ -20,14 +20,6 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
-import health.openwater.openlifu3dscanner.Adapters.ImagePreviewAdapter;
-import health.openwater.openlifu3dscanner.Modals.ImagePreviewModal;
-import health.openwater.openlifu3dscanner.api.dto.Photocollection;
-import health.openwater.openlifu3dscanner.api.dto.PhotoscanStatus;
-import health.openwater.openlifu3dscanner.api.repository.CloudRepository;
-import health.openwater.openlifu3dscanner.dialogs.DeleteCaptureDialog;
-import health.openwater.openlifu3dscanner.dialogs.NotEnoughCreditsDialog;
-import health.openwater.openlifu3dscanner.dialogs.PhotoscanDownloadDialog;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -37,6 +29,14 @@ import java.util.List;
 import javax.inject.Inject;
 
 import dagger.hilt.android.AndroidEntryPoint;
+import health.openwater.openlifu3dscanner.Adapters.ImagePreviewAdapter;
+import health.openwater.openlifu3dscanner.Modals.ImagePreviewModal;
+import health.openwater.openlifu3dscanner.api.dto.Photocollection;
+import health.openwater.openlifu3dscanner.api.dto.PhotoscanStatus;
+import health.openwater.openlifu3dscanner.api.repository.CloudRepository;
+import health.openwater.openlifu3dscanner.dialogs.DeleteCaptureDialog;
+import health.openwater.openlifu3dscanner.dialogs.NotEnoughCreditsDialog;
+import health.openwater.openlifu3dscanner.dialogs.PhotoscanDownloadDialog;
 
 @AndroidEntryPoint
 public class ImagePreview extends BaseActivity {
@@ -65,10 +65,13 @@ public class ImagePreview extends BaseActivity {
         setContentView(R.layout.activity_image_preview);
         applyWindowInsets(R.id.main, true);
 
+        Analytics.INSTANCE.onReviewCapture();
+
         referenceNumber = getIntent().getStringExtra(EXTRA_REFERENCE_ID);
         photocollectionId = getIntent().getLongExtra(EXTRA_PHOTOCOLLECTION_ID, -1);
         photoscanId = getIntent().getLongExtra(EXTRA_PHOTOSCAN_ID, -1);
-        photoscanStatus = getIntent().getSerializableExtra(EXTRA_PHOTOSCAN_STATUS, PhotoscanStatus.class);
+
+        photoscanStatus = (PhotoscanStatus) getIntent().getSerializableExtra(EXTRA_PHOTOSCAN_STATUS);
 
         recyclerView = findViewById(R.id.recyclerViewImagePreview);
         imageViewPreview = findViewById(R.id.imageViewInReview);
@@ -155,11 +158,13 @@ public class ImagePreview extends BaseActivity {
         reconstructMeshButton.setOnClickListener(v -> {
             Long newPhotoscanId = CoroutineHelper.startReconstruction(cloudRepository, photocollectionId);
             if (newPhotoscanId != null) {
+                Analytics.INSTANCE.onStartReconstruction();
                 Intent intent = new Intent(getApplicationContext(), ReconstructionActivity.class)
                         .putExtra(ReconstructionActivity.EXTRA_PHOTOSCAN_ID, newPhotoscanId);
                 startActivity(intent);
                 finish();
             } else {
+                Analytics.INSTANCE.onNotEnoughCredits();
                 NotEnoughCreditsDialog dialog = new NotEnoughCreditsDialog();
                 dialog.show(getSupportFragmentManager(), NotEnoughCreditsDialog.class.getSimpleName());
             }

@@ -15,6 +15,7 @@ import health.openwater.openlifu3dscanner.R
 import health.openwater.openlifu3dscanner.ReviewCapturesActivity
 import health.openwater.openlifu3dscanner.api.repository.CloudRepository
 import dagger.hilt.android.AndroidEntryPoint
+import health.openwater.openlifu3dscanner.Analytics
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -53,6 +54,8 @@ class DeleteCaptureDialog(
         updateUI(view)
 
         deleteButton.setOnClickListener {
+            Analytics.onCaptureDeleted()
+
             loadingProgress.visibility = View.VISIBLE
             lifecycleScope.launch {
                 when (state) {

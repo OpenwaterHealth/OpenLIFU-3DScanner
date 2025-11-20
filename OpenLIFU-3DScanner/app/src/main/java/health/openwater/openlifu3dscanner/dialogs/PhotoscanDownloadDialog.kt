@@ -14,6 +14,7 @@ import androidx.lifecycle.lifecycleScope
 import health.openwater.openlifu3dscanner.R
 import health.openwater.openlifu3dscanner.api.repository.CloudRepository
 import dagger.hilt.android.AndroidEntryPoint
+import health.openwater.openlifu3dscanner.Analytics
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -58,6 +59,8 @@ class PhotoscanDownloadDialog(
                 progress.visibility = View.GONE
 
                 if (scanName != null) {
+                    Analytics.onPhotoscanDownloaded()
+
                     statusText.text = getString(R.string.download_successful)
                     statusText.setTextColor(requireView().context.getColor(R.color.light_green))
 
