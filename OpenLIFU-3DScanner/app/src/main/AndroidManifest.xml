@@ -33,7 +33,7 @@
     <uses-feature android:name="android.hardware.usb.host" />
 
     <application
-        android:name="health.openwater.openlifu3dscanner.App"
+        android:name=".App"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
@@ -42,42 +42,45 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
-            android:name="health.openwater.openlifu3dscanner.ReconstructionActivity"
-            android:screenOrientation="portrait"
-            android:exported="false"/>
+            android:name=".CameraActivity"
+            android:exported="false" />
         <activity
-            android:name="health.openwater.openlifu3dscanner.ImageUploadActivity"
-            android:screenOrientation="portrait"
-            android:exported="false"/>
+            android:name=".ReconstructionActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
         <activity
-            android:name="health.openwater.openlifu3dscanner.MainActivity"
+            android:name=".ImageUploadActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".MainActivity"
             android:exported="false"
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme.NoFlicker" />
         <activity
-            android:name="health.openwater.openlifu3dscanner.QrActivity"
-            android:screenOrientation="portrait"
-            android:exported="false" />
+            android:name=".QrActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
         <activity
-            android:name="health.openwater.openlifu3dscanner.ReviewCapturesActivity"
-            android:screenOrientation="portrait"
-            android:exported="false"/>
+            android:name=".ReviewCapturesActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
         <activity
-            android:name="health.openwater.openlifu3dscanner.completeCapture"
-            android:screenOrientation="portrait"
-            android:exported="false" /> <!-- <activity -->
+            android:name=".completeCapture"
+            android:exported="false"
+            android:screenOrientation="portrait" /> <!-- <activity -->
         <!-- android:name=".CaptureCompleteActivity" -->
         <!-- android:exported="false" /> -->
         <activity
-            android:name="health.openwater.openlifu3dscanner.New_capture"
-            android:screenOrientation="portrait"
-            android:exported="false" /> <!-- <activity -->
+            android:name=".New_capture"
+            android:exported="false"
+            android:screenOrientation="portrait" /> <!-- <activity -->
         <!-- android:name=".welcomeActivity" -->
         <!-- android:exported="false" /> -->
         <activity
-            android:name="health.openwater.openlifu3dscanner.ImagePreview"
-            android:screenOrientation="portrait"
-            android:exported="false"/> <!-- Required metadata for ARCore to work properly -->
+            android:name=".ImagePreview"
+            android:exported="false"
+            android:screenOrientation="portrait" /> <!-- Required metadata for ARCore to work properly -->
         <meta-data
             android:name="com.google.ar.core"
             android:value="required"
@@ -89,10 +92,10 @@
             android:name="androidx.camera.defaultConfigProvider"
             android:value="androidx.camera.camera2.Camera2Config" /> <!-- .ReferenceInputActivity  .welcomeActivity -->
         <activity
-            android:name="health.openwater.openlifu3dscanner.welcomeActivity"
-            android:screenOrientation="portrait"
+            android:name=".welcomeActivity"
             android:exported="true"
-            android:launchMode="singleTop">
+            android:launchMode="singleTop"
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -100,21 +103,21 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="health.openwater.openlifu3dscanner.UsbScreenActivity"
-            android:screenOrientation="portrait"
-            android:exported="true">
+            android:name=".UsbScreenActivity"
+            android:exported="true"
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" />
             </intent-filter>
         </activity>
         <activity
-            android:name="health.openwater.openlifu3dscanner.FaceDetectionActivity"
+            android:name=".FaceDetectionActivity"
             android:screenOrientation="portrait" />
         <activity
-            android:name="health.openwater.openlifu3dscanner.LoginActivity"
-            android:screenOrientation="portrait"
+            android:name=".LoginActivity"
             android:exported="false"
-            android:launchMode="singleInstance"/>
+            android:launchMode="singleInstance"
+            android:screenOrientation="portrait" />
     </application>
 
 </manifest>

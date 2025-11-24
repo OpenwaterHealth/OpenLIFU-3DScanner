@@ -20,6 +20,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -124,7 +125,11 @@ public class ImagePreview extends BaseActivity {
 
         adapter = new ImagePreviewAdapter(list, this, imageFile -> {
             currentPosition = adapter.getSelectedPosition(); // Keep in sync
-            Glide.with(ImagePreview.this).load(imageFile).into(imageViewPreview);
+            Glide.with(ImagePreview.this)
+                    .load(imageFile)
+                    .skipMemoryCache(true)
+                    .diskCacheStrategy(DiskCacheStrategy.NONE)
+                    .into(imageViewPreview);
         });
 
         recyclerView.setAdapter(adapter);
@@ -134,7 +139,10 @@ public class ImagePreview extends BaseActivity {
         if (!list.isEmpty()) {
             currentPosition = 0;
             adapter.setSelectedPosition(currentPosition);
-            Glide.with(this).load(list.get(currentPosition).getImageFile()).into(imageViewPreview);
+            Glide.with(this).load(list.get(currentPosition).getImageFile())
+                    .skipMemoryCache(true)
+                    .diskCacheStrategy(DiskCacheStrategy.NONE)
+                    .into(imageViewPreview);
             recyclerView.scrollToPosition(currentPosition);
         }
 
@@ -194,7 +202,10 @@ public class ImagePreview extends BaseActivity {
         adapter.setSelectedPosition(currentPosition);
         File imageFile = adapter.getSelectedImageFile();
         if (imageFile != null) {
-            Glide.with(this).load(imageFile).into(imageViewPreview);
+            Glide.with(this).load(imageFile)
+                    .diskCacheStrategy(DiskCacheStrategy.NONE)
+                    .skipMemoryCache(true)
+                    .into(imageViewPreview);
         }
     }
 

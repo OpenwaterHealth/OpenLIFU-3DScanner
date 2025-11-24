@@ -9,23 +9,21 @@ import android.os.Handler
 import android.os.Looper
 import android.text.Editable
 import android.util.Log
+import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.CheckBox
-import android.widget.EditText
-import android.widget.TextView
 import android.widget.Toast
 import android.widget.VideoView
 import androidx.appcompat.app.AlertDialog
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import com.google.ar.core.ArCoreApk
 import com.google.ar.core.exceptions.UnavailableDeviceNotCompatibleException
 import dagger.hilt.android.AndroidEntryPoint
 import health.openwater.openlifu3dscanner.api.repository.CloudRepository
 import health.openwater.openlifu3dscanner.api.repository.UserRepository
+import health.openwater.openlifu3dscanner.databinding.ActivityNewCaptureBinding
 import kotlinx.coroutines.launch
 import org.json.JSONArray
 import org.json.JSONObject
@@ -39,10 +37,16 @@ class New_capture : BaseActivity() {
     @Inject
     lateinit var userRepository: UserRepository
 
-    private lateinit var newCaptureCheckbox: CheckBox
+    private lateinit var binding: ActivityNewCaptureBinding
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_new_capture)
+        binding = ActivityNewCaptureBinding.inflate(
+            LayoutInflater.from(this),
+            null,
+            false
+        )
+        setContentView(binding.root)
         applyWindowInsets(R.id.main)
 
         Analytics.onNewCaptureScreenOpened()
@@ -65,16 +69,9 @@ class New_capture : BaseActivity() {
 
 
 //        val linearLayout=findViewById<LinearLayout>(R.id.linerLayoutOfParameters)
-        val errorText = findViewById<TextView>(R.id.errorText)
-        val cancelButton = findViewById<Button>(R.id.cancelButton);
 //        val qrIconButton=findViewById<ImageButton>(R.id.qrIconButton);
-        val startCaptureButton = findViewById<Button>(R.id.startCaptureButton);
-        newCaptureCheckbox = findViewById<CheckBox>(R.id.newCaptureCheckbox)
 
-        val autoUploadCheckbox = findViewById<CheckBox>(R.id.autoUploadCheckbox)
-        val autoUploadContainer = findViewById<View>(R.id.autoUploadContainer)
-
-        val referenceNumberEditText = findViewById<EditText>(R.id.scanIDInputText)
+        val referenceNumberEditText = binding.scanIDInputText
 
         val fetchedQRText = intent.getStringExtra("QR_TEXT")
         val prefs = getSharedPreferences("app_prefs", MODE_PRIVATE)
@@ -82,12 +79,12 @@ class New_capture : BaseActivity() {
 
 
         if (!userRepository.authService.isSignedIn()) {
-            autoUploadCheckbox.isChecked = false
-            autoUploadContainer.visibility = View.GONE
+            binding.autoUploadCheckbox.isChecked = false
+            binding.autoUploadContainer.visibility = View.GONE
         }
 
         if (doNotShowInfoPref) {
-            newCaptureCheckbox.isChecked = false;
+            binding.newCaptureCheckbox.isChecked = false;
         }
 
         val existingReferenceNumbers = mutableSetOf<String>()
@@ -108,7 +105,7 @@ class New_capture : BaseActivity() {
 
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
                 if (!s.isNullOrEmpty()) {
-                    errorText.visibility = View.INVISIBLE
+                    binding.errorText.visibility = View.INVISIBLE
                     referenceNumberEditText.setBackgroundResource(R.drawable.edit_text_border_green)
                 }
             }
@@ -134,7 +131,7 @@ class New_capture : BaseActivity() {
             }
         }
 
-        cancelButton.setOnClickListener {
+        binding.cancelButton.setOnClickListener {
             val intent = Intent(this, welcomeActivity::class.java)
             startActivity(intent)
             finish()
@@ -148,24 +145,24 @@ class New_capture : BaseActivity() {
 
 
         // Handle submit button click
-        startCaptureButton.setOnClickListener {
+        binding.startCaptureButton.setOnClickListener {
             val referenceNumber = referenceNumberEditText.text.toString().trim()
 
             if (referenceNumber.isEmpty()) {
 
-                errorText.visibility = View.VISIBLE
+                binding.errorText.visibility = View.VISIBLE
                 referenceNumberEditText.setBackgroundResource(R.drawable.input_border_red)
-                errorText.setText(R.string.please_enter_a_scan_id)
+                binding.errorText.setText(R.string.please_enter_a_scan_id)
             } else if (existingReferenceNumbers.contains(referenceNumber.lowercase())) {
-                errorText.visibility = View.VISIBLE
+                binding.errorText.visibility = View.VISIBLE
                 referenceNumberEditText.setBackgroundResource(R.drawable.input_border_red)
-                errorText.setText(R.string.this_scan_id_already_exists)
+                binding.errorText.setText(R.string.this_scan_id_already_exists)
             } else if (hasAllPermissions()) {
                 //LogFileUtil.appendLog("Moving to face detection screen")
 
                 Analytics.onCaptureStarted()
 
-                cloudRepository.createPhotocollection(referenceNumber, autoUploadCheckbox.isChecked)
+                cloudRepository.createPhotocollection(referenceNumber, binding.autoUploadCheckbox.isChecked)
                 navigateToFaceDetection(referenceNumber)
             } else {
                 showToastAndLog("Permissions are required to proceed")
@@ -201,16 +198,11 @@ class New_capture : BaseActivity() {
                 Log.d("Preferene", "Will show modal now")
             }
 
-            val intent = Intent(this, MainActivity::class.java)
-            intent.putExtra("REFERENCE_NUMBER", referenceNumber)
-            startActivity(intent)
-            finish()
-
-
+            navigateToActivity(referenceNumber)
         }
 
 
-        if (newCaptureCheckbox.isChecked) {
+        if (binding.newCaptureCheckbox.isChecked) {
 
             // Set the inflated view as content
 
@@ -236,17 +228,22 @@ class New_capture : BaseActivity() {
                 mediaPlayer.start() // Start playback when prepared
             }
 
-
-
             dialog.show()
 
         } else {
-            val intent = Intent(this, MainActivity::class.java)
-            intent.putExtra("REFERENCE_NUMBER", referenceNumber)
-            startActivity(intent)
-            finish()
+            navigateToActivity(referenceNumber)
         }
 
+    }
+
+    private fun navigateToActivity(referenceNumber: String) {
+        val intent = Intent(
+            this,
+            if (binding.arModeCheckbox.isChecked) MainActivity::class.java else CameraActivity::class.java
+        )
+        intent.putExtra("REFERENCE_NUMBER", referenceNumber)
+        startActivity(intent)
+        finish()
     }
 
     override fun onPermissionsGranted() {

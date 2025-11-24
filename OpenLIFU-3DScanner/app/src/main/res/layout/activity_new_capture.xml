@@ -85,6 +85,32 @@
     <!-- Cancel Button -->
 
     <LinearLayout
+        android:id="@+id/arModeContainer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:orientation="horizontal"
+        android:layout_marginStart="32dp"
+        app:layout_constraintBottom_toTopOf="@+id/instructionContainer"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <CheckBox
+            android:id="@+id/arModeCheckbox"
+            android:layout_width="38dp"
+            android:layout_height="32dp"
+            android:buttonTint="@color/algae"
+            android:checked="false" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:layout_marginStart="8dp"
+            android:text="@string/ar_mode"
+            android:textColor="@color/white" />
+    </LinearLayout>
+
+    <LinearLayout
         android:id="@+id/instructionContainer"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

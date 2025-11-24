@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    tools:context=".fragments.PhotoCaptureFragment">
+
+    <TextView
+        android:id="@+id/title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/face_detected"
+        android:layout_marginTop="16dp"
+        android:textStyle="bold"
+        android:textSize="24sp"
+        android:textColor="@color/white"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"/>
+
+    <ProgressBar
+        android:id="@+id/progress_bar"
+        android:layout_width="0dp"
+        android:layout_height="8dp"
+        android:indeterminate="false"
+        style="@style/Widget.AppCompat.ProgressBar.Horizontal"
+        android:progress="0"
+        android:progressBackgroundTint="@color/white"
+        android:progressBackgroundTintMode="src_over"
+        android:progressTint="@color/ripple_red"
+        app:layout_constraintBottom_toTopOf="@+id/text_images"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginBottom="16dp"/>
+
+    <TextView
+        android:id="@+id/text_images"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingVertical="4dp"
+        android:paddingHorizontal="16dp"
+        android:drawableStart="@android:drawable/ic_menu_gallery"
+        android:drawablePadding="8dp"
+        android:textSize="14sp"
+        android:gravity="center_vertical"
+        android:background="@drawable/bg_rounded_transparent"
+        android:textColor="@color/white"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/button_play"
+        android:layout_marginBottom="16dp"
+        tools:text="0 images"/>
+
+    <ImageView
+        android:id="@+id/image_left"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:src="@drawable/left"
+        app:layout_constraintBottom_toTopOf="@+id/progress_bar"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginBottom="8dp"
+        android:layout_marginStart="24dp"/>
+
+    <ImageView
+        android:id="@+id/image_phone"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:src="@drawable/mobile"
+        app:layout_constraintBottom_toTopOf="@+id/image_left"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginBottom="8dp" />
+
+    <ImageButton
+        android:id="@+id/button_play"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:background="@null"
+        android:src="@drawable/button_start_capture"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginBottom="32dp"/>
+
+    <ImageButton
+        android:id="@+id/button_pause"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:background="@null"
+        android:src="@drawable/button_pause_capture"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginBottom="32dp"
+        android:visibility="gone"/>
+
+    <Button
+        android:id="@+id/button_done"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Done"
+        android:textColor="@color/white"
+        android:background="@drawable/bg_rounded_transparent"
+        app:layout_constraintTop_toTopOf="@+id/button_play"
+        app:layout_constraintBottom_toBottomOf="@+id/button_play"
+        app:layout_constraintStart_toEndOf="@+id/button_play"
+        android:layout_marginStart="40dp"/>
+
+    <ImageButton
+        android:id="@+id/button_back"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:src="@drawable/back_curved_arrow"
+        android:background="@drawable/bg_circle_transparent"
+        app:layout_constraintTop_toTopOf="@+id/button_play"
+        app:layout_constraintBottom_toBottomOf="@+id/button_play"
+        app:layout_constraintEnd_toStartOf="@+id/button_play"
+        android:layout_marginEnd="40dp"/>
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>

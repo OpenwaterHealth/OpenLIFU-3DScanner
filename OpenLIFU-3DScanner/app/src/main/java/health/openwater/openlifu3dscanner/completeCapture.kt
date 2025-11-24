@@ -19,6 +19,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.bumptech.glide.load.engine.DiskCacheStrategy
 import health.openwater.openlifu3dscanner.Adapters.ImageDiscardAdapter
 import health.openwater.openlifu3dscanner.Modals.ImageDiscardModal
 import health.openwater.openlifu3dscanner.Adapters.OnImageClickListener
@@ -75,6 +76,8 @@ class completeCapture : BaseActivity() {
             override fun onImageClick(imageFile: File) {
                 Glide.with(this@completeCapture)
                     .load(imageFile)
+                    .diskCacheStrategy(DiskCacheStrategy.NONE)
+                    .skipMemoryCache(true)
                     .into(imageViewPreview)
 
                 selectedPosition = imageList.indexOfFirst { it.imageFile == imageFile }
@@ -86,7 +89,11 @@ class completeCapture : BaseActivity() {
         // Initially select the first image
         if (imageList.isNotEmpty()) {
             val firstImage = imageList[0].imageFile
-            Glide.with(this).load(firstImage).into(imageViewPreview)
+            Glide.with(this)
+                .load(firstImage)
+                .diskCacheStrategy(DiskCacheStrategy.NONE)
+                .skipMemoryCache(true)
+                .into(imageViewPreview)
             adapter.setSelectedPosition(0)
         }
 
@@ -184,7 +191,11 @@ class completeCapture : BaseActivity() {
     private fun updatePreviewSelection() {
         if (selectedPosition in imageList.indices) {
             val imageFile = imageList[selectedPosition].imageFile
-            Glide.with(this).load(imageFile).into(imageViewPreview)
+            Glide.with(this)
+                .load(imageFile)
+                .diskCacheStrategy(DiskCacheStrategy.NONE)
+                .skipMemoryCache(true)
+                .into(imageViewPreview)
             adapter.setSelectedPosition(selectedPosition)
             recyclerView.scrollToPosition(selectedPosition)
         }

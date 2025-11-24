@@ -10,6 +10,8 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
+
 import health.openwater.openlifu3dscanner.Modals.ImageDiscardModal;
 import health.openwater.openlifu3dscanner.R;
 
@@ -42,6 +44,8 @@ public class ImageDiscardAdapter extends RecyclerView.Adapter<ImageDiscardAdapte
 
         Glide.with(context)
                 .load(imageFile)
+                .diskCacheStrategy(DiskCacheStrategy.NONE)
+                .skipMemoryCache(true)
                 .into(holder.imageView);
 
         // selected image border logic
