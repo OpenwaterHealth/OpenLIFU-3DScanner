@@ -11,6 +11,7 @@ import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import health.openwater.openlifu3dscanner.databinding.ActivityCameraBinding
 import health.openwater.openlifu3dscanner.utils.CameraManager
+import health.openwater.openlifu3dscanner.utils.OrientationProvider
 import health.openwater.openlifu3dscanner.viewmodel.PhotoCaptureViewModel
 import io.github.sceneview.utils.setKeepScreenOn
 import kotlinx.coroutines.launch
@@ -23,6 +24,7 @@ class CameraActivity : BaseActivity() {
     private val viewModel: PhotoCaptureViewModel by viewModels()
     private var cameraManager: CameraManager? = null
     private lateinit var referenceNumber: String
+    private lateinit var orientationProvider: OrientationProvider
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
@@ -45,8 +47,11 @@ class CameraActivity : BaseActivity() {
         applyWindowInsets(R.id.main, displayCutout = false)
 
         referenceNumber = intent?.getStringExtra("REFERENCE_NUMBER") ?: ""
-
         viewModel.setReferenceNumber(referenceNumber)
+
+        orientationProvider = OrientationProvider(this) {
+            viewModel.onOrientationData(it)
+        }
 
         lifecycleScope.launch {
             viewModel.getFaceDetectionCompleteFlow().flowWithLifecycle(lifecycle).collect {
@@ -81,5 +86,15 @@ class CameraActivity : BaseActivity() {
         val intent = Intent(this, welcomeActivity::class.java)
         startActivity(intent)
         finish()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        orientationProvider.stop()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        orientationProvider.start()
     }
 }

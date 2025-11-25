@@ -46,13 +46,13 @@ class PhotoCaptureFragment : BaseFragment() {
             .into(binding.imageLeft)
 
         binding.buttonBack.setOnClickListener {
-            viewModel.stopCapture()
+            viewModel.stopCapture(false)
             (requireActivity() as CameraActivity).navigateWelcomeScreen()
         }
 
         ViewCompat.setBackgroundTintList(binding.buttonDone, null)
         binding.buttonDone.setOnClickListener {
-            viewModel.stopCapture()
+            viewModel.stopCapture(true)
             (requireActivity() as CameraActivity).navigateToCaptureCompleteScreen()
         }
 
@@ -63,7 +63,7 @@ class PhotoCaptureFragment : BaseFragment() {
         }
 
         binding.buttonPause.setOnClickListener {
-            viewModel.stopCapture()
+            viewModel.stopCapture(false)
             binding.buttonPlay.visibility = View.VISIBLE
             binding.buttonPause.visibility = View.INVISIBLE
         }

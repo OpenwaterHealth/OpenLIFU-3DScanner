@@ -8,13 +8,18 @@ import android.media.MediaScannerConnection
 import android.os.Environment
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import health.openwater.openlifu3dscanner.App
+import health.openwater.openlifu3dscanner.api.dto.Coordinates
+import health.openwater.openlifu3dscanner.api.dto.ImageCoordinates
 import health.openwater.openlifu3dscanner.api.repository.CloudRepository
 import health.openwater.openlifu3dscanner.data.FaceDetectionResult
+import health.openwater.openlifu3dscanner.data.ImageOrientationData
+import health.openwater.openlifu3dscanner.data.OrientationData
 import health.openwater.openlifu3dscanner.utils.CameraManager
+import health.openwater.openlifu3dscanner.utils.PositionGenerator
+import health.openwater.openlifu3dscanner.utils.writeToFile
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -44,6 +49,8 @@ class PhotoCaptureViewModel
     private var photoDir: File? = null
     private var cameraManagerRef = WeakReference<CameraManager>(null)
     private var photoNumber = 0
+    private var latestOrientation: OrientationData? = null
+    private val orientations = mutableListOf<ImageOrientationData>()
 
     private val audioManager = getApplication<App>().getSystemService(Context.AUDIO_SERVICE) as AudioManager
     private val sound = MediaActionSound()
@@ -102,7 +109,7 @@ class PhotoCaptureViewModel
     }
 
     fun startCapture() {
-        stopCapture()
+        stopCapture(false)
         captureJob = viewModelScope.launch {
             while (isActive && photoNumber < TOTAL_IMAGES) {
                 val fileName = "${referenceNumber}_${String.format("%03d", ++photoNumber)}.jpg"
@@ -110,13 +117,18 @@ class PhotoCaptureViewModel
 
                 cameraManagerRef.get()?.takePicture(file) {
                     Log.i(TAG, "Photo saved to: $file")
+                    latestOrientation?.let {
+                        Log.d(TAG, "Orientation: $fileName ${it.forward.asList()}")
+                        orientations.add(ImageOrientationData(fileName, it))
+                    }
+
                     capturedImagesNumberFlow.value = photoNumber
                     cloudRepository.onImageCaptured()
                     playShutterClick()
                     scanMediaGallery(file)
 
                     if (photoNumber == TOTAL_IMAGES) {
-                        stopCapture()
+                        stopCapture(true)
                         captureCompleteFlow.value = true
                     }
                 }
@@ -126,9 +138,49 @@ class PhotoCaptureViewModel
         }
     }
 
-    fun stopCapture() {
+    fun stopCapture(complete: Boolean) {
         captureJob?.cancel()
         captureJob = null
+        if (complete) {
+            savePositionsJson()
+        }
+    }
+
+    fun onOrientationData(data: OrientationData) {
+        latestOrientation = data
+    }
+
+    private fun savePositionsJson() {
+        if (orientations.isEmpty()) return
+
+        val positions = PositionGenerator.generatePositions(
+            forwards = orientations.map { it.orientation.forward },
+            stepSize = 0.15f,
+            smoothWindow = 5
+        )
+
+        val coordinatesList = mutableListOf<ImageCoordinates>()
+
+        orientations.forEachIndexed { idx, data ->
+            val position = positions[idx]
+
+            val imageCoordinates = ImageCoordinates(
+                image = data.filename,
+                x = position[0],
+                y = position[1],
+                z = position[2]
+            )
+            coordinatesList.add(imageCoordinates)
+
+            Log.d(TAG, "Position: forward = ${data.orientation.forward.asList()}, coordinates = $imageCoordinates")
+        }
+
+        val coordinates = Coordinates(images = coordinatesList)
+        photoDir?.let {
+            coordinates.writeToFile(it)
+        }
+
+        cloudRepository.uploadCoordinates(coordinates)
     }
 
     private fun playShutterClick() {
@@ -150,8 +202,8 @@ class PhotoCaptureViewModel
 
     companion object {
         private val TAG = PhotoCaptureViewModel::class.simpleName
-        private const val TOTAL_IMAGES = 60
-        private const val CAPTURE_DELAY = 3000L
+        private const val TOTAL_IMAGES = 120
+        private const val CAPTURE_DELAY = 1500L
     }
 
 }

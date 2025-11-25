@@ -61,6 +61,8 @@ import dagger.hilt.android.AndroidEntryPoint
 import dev.romainguy.kotlin.math.Float3
 import dev.romainguy.kotlin.math.Quaternion
 import health.openwater.openlifu3dscanner.Modals.bulletPointConfig
+import health.openwater.openlifu3dscanner.api.dto.Coordinates
+import health.openwater.openlifu3dscanner.api.dto.ImageCoordinates
 import health.openwater.openlifu3dscanner.api.repository.CloudRepository
 import io.github.sceneview.ar.ARSceneView
 import io.github.sceneview.ar.node.AnchorNode
@@ -78,6 +80,9 @@ import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
 import javax.inject.Inject
+import kotlin.math.abs
+import kotlin.math.cos
+import kotlin.math.sin
 import kotlin.math.sqrt
 
 @AndroidEntryPoint
@@ -1098,8 +1103,8 @@ val offsetVector = Vector3(
     private fun createQuaternionFromAxisAngle(axis: Vector3, angleDegrees: Float): Quaternion {
         val angleRad = Math.toRadians(angleDegrees.toDouble()).toFloat()
         val halfAngle = angleRad / 2f
-        val sinHalf = kotlin.math.sin(halfAngle)
-        val cosHalf = kotlin.math.cos(halfAngle)
+        val sinHalf = sin(halfAngle)
+        val cosHalf = cos(halfAngle)
         val normAxis = axis.normalized()
         return Quaternion(
             normAxis.x * sinHalf,
@@ -1196,12 +1201,12 @@ val offsetVector = Vector3(
     private fun vibrateShort(durationMs: Long = 35) {
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                val vm = getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
+                val vm = getSystemService(VIBRATOR_MANAGER_SERVICE) as VibratorManager
                 val v = vm.defaultVibrator
                 v.vibrate(VibrationEffect.createOneShot(durationMs, VibrationEffect.DEFAULT_AMPLITUDE))
             } else {
                 @Suppress("DEPRECATION")
-                val v = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+                val v = getSystemService(VIBRATOR_SERVICE) as Vibrator
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     v.vibrate(VibrationEffect.createOneShot(durationMs, VibrationEffect.DEFAULT_AMPLITUDE))
                 } else {
@@ -1584,7 +1589,7 @@ val offsetVector = Vector3(
     /** True if nose is within tolerance of the screen center. */
     private fun isNoseCentered(dxPx: Float, dyPx: Float, toleranceDp: Float = 24f): Boolean {
         val tolPx = dpToPx(toleranceDp)
-        return kotlin.math.abs(dxPx) <= tolPx && kotlin.math.abs(dyPx) <= tolPx
+        return abs(dxPx) <= tolPx && abs(dyPx) <= tolPx
     }
 
 
@@ -1678,7 +1683,7 @@ val offsetVector = Vector3(
                                         // Optional: guidance text for user
                                         val hint = when {
                                             centered -> "Centered"
-                                            kotlin.math.abs(dx) > kotlin.math.abs(dy) -> if (dx > 0) "Move camera RIGHT" else "Move camera LEFT"
+                                            abs(dx) > abs(dy) -> if (dx > 0) "Move camera RIGHT" else "Move camera LEFT"
                                             else -> if (dy > 0) "Move camera DOWN" else "Move camera UP"
                                         }
 
@@ -1986,6 +1991,8 @@ val offsetVector = Vector3(
             val root = JSONObject()
             val imagesArray = JSONArray()
 
+            val imageCoordinatesList = mutableListOf<ImageCoordinates>()
+
             for (entry in capturedDataList) {
                 val obj = JSONObject()
                 obj.put("image", entry["image"])
@@ -1993,9 +2000,22 @@ val offsetVector = Vector3(
                 obj.put("y", entry["y"])
                 obj.put("z", entry["z"])
                 imagesArray.put(obj)
+
+                imageCoordinatesList.add(
+                    ImageCoordinates(
+                        image = entry["image"] as String,
+                        x = entry["x"] as Float,
+                        y = entry["y"] as Float,
+                        z = entry["z"] as Float
+                    )
+                )
             }
 
             root.put("Images", imagesArray)
+
+            cloudRepository.uploadCoordinates(Coordinates(
+                images = imageCoordinatesList
+            ))
 
             val jsonString = root.toString(4)
             val fileName = "coordinates.json"

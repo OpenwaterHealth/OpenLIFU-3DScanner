@@ -19,11 +19,12 @@ object CoroutineHelper {
         lifecycle: Lifecycle,
         cloudRepository: CloudRepository,
         photocollectionId: Long,
-        joinPhotos: Boolean
+        joinPhotos: Boolean,
+        joinCoordinates: Boolean
     ): LiveData<Photocollection?> {
         val data = MutableLiveData<Photocollection?>()
         lifecycle.coroutineScope.launch {
-            data.postValue(cloudRepository.getPhotocollection(photocollectionId, joinPhotos))
+            data.postValue(cloudRepository.getPhotocollection(photocollectionId, joinPhotos, joinCoordinates))
         }
         return data
     }

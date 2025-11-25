@@ -102,7 +102,7 @@ public class ImagePreview extends BaseActivity {
                 downloadMeshButton.setEnabled(false);
 
             LiveData<Photocollection> photocollectionLiveData = CoroutineHelper.getPhotocollection(
-                    getLifecycle(), cloudRepository, photocollectionId, true
+                    getLifecycle(), cloudRepository, photocollectionId, true, false
             );
             photocollectionLiveData.observe(this, photocollection -> {
                 if (photocollection != null && photocollection.getPhotos() != null) {

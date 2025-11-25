@@ -1,5 +1,6 @@
 package health.openwater.openlifu3dscanner.api
 
+import health.openwater.openlifu3dscanner.api.dto.Coordinates
 import health.openwater.openlifu3dscanner.api.dto.CreatePhotocollectionRequest
 import health.openwater.openlifu3dscanner.api.dto.Photocollection
 import health.openwater.openlifu3dscanner.api.dto.StartPhotoscanRequest
@@ -25,7 +26,8 @@ interface PhotocollectionService {
     @GET("photocollection/{id}")
     suspend fun getPhotocollection(
         @Path("id") photocollectionId: Long,
-        @Query("join_photos") joinPhotos: Boolean = false
+        @Query("join_photos") joinPhotos: Boolean = false,
+        @Query("join_coordinates") joinCoordinates: Boolean = false
     ): Response<Photocollection>
 
     @GET("photocollection/account/{uid}")
@@ -58,4 +60,9 @@ interface PhotocollectionService {
         @Body request: StartPhotoscanRequest
     ): Response<StartPhotoscanResponse>
 
+    @POST("photocollection/{id}/coordinates")
+    suspend fun uploadCoordinates(
+        @Path("id") photocollectionId: Long,
+        @Body data: Coordinates
+    ): Response<Void>
 }

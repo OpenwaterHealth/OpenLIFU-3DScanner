@@ -6,6 +6,7 @@ import health.openwater.openlifu3dscanner.api.AuthService
 import health.openwater.openlifu3dscanner.api.PhotocollectionService
 import health.openwater.openlifu3dscanner.api.PhotoscanService
 import health.openwater.openlifu3dscanner.api.WebsocketService
+import health.openwater.openlifu3dscanner.api.dto.Coordinates
 import health.openwater.openlifu3dscanner.api.dto.CreatePhotocollectionRequest
 import health.openwater.openlifu3dscanner.api.dto.Photocollection
 import health.openwater.openlifu3dscanner.api.dto.Photoscan
@@ -15,6 +16,7 @@ import health.openwater.openlifu3dscanner.api.model.DownloadingItem
 import health.openwater.openlifu3dscanner.api.model.ImageUploadProgress
 import health.openwater.openlifu3dscanner.api.model.ReconstructionProgress
 import health.openwater.openlifu3dscanner.api.model.Type
+import health.openwater.openlifu3dscanner.utils.writeToFile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -160,8 +162,23 @@ class CloudRepository(
 
     suspend fun startReconstruction(photocollectionId: Long): Long? {
         return try {
+            var request = StartPhotoscanRequest()
+
+            val photocollectionResponse = photocollectionService.getPhotocollection(
+                photocollectionId, joinPhotos = false, joinCoordinates = true
+            )
+            if (photocollectionResponse.isSuccessful) {
+                photocollectionResponse.body()?.coordinates?.let { coordinates ->
+                    request = StartPhotoscanRequest(
+                        matchingMode = "spatial",
+                        numNeighbors = 10,
+                        locations = coordinates.images.map { listOf(it.x, it.y, it.z) }
+                    )
+                }
+            }
+
             val response =
-                photocollectionService.startPhotoscan(photocollectionId, StartPhotoscanRequest())
+                photocollectionService.startPhotoscan(photocollectionId, request)
             if (response.isSuccessful)
                 response.body()?.photoscanId
             else
@@ -185,9 +202,13 @@ class CloudRepository(
         websocketService.disconnect(photoscanId)
     }
 
-    suspend fun getPhotocollection(id: Long, joinPhotos: Boolean = false): Photocollection? {
+    suspend fun getPhotocollection(
+        id: Long,
+        joinPhotos: Boolean = false,
+        joinCoordinates: Boolean = false
+    ): Photocollection? {
         try {
-            val response = photocollectionService.getPhotocollection(id, joinPhotos)
+            val response = photocollectionService.getPhotocollection(id, joinPhotos, joinCoordinates)
             if (response.isSuccessful) {
                 return response.body()
             }
@@ -228,6 +249,18 @@ class CloudRepository(
             e.printStackTrace()
         }
         return false
+    }
+
+    fun uploadCoordinates(coordinates: Coordinates) {
+        currentPhotocollection?.let { photocollection ->
+            scope.launch {
+                try {
+                    photocollectionService.uploadCoordinates(photocollection.id, coordinates)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        }
     }
 
     fun getImagesDir(referenceNumber: String) = File(
@@ -318,7 +351,9 @@ class CloudRepository(
 
     private suspend fun downloadPhotocollection(id: Long): Boolean {
         try {
-            val response = photocollectionService.getPhotocollection(id, joinPhotos = true)
+            val response = photocollectionService.getPhotocollection(
+                id, joinPhotos = true, joinCoordinates = true
+            )
             if (response.isSuccessful) {
                 Log.d(TAG, "Loading photocollection $id")
 
@@ -326,6 +361,8 @@ class CloudRepository(
                     val photos = photocollection.photos ?: listOf()
                     val outputDir = getImagesDir(photocollection.name ?: return false)
                     if (!outputDir.exists()) outputDir.mkdirs()
+
+                    photocollection.coordinates?.writeToFile(outputDir)
 
                     for (photo in photos) {
                         Log.d(TAG, "Loading photo ${photo.fileName}")
@@ -361,6 +398,7 @@ class CloudRepository(
         private val TAG = CloudRepository::class.simpleName
         const val OPENLIFU_DIR = "OpenLIFU-3DScanner"
         const val SCAN_DIR = "scan"
+        const val COORDINATES_FILE_NAME = "coordinates.json"
     }
 
 }

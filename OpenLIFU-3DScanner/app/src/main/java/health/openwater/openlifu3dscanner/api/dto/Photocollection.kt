@@ -8,5 +8,6 @@ data class Photocollection(
     val name: String?,
     val creationDate: Date,
     val modificationDate: Date?,
-    val photos: List<Photo>?
+    val photos: List<Photo>?,
+    val coordinates: Coordinates?
 )
