@@ -142,6 +142,7 @@ class completeCapture : BaseActivity() {
         }
 
         saveFinishButton.setOnClickListener {
+            var cancelConfirmed = false
             val dialog = Dialog(this)
             val view = layoutInflater.inflate(R.layout.modal_capture_save, null)
             val captureSaveNoButton = view.findViewById<Button>(R.id.captureSaveNoButton)
@@ -181,7 +182,13 @@ class completeCapture : BaseActivity() {
             }
 
             captureSaveNoButton.setOnClickListener {
-                dialog.dismiss()
+                if (!cancelConfirmed) {
+                    cancelConfirmed = true
+                    saveTextInModal.text =
+                        getString(R.string.captured_images_will_be_deleted_this_action_cannot_be_undone_do_you_want_to_proceed)
+                } else {
+                    dialog.dismiss()
+                }
             }
         }
     }

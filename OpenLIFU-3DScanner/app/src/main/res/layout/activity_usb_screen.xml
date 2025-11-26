@@ -16,7 +16,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:paddingHorizontal="24dp"
-        android:text="Ready for Transfer Scan ABC123"
+        android:text="Ready to Transfer Scan ABC123"
         android:textAlignment="center"
         android:textColor="@color/white"
         android:textSize="26sp"

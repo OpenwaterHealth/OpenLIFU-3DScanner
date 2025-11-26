@@ -63,7 +63,7 @@ class UsbScreenActivity : BaseActivity() {
 
         referenceNumber = intent.getStringExtra("REFERENCE_NUMBER") ?: "REFNO"
         totalImageCount = intent.getStringExtra("TOTAL_IMAGE_COUNT") ?: "00"
-        readyForTransferText.text = "Ready for Transfer Scan $referenceNumber"
+        readyForTransferText.text = "Ready to Transfer Scan $referenceNumber"
         val filter = IntentFilter().apply {
             addAction(Intent.ACTION_POWER_CONNECTED)
             addAction(Intent.ACTION_POWER_DISCONNECTED)

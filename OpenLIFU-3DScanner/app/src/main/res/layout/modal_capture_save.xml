@@ -36,10 +36,10 @@
 
 
     <Button
-        android:id="@+id/captureSaveYesButton"
+        android:id="@+id/captureSaveNoButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Yes"
+        android:text="No"
         android:textAllCaps="false"
         app:backgroundTint="@null"
         android:background="@drawable/round_green_button"
@@ -49,10 +49,10 @@
         android:textColor="@color/white"/>
 
     <Button
-        android:id="@+id/captureSaveNoButton"
+        android:id="@+id/captureSaveYesButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="No"
+        android:text="Yes"
         android:textAllCaps="false"
         app:backgroundTint="@null"
         android:background="@drawable/round_cancel_ok"

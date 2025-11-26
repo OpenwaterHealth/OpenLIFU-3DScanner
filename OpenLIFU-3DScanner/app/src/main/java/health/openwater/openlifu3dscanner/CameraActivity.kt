@@ -84,6 +84,7 @@ class CameraActivity : BaseActivity() {
 
     fun navigateWelcomeScreen() {
         val intent = Intent(this, welcomeActivity::class.java)
+        intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
         startActivity(intent)
         finish()
     }

@@ -107,6 +107,8 @@ class ReconstructionActivity : BaseActivity() {
                         Analytics.onReconstructionFailed()
                         textTitle.text = getString(R.string.reconstruction_failed)
                         textTitle.setTextColor(getColor(R.color.ripple_red))
+                        textDescription.text =
+                            getString(R.string.the_reconstruction_failed_please_retry_the_reconstruction_if_the_problem_persists_then_contact_support)
                         buttonDownload.isEnabled = false
                     }
 

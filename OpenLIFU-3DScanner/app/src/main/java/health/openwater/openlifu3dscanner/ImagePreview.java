@@ -94,19 +94,23 @@ public class ImagePreview extends BaseActivity {
                 (photoscanStatus == PhotoscanStatus.FINISHED || photoscanStatus == PhotoscanStatus.RUNNING);
 
         if (!cloudRepository.isLoggedInAndOnline() || photocollectionId == -1) {
-            reconstructMeshButton.setEnabled(false);
-            downloadMeshButton.setEnabled(false);
+            reconstructMeshButton.setVisibility(View.GONE);
+            downloadMeshButton.setVisibility(View.GONE);
         } else {
-            reconstructMeshButton.setEnabled(false);
+            reconstructMeshButton.setVisibility(View.GONE);
             if (photoscanId == -1 || photoscanStatus != PhotoscanStatus.FINISHED)
-                downloadMeshButton.setEnabled(false);
+                downloadMeshButton.setVisibility(View.GONE);
 
             LiveData<Photocollection> photocollectionLiveData = CoroutineHelper.getPhotocollection(
                     getLifecycle(), cloudRepository, photocollectionId, true, false
             );
             photocollectionLiveData.observe(this, photocollection -> {
                 if (photocollection != null && photocollection.getPhotos() != null) {
-                    reconstructMeshButton.setEnabled(photocollection.getPhotos().size() > 1 && !isPhotoscanAvailable);
+                    if (photocollection.getPhotos().size() > 1 && !isPhotoscanAvailable) {
+                        reconstructMeshButton.setVisibility(View.VISIBLE);
+                    } else {
+                        reconstructMeshButton.setVisibility(View.GONE);
+                    }
                 }
             });
         }

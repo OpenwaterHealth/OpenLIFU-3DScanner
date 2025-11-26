@@ -64,8 +64,7 @@
         android:layout_width="216dp"
         android:layout_height="54dp"
         android:layout_marginTop="264dp"
-        android:text="AR Photogrammetry Image Capture"
-
+        android:text="@string/photoscan_nimage_capture"
         android:textAlignment="center"
         android:textColor="@color/white"
         android:textSize="20sp"

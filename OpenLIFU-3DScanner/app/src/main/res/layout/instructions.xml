@@ -67,10 +67,15 @@
                     android:layout_marginBottom="10dp">
 
                     <!-- Tick Icon -->
-                    <ImageView
+                    <TextView
                         android:layout_width="16dp"
                         android:layout_height="16dp"
-                        android:src="@drawable/ic_tick"
+                        android:background="@drawable/ic_circle_black"
+                        android:text="1"
+                        android:textSize="10sp"
+                        android:textStyle="bold"
+                        android:gravity="center"
+                        android:textColor="@color/white"
                         android:layout_marginEnd="8dp" />
 
                     <!-- Text -->
@@ -79,7 +84,7 @@
                         android:layout_marginTop="-3dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="Choose a Well-Lit Area (Soft indoor lighting recommended)."
+                        android:text="Choose a well-lit area (soft indoor lighting recommended)."
                         android:textSize="13sp"
                         android:textColor="#000000"
                         android:lineSpacingExtra="4dp"
@@ -92,10 +97,15 @@
                     android:orientation="horizontal"
                     android:layout_marginBottom="10dp">
 
-                    <ImageView
+                    <TextView
                         android:layout_width="16dp"
                         android:layout_height="16dp"
-                        android:src="@drawable/ic_tick"
+                        android:background="@drawable/ic_circle_black"
+                        android:text="2"
+                        android:textSize="10sp"
+                        android:textStyle="bold"
+                        android:gravity="center"
+                        android:textColor="@color/white"
                         android:layout_marginEnd="8dp" />
 
                     <TextView
@@ -103,7 +113,7 @@
                         android:layout_marginTop="-3dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="Subject Should Stay Still with Eyes Closed and No Expression Changes."
+                        android:text="Subject should stay still with eyes closed and no expression changes."
                         android:textSize="13sp"
                         android:textColor="#000000"
                         android:lineSpacingExtra="4dp" />
@@ -118,10 +128,15 @@
                     android:orientation="horizontal"
                     android:layout_marginBottom="10dp">
 
-                    <ImageView
+                    <TextView
                         android:layout_width="16dp"
                         android:layout_height="16dp"
-                        android:src="@drawable/ic_tick"
+                        android:background="@drawable/ic_circle_black"
+                        android:text="3"
+                        android:textSize="10sp"
+                        android:textStyle="bold"
+                        android:gravity="center"
+                        android:textColor="@color/white"
                         android:layout_marginEnd="8dp" />
 
                     <TextView
@@ -129,7 +144,7 @@
                         android:layout_marginTop="-3dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="Hold the Camera at Eye Level, Directly in Front of the Subject’s Face."
+                        android:text="Hold the camera at eye level, directly in front of the subject’s face."
                         android:textSize="13sp"
                         android:textColor="#000000"
                         android:lineSpacingExtra="4dp" />
@@ -141,10 +156,15 @@
                     android:orientation="horizontal"
                     android:layout_marginBottom="10dp">
 
-                    <ImageView
+                    <TextView
                         android:layout_width="16dp"
                         android:layout_height="16dp"
-                        android:src="@drawable/ic_tick"
+                        android:background="@drawable/ic_circle_black"
+                        android:text="4"
+                        android:textSize="10sp"
+                        android:textStyle="bold"
+                        android:gravity="center"
+                        android:textColor="@color/white"
                         android:layout_marginEnd="8dp" />
 
                     <TextView
@@ -152,7 +172,7 @@
                         android:layout_marginTop="-3dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="The App Detects the Face and Measures Distance, Prompting Adjustments if Needed."
+                        android:text="The app detects the face and measures distance, prompting adjustments if needed."
                         android:textSize="13sp"
                         android:textColor="#000000"
                         android:lineSpacingExtra="4dp" />
@@ -164,10 +184,15 @@
                     android:orientation="horizontal"
                     android:layout_marginBottom="10dp">
 
-                    <ImageView
+                    <TextView
                         android:layout_width="16dp"
                         android:layout_height="16dp"
-                        android:src="@drawable/ic_tick"
+                        android:background="@drawable/ic_circle_black"
+                        android:text="5"
+                        android:textSize="10sp"
+                        android:textStyle="bold"
+                        android:gravity="center"
+                        android:textColor="@color/white"
                         android:layout_marginEnd="8dp" />
 
                     <TextView
@@ -175,7 +200,7 @@
                         android:layout_marginTop="-3dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="Start the Scan to Generate Dots Around the Subject’s Head."
+                        android:text="Start the scan to generate dots around the subject’s head."
                         android:textSize="13sp"
                         android:textColor="#000000"
                         android:lineSpacingExtra="4dp" />
@@ -187,10 +212,15 @@
                     android:orientation="horizontal"
                     android:layout_marginBottom="10dp">
 
-                    <ImageView
+                    <TextView
                         android:layout_width="16dp"
                         android:layout_height="16dp"
-                        android:src="@drawable/ic_tick"
+                        android:background="@drawable/ic_circle_black"
+                        android:text="6"
+                        android:textSize="10sp"
+                        android:textStyle="bold"
+                        android:gravity="center"
+                        android:textColor="@color/white"
                         android:layout_marginEnd="8dp" />
 
                     <TextView
@@ -198,7 +228,7 @@
                         android:layout_marginTop="-3dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="Move Slowly and Align the Target with Each Dot for Steady Captures."
+                        android:text="Move slowly and align the target with each dot for steady captures."
                         android:textSize="13sp"
                         android:textColor="#000000"
                         android:lineSpacingExtra="4dp" />
@@ -210,10 +240,15 @@
                     android:orientation="horizontal"
                     android:layout_marginBottom="10dp">
 
-                    <ImageView
+                    <TextView
                         android:layout_width="16dp"
                         android:layout_height="16dp"
-                        android:src="@drawable/ic_tick"
+                        android:background="@drawable/ic_circle_black"
+                        android:text="7"
+                        android:textSize="10sp"
+                        android:textStyle="bold"
+                        android:gravity="center"
+                        android:textColor="@color/white"
                         android:layout_marginEnd="8dp" />
 
                     <TextView
@@ -221,7 +256,7 @@
                         android:layout_marginTop="-3dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="App Notifies if the Subject is Too Close or Far, Ensuring Perfect Frames Only."
+                        android:text="App notifies if the subject is too close or far, ensuring perfect frames only."
                         android:textSize="13sp"
                         android:textColor="#000000"
                         android:lineSpacingExtra="4dp" />
@@ -234,10 +269,15 @@
                     android:background="@color/white"
                     android:layout_marginBottom="10dp">
 
-                    <ImageView
+                    <TextView
                         android:layout_width="16dp"
                         android:layout_height="16dp"
-                        android:src="@drawable/ic_tick"
+                        android:background="@drawable/ic_circle_black"
+                        android:text="8"
+                        android:textSize="10sp"
+                        android:textStyle="bold"
+                        android:gravity="center"
+                        android:textColor="@color/white"
                         android:layout_marginEnd="8dp" />
 
                     <TextView
@@ -245,7 +285,7 @@
                         android:layout_marginTop="-3dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="After Circle Shots, Follow the App to Capture Vertical Photos from Chin to Top of Head."
+                        android:text="After circle shots, follow the app to capture vertical photos from chin to top of head."
                         android:textSize="13sp"
                         android:textColor="#000000"
                         android:lineSpacingExtra="4dp" />

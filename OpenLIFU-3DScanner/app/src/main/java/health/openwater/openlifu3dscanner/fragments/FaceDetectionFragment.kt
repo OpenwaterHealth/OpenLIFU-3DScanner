@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
+import health.openwater.openlifu3dscanner.CameraActivity
 import health.openwater.openlifu3dscanner.R
 import health.openwater.openlifu3dscanner.databinding.FragmentFaceDetectionBinding
 import health.openwater.openlifu3dscanner.viewmodel.PhotoCaptureViewModel
@@ -42,6 +43,11 @@ class FaceDetectionFragment : BaseFragment() {
                 binding.title.text = getString(if (it) R.string.face_detected else R.string.scan_your_head)
                 binding.footer.visibility = if (it) View.INVISIBLE else View.VISIBLE
             }
+        }
+
+        binding.buttonBack.setOnClickListener {
+            viewModel.stopCapture(false)
+            (requireActivity() as CameraActivity).navigateWelcomeScreen()
         }
     }
 

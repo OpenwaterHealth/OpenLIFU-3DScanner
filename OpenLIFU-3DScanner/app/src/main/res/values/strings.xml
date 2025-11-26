@@ -1,6 +1,6 @@
 <resources>
     <string name="app_name">OpenLIFU</string>
-    <string name="notice">Investigational device. Limited by Federal (or United States) law to investigational use. The system described here has not been evaluated by the FDA and is not designed for the treatment or diagnosis of any disease. It is provided AS-IS, with no warranties. User assumes all liability and responsibility for identifying and mitigating risks associated with using this software.</string>
+    <string name="notice">Research device. Limited by Federal (or United States) law to research use. The system described here has not been evaluated by the FDA and is not designed for the treatment or diagnosis of any disease. It is provided AS-IS, with no warranties. User assumes all liability and responsibility for identifying and mitigating risks associated with using this software.</string>
     <string name="review_capture_abc123">Review Capture %1$s</string>
     <string name="endcaptureText">This will finish the current capture with %1$d images. Are you sure you want to finish?</string>
     <string name="discardText">This will discard the current capture. Are you sure you want to continue?</string>
@@ -46,11 +46,11 @@
     <string name="cannot_start_reconstruction">Cannot start Reconstruction</string>
     <string name="download_to_device">Download to Device</string>
     <string name="running_reconstruction">Running\nReconstruction</string>
-    <string name="reconstruction_will_continue_running_in_the_cloud_results_can_also_be_downloaded_later_once_complete">Reconstruction will continue running in the cloud. Results can also be downloaded later once complete</string>
+    <string name="reconstruction_will_continue_running_in_the_cloud_results_can_also_be_downloaded_later_once_complete">The reconstruction will continue running in the cloud. You may safely close the app and download the results once complete.</string>
     <string name="reconstruction_complete">Reconstruction Complete</string>
     <string name="reconstruction_failed">Reconstruction Failed</string>
     <string name="reconstruction_stopped">Reconstruction Stopped</string>
-    <string name="results_can_also_be_downloaded_later">Results can also be downloaded later</string>
+    <string name="results_can_also_be_downloaded_later">The reconstruction can now be downloaded.</string>
     <string name="downloading">Downloading...</string>
     <string name="ok">Ok</string>
     <string name="download_successful">Download\nSuccessful</string>
@@ -74,11 +74,11 @@
     <string name="done">Done</string>
     <string name="delete">Delete</string>
     <string name="delete_capture">Delete Capture</string>
-    <string name="delete_capture_description"><![CDATA[<font color="#488C75">The scan is available in the cloud. </font><font color="#FFFFFF">Would you like to delete the local copy, the cloud copy, or both?</font>]]></string>
-    <string name="delete_capture_description_local_only_offline"><![CDATA[<font color="#FFFFFF">This will delete the current scan from the local device. </font><font color="#8D0808">The scan is not available in the cloud and this cannot be undone. </font><font color="#FFFFFF">Are you sure you want to continue?</font>]]></string>
-    <string name="delete_capture_description_local_only_online"><![CDATA[<font color="#FFFFFF">This will delete the current scan from the local device. </font><font color="#488C75">The scan will remain available in the cloud. </font><font color="#FFFFFF">Are you sure you want to continue?</font>]]></string>
-    <string name="delete_capture_description_both"><![CDATA[<font color="#FFFFFF">This will delete the current scan from both the local device and the cloud. </font><font color="#8D0808">This cannot be undone. </font><font color="#FFFFFF">Are you sure you want to continue?</font>]]></string>
-    <string name="delete_capture_description_cloud_only"><![CDATA[<font color="#FFFFFF">This will delete the current scan from the cloud. </font><font color="#8D0808">This cannot be undone. </font><font color="#FFFFFF">Are you sure you want to continue?</font>]]></string>
+    <string name="delete_capture_description"><![CDATA[<font color="#488C75">The photo collection is available in the cloud. </font><font color="#FFFFFF">Would you like to delete the local copy, the cloud copy, or both?</font>]]></string>
+    <string name="delete_capture_description_local_only_offline"><![CDATA[<font color="#FFFFFF">This will delete the current photo collection from the local device. </font><font color="#cc2626">The photo collection has not been synced with the cloud and this cannot be undone. </font><font color="#FFFFFF">Are you sure you want to continue?</font>]]></string>
+    <string name="delete_capture_description_local_only_online"><![CDATA[<font color="#FFFFFF">This will delete the current photo collection from the local device. </font><font color="#488C75">The scan will remain available in the cloud. </font><font color="#FFFFFF">Are you sure you want to continue?</font>]]></string>
+    <string name="delete_capture_description_both"><![CDATA[<font color="#FFFFFF">This will delete the current photo collection from both the local device and the cloud. </font><font color="#cc2626">This cannot be undone. </font><font color="#FFFFFF">Are you sure you want to continue?</font>]]></string>
+    <string name="delete_capture_description_cloud_only"><![CDATA[<font color="#FFFFFF">This will delete the current photo collection from the cloud. </font><font color="#cc2626">This cannot be undone. </font><font color="#FFFFFF">Are you sure you want to continue?</font>]]></string>
     <string name="delete_local_only">Delete Local Only</string>
     <string name="delete_both">Delete Both</string>
     <string name="delete_cloud_only">Delete Cloud Only</string>
@@ -98,5 +98,8 @@
     <string name="face_detected">Face Detected</string>
     <string name="n_images">+%1$d images</string>
     <string name="zero_images">0 images</string>
+    <string name="photoscan_nimage_capture">Photoscan\nImage Capture</string>
+    <string name="captured_images_will_be_deleted_this_action_cannot_be_undone_do_you_want_to_proceed">Captured images will be deleted. This action cannot be undone. Do you want to proceed?</string>
+    <string name="the_reconstruction_failed_please_retry_the_reconstruction_if_the_problem_persists_then_contact_support">The reconstruction failed. Please retry the reconstruction. If the problem persists then contact support.</string>
 
 </resources>

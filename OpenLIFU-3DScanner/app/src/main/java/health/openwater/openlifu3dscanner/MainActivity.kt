@@ -1178,8 +1178,9 @@ val offsetVector = Vector3(
             }
         }
         //showing dialog on capture complete
-        if (capturedModelList.size == nonCapturedModelList.size) {
+        if (capturedModelList.size == 2) { //nonCapturedModelList.size) {
             Log.d("showCompletionDialog","showCompletionDialog will show dialog box")
+            sceneView.visibility = View.INVISIBLE
             showCompletionDialog()
         }
     }
