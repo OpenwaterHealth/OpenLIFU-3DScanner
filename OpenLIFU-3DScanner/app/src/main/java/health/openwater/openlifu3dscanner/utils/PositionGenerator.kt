@@ -3,41 +3,34 @@ package health.openwater.openlifu3dscanner.utils
 import kotlin.math.sqrt
 
 object PositionGenerator {
+
     /**
-     * Generate synthetic XYZ positions based on forward vectors.
+     * Generate synthetic XYZ positions assuming the subject is at the origin
+     * and the camera is always at a fixed distance [radius], looking toward it.
      *
-     * @param forwards List of forward vectors [fx, fy, fz]
-     * @param stepSize How far the camera "moves" per frame (in meters)
-     * @param smoothWindow Moving average smoothing window size
-     *
-     * @return List of synthetic XYZ positions
+     * For SpatialMatching we only need rough relative positions.
      */
     fun generatePositions(
         forwards: List<FloatArray>,
-        stepSize: Float = 0.15f,
+        radius: Float = 1.0f,
         smoothWindow: Int = 5
     ): List<FloatArray> {
-
         if (forwards.isEmpty()) return emptyList()
 
+        // 1. Normalize and smooth the forward vectors
         val normForwards = forwards.map { normalize(it.copyOf()) }
-
-        // Smooth with moving average
         val smoothed = smooth(normForwards, smoothWindow)
 
-        val positions = ArrayList<FloatArray>()
-        var pos = floatArrayOf(0f, 0f, 0f)
-
-        for (f in smoothed) {
-            pos = floatArrayOf(
-                pos[0] + f[0] * stepSize,
-                pos[1] + f[1] * stepSize,
-                pos[2] + f[2] * stepSize
+        // 2. Map each forward direction to a camera position on a sphere
+        return smoothed.map { f ->
+            val n = normalize(f.copyOf())
+            // subject is at (0,0,0), camera is radius away, looking at origin
+            floatArrayOf(
+                -n[0] * radius,
+                -n[1] * radius,
+                -n[2] * radius
             )
-            positions.add(pos)
         }
-
-        return positions
     }
 
     private fun smooth(

@@ -153,11 +153,7 @@ class PhotoCaptureViewModel
     private fun savePositionsJson() {
         if (orientations.isEmpty()) return
 
-        val positions = PositionGenerator.generatePositions(
-            forwards = orientations.map { it.orientation.forward },
-            stepSize = 0.15f,
-            smoothWindow = 5
-        )
+        val positions = PositionGenerator.generatePositions(forwards = orientations.map { it.orientation.forward })
 
         val coordinatesList = mutableListOf<ImageCoordinates>()
 
@@ -203,7 +199,7 @@ class PhotoCaptureViewModel
     companion object {
         private val TAG = PhotoCaptureViewModel::class.simpleName
         private const val TOTAL_IMAGES = 120
-        private const val CAPTURE_DELAY = 1500L
+        private const val CAPTURE_DELAY = 1000L
     }
 
 }
