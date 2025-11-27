@@ -15,6 +15,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import dagger.hilt.android.AndroidEntryPoint
 import health.openwater.openlifu3dscanner.Adapters.ReviewListAdapter
+import health.openwater.openlifu3dscanner.dialogs.ReviewCapturesHelpDialog
 import health.openwater.openlifu3dscanner.viewmodel.ReviewCapturesViewModel
 import kotlinx.coroutines.launch
 
@@ -64,6 +65,12 @@ class ReviewCapturesActivity : BaseActivity() {
         dateHeader = tableHeader.findViewById(R.id.dateText)
         idHeader = tableHeader.findViewById(R.id.idText)
         numHeader = tableHeader.findViewById(R.id.imageCountText)
+        val help: View = findViewById(R.id.help)
+
+        help.setOnClickListener {
+            val dialog = ReviewCapturesHelpDialog()
+            dialog.show(supportFragmentManager, ReviewCapturesHelpDialog::class.simpleName)
+        }
 
         tableHeader.visibility = View.INVISIBLE
 
