@@ -33,15 +33,16 @@ class CameraManager(
         }, cameraExecutor)
     }
 
-    fun takePicture(file: File, onImageSaved: () -> Unit) {
+    fun takePicture(file: File, onImageSaved: (Boolean) -> Unit) {
         val outputFileOptions = ImageCapture.OutputFileOptions.Builder(file).build()
         imageCapture.takePicture(outputFileOptions, cameraExecutor,
             object : ImageCapture.OnImageSavedCallback {
                 override fun onError(error: ImageCaptureException) {
                     Log.e(TAG, error.message, error)
+                    onImageSaved(false)
                 }
                 override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
-                    onImageSaved()
+                    onImageSaved(true)
                 }
             })
     }

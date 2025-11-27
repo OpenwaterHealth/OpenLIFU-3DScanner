@@ -51,19 +51,6 @@
             android:textColor="@color/disable_button_text"/>
 
         <Button
-            android:id="@+id/deleteBothBtn"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/delete_both"
-            android:textAllCaps="false"
-            android:textSize="18sp"
-            app:backgroundTint="@null"
-            android:background="@drawable/selector_round_green_button"
-            android:layout_marginHorizontal="20dp"
-            android:layout_marginTop="10dp"
-            android:textColor="@color/disable_button_text"/>
-
-        <Button
             android:id="@+id/deleteCloudOnlyBtn"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

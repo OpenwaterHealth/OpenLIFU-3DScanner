@@ -21,6 +21,7 @@ import health.openwater.openlifu3dscanner.utils.CameraManager
 import health.openwater.openlifu3dscanner.utils.PositionGenerator
 import health.openwater.openlifu3dscanner.utils.writeToFile
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -111,29 +112,47 @@ class PhotoCaptureViewModel
     fun startCapture() {
         stopCapture(false)
         captureJob = viewModelScope.launch {
+            val channel = Channel<Boolean>()
+
             while (isActive && photoNumber < TOTAL_IMAGES) {
                 val fileName = "${referenceNumber}_${String.format("%03d", ++photoNumber)}.jpg"
                 val file = File(photoDir, fileName)
 
-                cameraManagerRef.get()?.takePicture(file) {
-                    Log.i(TAG, "Photo saved to: $file")
-                    latestOrientation?.let {
-                        Log.d(TAG, "Orientation: $fileName ${it.forward.asList()}")
-                        orientations.add(ImageOrientationData(fileName, it))
-                    }
+                val startTime = System.currentTimeMillis()
 
-                    capturedImagesNumberFlow.value = photoNumber
-                    cloudRepository.onImageCaptured()
-                    playShutterClick()
-                    scanMediaGallery(file)
+                cameraManagerRef.get()?.takePicture(file) { success ->
+                    if (success) {
+                        Log.i(TAG, "Photo saved to: $file")
+                        latestOrientation?.let {
+                            Log.d(TAG, "Orientation: $fileName ${it.forward.asList()}")
+                            orientations.add(ImageOrientationData(fileName, it))
+                        }
 
-                    if (photoNumber == TOTAL_IMAGES) {
-                        stopCapture(true)
-                        captureCompleteFlow.value = true
+                        capturedImagesNumberFlow.value = photoNumber
+                        cloudRepository.onImageCaptured()
+                        playShutterClick()
+                        scanMediaGallery(file)
+
+                        if (photoNumber == TOTAL_IMAGES) {
+                            stopCapture(true)
+                            captureCompleteFlow.value = true
+                        }
+                        channel.trySend(true)
+                    } else {
+                        Log.i(TAG, "Photo does not saved to: $file, retrying")
+                        photoNumber -= 1
+                        channel.trySend(false)
                     }
                 }
 
-                delay(CAPTURE_DELAY)
+                channel.receive()
+
+                val remainingDelay = CAPTURE_DELAY - (System.currentTimeMillis() - startTime)
+
+                if (remainingDelay > 0) {
+                    Log.d(TAG, "Waiting $remainingDelay ms")
+                    delay(remainingDelay)
+                }
             }
         }
     }
@@ -199,7 +218,7 @@ class PhotoCaptureViewModel
     companion object {
         private val TAG = PhotoCaptureViewModel::class.simpleName
         private const val TOTAL_IMAGES = 120
-        private const val CAPTURE_DELAY = 1000L
+        private const val CAPTURE_DELAY = 1500L
     }
 
 }

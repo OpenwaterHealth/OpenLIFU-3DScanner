@@ -45,7 +45,6 @@ class DeleteCaptureDialog(
         super.onViewCreated(view, savedInstanceState)
 
         val deleteLocalOnlyButton = view.findViewById<Button>(R.id.deleteLocalOnlyBtn)
-        val deleteBothButton = view.findViewById<Button>(R.id.deleteBothBtn)
         val deleteCloudOnlyButton = view.findViewById<Button>(R.id.deleteCloudOnlyBtn)
         val deleteButton = view.findViewById<Button>(R.id.deleteBtn)
         val cancelButton = view.findViewById<Button>(R.id.cancelBtn)
@@ -61,10 +60,6 @@ class DeleteCaptureDialog(
                 when (state) {
                     State.DELETE_LOCAL_OFFLINE -> deleteLocal()
                     State.DELETE_LOCAL_ONLY -> deleteLocal()
-                    State.DELETE_BOTH -> {
-                        deleteLocal()
-                        deleteOnCloud()
-                    }
                     State.DELETE_CLOUD_ONLY -> deleteOnCloud()
                     else -> {
                         loadingProgress.visibility = View.GONE
@@ -78,11 +73,6 @@ class DeleteCaptureDialog(
 
         deleteLocalOnlyButton.setOnClickListener {
             state = State.DELETE_LOCAL_ONLY
-            updateUI(view)
-        }
-
-        deleteBothButton.setOnClickListener {
-            state = State.DELETE_BOTH
             updateUI(view)
         }
 
@@ -109,13 +99,11 @@ class DeleteCaptureDialog(
 
     private fun updateUI(view: View) {
         val deleteLocalOnlyButton = view.findViewById<Button>(R.id.deleteLocalOnlyBtn)
-        val deleteBothButton = view.findViewById<Button>(R.id.deleteBothBtn)
         val deleteCloudOnlyButton = view.findViewById<Button>(R.id.deleteCloudOnlyBtn)
         val deleteButton = view.findViewById<Button>(R.id.deleteBtn)
         val description = view.findViewById<TextView>(R.id.descriptionText)
 
         deleteLocalOnlyButton.visibility = View.GONE
-        deleteBothButton.visibility = View.GONE
         deleteCloudOnlyButton.visibility = View.GONE
 
         when (state) {
@@ -126,10 +114,8 @@ class DeleteCaptureDialog(
                 } else {
                     val downloaded = isDownloaded()
                     deleteLocalOnlyButton.isEnabled = downloaded
-                    deleteBothButton.isEnabled = downloaded
 
                     deleteLocalOnlyButton.visibility = View.VISIBLE
-                    deleteBothButton.visibility = View.VISIBLE
                     deleteCloudOnlyButton.visibility = View.VISIBLE
                     deleteButton.visibility = View.GONE
                     description.text = getSpanned(R.string.delete_capture_description)
@@ -141,10 +127,6 @@ class DeleteCaptureDialog(
             }
             State.DELETE_LOCAL_ONLY -> {
                 description.text = getSpanned(R.string.delete_capture_description_local_only_online)
-                deleteButton.visibility = View.VISIBLE
-            }
-            State.DELETE_BOTH -> {
-                description.text = getSpanned(R.string.delete_capture_description_both)
                 deleteButton.visibility = View.VISIBLE
             }
             State.DELETE_CLOUD_ONLY -> {
@@ -172,6 +154,5 @@ private enum class State {
     INITIAL,
     DELETE_LOCAL_OFFLINE,
     DELETE_LOCAL_ONLY,
-    DELETE_BOTH,
     DELETE_CLOUD_ONLY
 }

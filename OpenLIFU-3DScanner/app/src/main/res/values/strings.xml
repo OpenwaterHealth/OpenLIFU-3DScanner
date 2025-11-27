@@ -70,17 +70,15 @@
     <string name="options">Options</string>
     <string name="delete_scan">Delete Scan</string>
     <string name="download_mesh">Download Mesh</string>
-    <string name="reconstruct_mesh">Reconstruct Mesh</string>
+    <string name="reconstruct_mesh">Reconstruct 3D Mesh</string>
     <string name="done">Done</string>
     <string name="delete">Delete</string>
     <string name="delete_capture">Delete Capture</string>
     <string name="delete_capture_description"><![CDATA[<font color="#488C75">The photo collection is available in the cloud. </font><font color="#FFFFFF">Would you like to delete the local copy, the cloud copy, or both?</font>]]></string>
     <string name="delete_capture_description_local_only_offline"><![CDATA[<font color="#FFFFFF">This will delete the current photo collection from the local device. </font><font color="#cc2626">The photo collection has not been synced with the cloud and this cannot be undone. </font><font color="#FFFFFF">Are you sure you want to continue?</font>]]></string>
     <string name="delete_capture_description_local_only_online"><![CDATA[<font color="#FFFFFF">This will delete the current photo collection from the local device. </font><font color="#488C75">The scan will remain available in the cloud. </font><font color="#FFFFFF">Are you sure you want to continue?</font>]]></string>
-    <string name="delete_capture_description_both"><![CDATA[<font color="#FFFFFF">This will delete the current photo collection from both the local device and the cloud. </font><font color="#cc2626">This cannot be undone. </font><font color="#FFFFFF">Are you sure you want to continue?</font>]]></string>
     <string name="delete_capture_description_cloud_only"><![CDATA[<font color="#FFFFFF">This will delete the current photo collection from the cloud. </font><font color="#cc2626">This cannot be undone. </font><font color="#FFFFFF">Are you sure you want to continue?</font>]]></string>
     <string name="delete_local_only">Delete Local Only</string>
-    <string name="delete_both">Delete Both</string>
     <string name="delete_cloud_only">Delete Cloud Only</string>
     <string name="please_enter_a_scan_id">Please enter a Scan Id</string>
     <string name="this_scan_id_already_exists">This Scan ID already exists</string>
