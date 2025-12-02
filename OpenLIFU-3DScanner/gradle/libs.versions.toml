@@ -1,15 +1,13 @@
 [versions]
-agp = "8.6.0"
+agp = "8.9.3"
 converterGson = "2.9.0"
-firebaseBom = "32.7.0"
-kotlin = "1.9.0"
+firebaseBom = "33.12.0"
+kotlin = "2.2.10"
 coreKtx = "1.13.1"
 junit = "4.13.2"
 junitVersion = "1.2.1"
 espressoCore = "3.6.1"
 lifecycleRuntimeKtx = "2.8.6"
-activityCompose = "1.9.3"
-composeBom = "2024.04.01"
 core = "1.46.0"
 loggingInterceptor = "4.11.0"
 okhttp = "4.11.0"
@@ -25,8 +23,8 @@ cameraView = "1.4.0"
 material = "1.12.0"
 activity = "1.10.1"
 recyclerview = "1.4.0"
-googleKspPlugin = "1.9.0-1.0.13"
-hilt = "2.51.1"
+googleKspPlugin = "2.2.10-2.0.2"
+hilt = "2.57.2"
 googleServices = "4.4.4"
 socketIoClient = "2.1.2"
 grgit = "5.3.3"
@@ -45,15 +43,6 @@ androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "j
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
 androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
 androidx-fragment-ktx = { group = "androidx.fragment", name = "fragment-ktx", version.ref = "fragmentKtxRef" }
-androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
-androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
-androidx-ui = { group = "androidx.compose.ui", name = "ui" }
-androidx-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" }
-androidx-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
-androidx-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
-androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
-androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
-androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
 core = { group = "com.google.ar", name = "core", version.ref = "core" }
 logging-interceptor = { module = "com.squareup.okhttp3:logging-interceptor", version.ref = "loggingInterceptor" }
 okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
