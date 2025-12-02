@@ -714,7 +714,7 @@ class MainActivity : BaseActivity() {
                         intent.putExtra("IMAGE_COUNT", capturedModelList.size.toString())
                         intent.putExtra("TOTAL_IMAGE_COUNT",nonCapturedModelList.size.toString())
                         startActivity(intent)
-
+                        finish()
                     }
 
                 }
@@ -1934,7 +1934,7 @@ val offsetVector = Vector3(
         intent.putExtra("TOTAL_IMAGE_COUNT", nonCapturedModelList.size.toString())
 
         startActivity(intent)
-        finish() // Optional: finish the current activity
+        finish()
     }
 
     //  The actual function responsible for capturing the camera feed photo and saving it to device .
