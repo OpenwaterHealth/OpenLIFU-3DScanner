@@ -4,6 +4,7 @@ import android.app.Dialog
 import android.content.Intent
 import android.graphics.Paint
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
@@ -59,7 +60,7 @@ appVersionText.text="VER:${versionName}";
 
         newCaptureButton.setOnClickListener {
             val intent=Intent(this,New_capture::class.java)
-            startActivity(intent);
+            startActivity(intent)
         }
 
         reviewButton.setOnClickListener {
@@ -165,11 +166,5 @@ appVersionText.text="VER:${versionName}";
             }
         }
     }
-
-    override fun onResume() {
-        super.onResume()
-        cloudRepository.resetCurrentPhotocollection()
-    }
-
 }
 

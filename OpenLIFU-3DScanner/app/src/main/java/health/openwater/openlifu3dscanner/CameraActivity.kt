@@ -9,15 +9,20 @@ import androidx.activity.viewModels
 import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
+import health.openwater.openlifu3dscanner.api.repository.CloudRepository
 import health.openwater.openlifu3dscanner.databinding.ActivityCameraBinding
 import health.openwater.openlifu3dscanner.utils.CameraManager
 import health.openwater.openlifu3dscanner.utils.OrientationProvider
 import health.openwater.openlifu3dscanner.viewmodel.PhotoCaptureViewModel
 import io.github.sceneview.utils.setKeepScreenOn
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class CameraActivity : BaseActivity() {
+
+    @Inject
+    lateinit var cloudRepository: CloudRepository
 
     private lateinit var binding: ActivityCameraBinding
 
@@ -83,6 +88,8 @@ class CameraActivity : BaseActivity() {
     }
 
     fun navigateWelcomeScreen() {
+        Analytics.onCaptureDiscarded()
+        cloudRepository.resetCurrentPhotocollection()
         val intent = Intent(this, welcomeActivity::class.java)
         intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
         startActivity(intent)

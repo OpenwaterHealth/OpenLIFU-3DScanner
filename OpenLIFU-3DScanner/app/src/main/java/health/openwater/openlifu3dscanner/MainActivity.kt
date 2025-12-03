@@ -40,6 +40,7 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.annotation.RequiresApi
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.app.ActivityCompat
@@ -253,11 +254,6 @@ class MainActivity : BaseActivity() {
 
 
             loadsRingArrayFromJson()
-
-
-
-
-
 
 
             //initialize session
@@ -756,13 +752,22 @@ class MainActivity : BaseActivity() {
             }
 
 
+            onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    if (IsCaptureStarted) {
+                        stopButton.performClick()
+                        endCaptureButton.performClick()
+                    } else {
+                        endCaptureButton.performClick()
+                    }
+                }
+            })
 
         } catch (e: Exception) {
 
             e.printStackTrace()
             Log.d("onCreate", "onCreate Error  " + e.message.toString())
         }
-
 
     }
 

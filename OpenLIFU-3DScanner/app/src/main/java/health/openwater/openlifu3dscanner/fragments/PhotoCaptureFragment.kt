@@ -4,10 +4,13 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.activity.OnBackPressedCallback
 import androidx.core.view.ViewCompat
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.bumptech.glide.Glide
 import health.openwater.openlifu3dscanner.CameraActivity
 import health.openwater.openlifu3dscanner.R
@@ -79,6 +82,27 @@ class PhotoCaptureFragment : BaseFragment() {
                     else
                         getString(R.string.zero_images)
             }
+        }
+
+        requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner,
+            object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    _binding?.buttonBack?.performClick()
+                }
+            }
+        )
+    }
+
+    override fun onPause() {
+        super.onPause()
+        viewModel.stopCapture(false)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        _binding?.apply {
+            buttonPlay.visibility = View.VISIBLE
+            buttonPause.visibility = View.INVISIBLE
         }
     }
 }

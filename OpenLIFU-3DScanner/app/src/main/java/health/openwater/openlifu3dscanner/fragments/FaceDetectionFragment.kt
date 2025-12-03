@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.activity.OnBackPressedCallback
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
@@ -49,6 +50,12 @@ class FaceDetectionFragment : BaseFragment() {
             viewModel.stopCapture(false)
             (requireActivity() as CameraActivity).navigateWelcomeScreen()
         }
+
+        requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                _binding?.buttonBack?.performClick()
+            }
+        })
     }
 
     override fun onDestroyView() {

@@ -12,6 +12,7 @@ import android.widget.Button
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -191,6 +192,12 @@ class completeCapture : BaseActivity() {
                 }
             }
         }
+
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                discardCaptureButton.performClick()
+            }
+        })
     }
 
 
@@ -289,6 +296,9 @@ class completeCapture : BaseActivity() {
             if (folder.exists() && folder.isDirectory) {
                 deleteRecursive(folder)
                 Log.d("DeleteFolder", "Deleted folder and images for reference: $referenceNumber")
+
+                cloudRepository.resetCurrentPhotocollection()
+
                 val intent = Intent(context, welcomeActivity::class.java)
                 context.startActivity(intent)
                 if (context is Activity) context.finish()

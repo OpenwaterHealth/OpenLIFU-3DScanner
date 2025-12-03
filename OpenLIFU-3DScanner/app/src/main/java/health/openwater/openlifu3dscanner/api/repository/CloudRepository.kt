@@ -65,9 +65,15 @@ class CloudRepository(
     }
 
     fun resetCurrentPhotocollection() {
-        if (imageUploader?.isUploadComplete() == false) {
-            deletePhotocollection()
+        deletePhotocollection()
+        currentReferenceNumber?.let {
+            val dir = getImagesDir(it)
+            if (dir.exists()) {
+                Log.d(TAG, "Deleting directory: $dir")
+                dir.deleteRecursively()
+            }
         }
+
         imageUploader?.stop()
         imageUploader = null
         currentReferenceNumber = null

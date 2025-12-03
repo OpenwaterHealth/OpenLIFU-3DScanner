@@ -132,6 +132,7 @@ class New_capture : BaseActivity() {
         }
 
         binding.cancelButton.setOnClickListener {
+            cloudRepository.resetCurrentPhotocollection()
             val intent = Intent(this, welcomeActivity::class.java)
             startActivity(intent)
             finish()
