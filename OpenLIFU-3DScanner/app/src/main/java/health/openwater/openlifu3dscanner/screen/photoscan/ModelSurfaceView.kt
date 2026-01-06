@@ -6,12 +6,12 @@ import android.opengl.GLSurfaceView
 import android.view.ScaleGestureDetector
 
 @SuppressLint("ViewConstructor")
-class ObjSurfaceView(
+class ModelSurfaceView(
     context: Context,
     modelDir: String
 ) : GLSurfaceView(context) {
 
-    private val renderer = ObjRenderer(modelDir)
+    private val renderer = ModelRenderer(modelDir)
     private val scaleDetector = ScaleGestureDetector(context, ScaleListener())
 
     private var prevX = 0f

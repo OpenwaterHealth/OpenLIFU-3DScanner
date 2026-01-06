@@ -1,5 +1,6 @@
 package health.openwater.openlifu3dscanner.screen.home
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -45,6 +46,7 @@ import health.openwater.openlifu3dscanner.R
 import health.openwater.openlifu3dscanner.api.AuthService
 import kotlinx.coroutines.launch
 
+@SuppressLint("LocalContextGetResourceValueCall")
 @Composable
 fun LoginScreen(
     onSignIn: suspend (String, String) -> AuthService.AuthResponse,

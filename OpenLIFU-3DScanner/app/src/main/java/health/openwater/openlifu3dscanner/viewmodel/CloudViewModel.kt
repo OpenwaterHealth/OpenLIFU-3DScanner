@@ -120,7 +120,7 @@ class CloudViewModel @Inject constructor(
                     it.readText(),
                     CaptureData::class.java
                 )
-            } catch (e: JsonSyntaxException) {
+            } catch (_: JsonSyntaxException) {
                 null
             }
         }

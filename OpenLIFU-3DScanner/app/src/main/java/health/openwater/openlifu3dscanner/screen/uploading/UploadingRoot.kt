@@ -52,7 +52,6 @@ fun UploadingRoot(
     }
 
     LaunchedEffect(uploadState) {
-        Log.w("TAG", "Upload state changed: $uploadState")
         if (uploadState is UploadState.Reconstructing) {
             onComplete()
         }
@@ -165,6 +164,7 @@ fun UploadingView(
         )
 
         LinearProgressIndicator(
+            drawStopIndicator = { },
             progress = { animatedProgress },
             modifier = Modifier
                 .fillMaxWidth()

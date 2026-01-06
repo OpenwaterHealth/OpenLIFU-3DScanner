@@ -11,7 +11,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import health.openwater.openlifu3dscanner.R
 
 @Composable
 fun StoragePermissionScreen(
@@ -23,21 +25,21 @@ fun StoragePermissionScreen(
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
-                text = "Storage access required",
+                text = stringResource(R.string.storage_access_required),
                 style = MaterialTheme.typography.titleLarge
             )
 
             Spacer(modifier = Modifier.height(12.dp))
 
             Text(
-                text = "We need access to your media to save and view scans.",
+                text = stringResource(R.string.we_need_access_to_your_media_to_save_and_view_scans),
                 style = MaterialTheme.typography.bodyMedium
             )
 
             Spacer(modifier = Modifier.height(24.dp))
 
             Button(onClick = onGrantPermission) {
-                Text("Grant permission")
+                Text(stringResource(R.string.grant_permission))
             }
         }
     }

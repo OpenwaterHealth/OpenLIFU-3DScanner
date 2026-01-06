@@ -40,11 +40,11 @@ fun WelcomeScreen(
             Image(
                 painter = painterResource(R.drawable.logo),
                 contentDescription = null,
-                modifier = Modifier.size(128.dp)
+                modifier = Modifier.size(164.dp)
             )
 
             Text(
-                text = "Welcome back, ${userInfo?.displayName ?: "Guest"}",
+                text = stringResource(R.string.welcome_back, userInfo?.displayName ?: "Guest"),
                 color = MaterialTheme.colorScheme.onBackground,
                 fontSize = 24.sp,
                 style = MaterialTheme.typography.headlineMedium

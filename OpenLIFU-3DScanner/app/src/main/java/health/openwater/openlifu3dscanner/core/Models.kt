@@ -11,7 +11,6 @@ data class CaptureData(
     val timestamp: Long,
     val angle: Float,              // Relative angle from start (0-360)
     val absoluteAngle: Float,      // Absolute compass angle
-    val captureIndex: Int,
     val filename: String,
     val forwardX: Float,
     val forwardY: Float,

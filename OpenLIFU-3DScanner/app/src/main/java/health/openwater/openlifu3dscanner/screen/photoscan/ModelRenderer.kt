@@ -14,7 +14,7 @@ import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
 import kotlin.math.max
 
-class ObjRenderer(
+class ModelRenderer(
     private val modelDir: String
 ) : GLSurfaceView.Renderer {
 

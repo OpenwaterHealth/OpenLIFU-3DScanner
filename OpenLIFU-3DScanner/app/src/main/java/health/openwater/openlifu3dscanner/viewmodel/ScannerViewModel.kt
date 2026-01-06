@@ -2,34 +2,26 @@ package health.openwater.openlifu3dscanner.viewmodel
 
 import android.app.Application
 import android.content.Context
-import android.graphics.Bitmap
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.util.Log
-import androidx.camera.core.Camera
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
-import androidx.camera.core.ImageProxy
-import androidx.camera.core.resolutionselector.ResolutionSelector
-import androidx.camera.core.resolutionselector.ResolutionStrategy
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableStateSetOf
 import androidx.compose.runtime.setValue
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import com.google.gson.Gson
 import dagger.hilt.android.lifecycle.HiltViewModel
 import health.openwater.openlifu3dscanner.core.CaptureData
 import health.openwater.openlifu3dscanner.core.FaceInfo
 import health.openwater.openlifu3dscanner.extensions.getModelsDir
-import health.openwater.openlifu3dscanner.extensions.toRotatedBitmap
 import java.io.File
-import java.io.FileOutputStream
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import javax.inject.Inject
@@ -75,14 +67,8 @@ class ScannerViewModel @Inject constructor(
     fun initializeCameraAndSensors() {
         cameraExecutor = Executors.newSingleThreadExecutor()
         imageCapture = ImageCapture.Builder()
-            .setCaptureMode(ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY)
-            .setJpegQuality(85)
-            .setResolutionSelector(
-                ResolutionSelector.Builder()
-                    .setResolutionStrategy(ResolutionStrategy.HIGHEST_AVAILABLE_STRATEGY)
-                    .build()
-            )
-            .setFlashMode(ImageCapture.FLASH_MODE_OFF)
+            .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
+            .setJpegQuality(90)
             .build()
 
         sensorManager = application.getSystemService(Context.SENSOR_SERVICE) as SensorManager
@@ -169,35 +155,38 @@ class ScannerViewModel @Inject constructor(
     fun capturePhoto() {
         // Prevent concurrent captures
         if (isCapturing) {
-            Log.d("ScannerViewModel", "Capture already in progress, skipping")
             return
         }
 
-        val bucket = angleToBucket(currentAngle)
-        capturedBuckets.add(bucket)
+        isCapturing = true
+
+        val angleSnapshot = currentAngle
+        val forwardSnapshot = forward.clone()
+        val bucket = angleToBucket(angleSnapshot)
 
         val relativeAngle = bucket * captureInterval
         val timestamp = System.currentTimeMillis()
         val filename = "scan_${timestamp}_A${relativeAngle.toInt()}.jpg"
-        val photoFile = File(currentScanPath, filename)
-        val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
+        val outputFileOptions =
+            ImageCapture.OutputFileOptions.Builder(File(currentScanPath, filename)).build()
 
         imageCapture.takePicture(
-            outputOptions,
-            ContextCompat.getMainExecutor(application),
+            outputFileOptions,
+            cameraExecutor,
             object : ImageCapture.OnImageSavedCallback {
                 override fun onImageSaved(output: ImageCapture.OutputFileResults) {
+
                     val captureData = CaptureData(
                         timestamp = timestamp,
                         angle = relativeAngle,
-                        absoluteAngle = currentAngle,
-                        captureIndex = capturedBuckets.size,
+                        absoluteAngle = angleSnapshot,
                         filename = filename,
-                        forwardX = forward[0],
-                        forwardY = forward[1],
-                        forwardZ = forward[2]
+                        forwardX = forwardSnapshot[0],
+                        forwardY = forwardSnapshot[1],
+                        forwardZ = forwardSnapshot[2]
                     )
 
+                    capturedBuckets.add(bucket)
                     captureHistory.add(captureData)
 
                     val metadataFile = File(currentScanPath, filename.replace(".jpg", ".json"))
@@ -212,7 +201,6 @@ class ScannerViewModel @Inject constructor(
             })
     }
 
-    // ---- Face detection ----
     fun setFace(face: FaceInfo?) {
         faceInfo = face
         faceDetected = face != null

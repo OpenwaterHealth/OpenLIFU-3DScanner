@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -36,15 +37,13 @@ fun HomeScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 28.dp)
+                    .padding(vertical = 16.dp)
             ) {
                 Image(
                     painter = painterResource(R.drawable.openwater),
                     contentDescription = null,
                     contentScale = ContentScale.Fit,
                     colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onBackground),
-                    modifier = Modifier
-                        .alpha(0.72f)
                 )
 
                 Text(
@@ -52,7 +51,7 @@ fun HomeScreen(
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onBackground,
                     modifier = Modifier
-                        .alpha(0.72f)
+                        .offset(y = (-8).dp)
                         .padding(end = 8.dp, bottom = 4.dp)
                 )
             }

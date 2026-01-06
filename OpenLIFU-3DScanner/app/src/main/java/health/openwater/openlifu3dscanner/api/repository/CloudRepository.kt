@@ -183,7 +183,7 @@ class CloudRepository(
                 collectionResponse.body()?.coordinates?.let { coordinates ->
                     request = StartPhotoscanRequest(
                         matchingMode = MatchingMode.spatial,
-                        numNeighbors = 20,
+                        numNeighbors = 16,
                         locations = coordinates.images.map { listOf(it.x, it.y, it.z) }
                     )
                 }

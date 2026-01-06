@@ -119,7 +119,7 @@ fun PhotoscanScreen(
             if (showViewer && modelDir != null) {
                 AndroidView(
                     factory = { context ->
-                        ObjSurfaceView(context, modelDir!!.absolutePath)
+                        ModelSurfaceView(context, modelDir!!.absolutePath)
                     }
                 )
             } else {
