@@ -1,5 +1,6 @@
 package health.openwater.openlifu3dscanner.di
 
+import android.content.Context
 import android.util.Log
 import health.openwater.openlifu3dscanner.api.AuthService
 import health.openwater.openlifu3dscanner.api.PhotocollectionService
@@ -14,6 +15,7 @@ import com.google.gson.GsonBuilder
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import health.openwater.openlifu3dscanner.api.adapter.DateTypeAdapter
 import kotlinx.coroutines.CoroutineScope
@@ -32,6 +34,7 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 class ApiModule {
 
+
     @Provides
     @Singleton
     fun provideUserRepository(
@@ -45,6 +48,7 @@ class ApiModule {
     @Provides
     @Singleton
     fun provideReconstructionRepository(
+        @ApplicationContext application: Context,
         authService: AuthService,
         photocollectionService: PhotocollectionService,
         photoscanService: PhotoscanService,
@@ -52,7 +56,12 @@ class ApiModule {
         userRepository: UserRepository
     ): CloudRepository {
         return CloudRepository(
-            authService, photocollectionService, photoscanService, websocketService, userRepository
+            application,
+            authService,
+            photocollectionService,
+            photoscanService,
+            websocketService,
+            userRepository
         )
     }
 

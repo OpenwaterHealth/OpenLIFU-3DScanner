@@ -1,6 +1,12 @@
 package health.openwater.openlifu3dscanner.utils
 
+import kotlin.collections.copyOf
+import kotlin.collections.indices
+import kotlin.collections.lastIndex
+import kotlin.collections.map
 import kotlin.math.sqrt
+import kotlin.ranges.coerceIn
+import kotlin.ranges.until
 
 object PositionGenerator {
 
@@ -39,7 +45,7 @@ object PositionGenerator {
     ): List<FloatArray> {
         if (window <= 1) return vectors
 
-        val smoothed = ArrayList<FloatArray>(vectors.size)
+        val smoothed = kotlin.collections.ArrayList<FloatArray>(vectors.size)
         val kernel = FloatArray(window) { 1f / window }
 
         for (i in vectors.indices) {
@@ -59,9 +65,9 @@ object PositionGenerator {
     }
 
     private fun normalize(v: FloatArray): FloatArray {
-        val len = sqrt(v[0]*v[0] + v[1]*v[1] + v[2]*v[2])
+        val len = sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2])
         return if (len > 0.0001f)
-            floatArrayOf(v[0]/len, v[1]/len, v[2]/len)
+            floatArrayOf(v[0] / len, v[1] / len, v[2] / len)
         else
             floatArrayOf(0f, 0f, 0f)
     }

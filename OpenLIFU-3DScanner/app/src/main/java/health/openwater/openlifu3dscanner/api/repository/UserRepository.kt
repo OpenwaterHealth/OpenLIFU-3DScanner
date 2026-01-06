@@ -19,6 +19,10 @@ class UserRepository(
 
     fun getCloudAvailability(): StateFlow<Boolean> = cloudAvailabilityFlow
 
+    fun isSignedIn(): Boolean = authService.isSignedIn()
+
+    suspend fun signIn(email: String, password: String) = authService.signIn(email, password)
+
     suspend fun isCloudAvailable(): Boolean {
         return try {
             val response = photocollectionService.healthCheck()

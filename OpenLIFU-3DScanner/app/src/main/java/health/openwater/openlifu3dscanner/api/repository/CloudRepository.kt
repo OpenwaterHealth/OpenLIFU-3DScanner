@@ -1,5 +1,6 @@
 package health.openwater.openlifu3dscanner.api.repository
 
+import android.content.Context
 import android.os.Environment
 import android.util.Log
 import health.openwater.openlifu3dscanner.api.AuthService
@@ -16,7 +17,7 @@ import health.openwater.openlifu3dscanner.api.model.DownloadingItem
 import health.openwater.openlifu3dscanner.api.model.ImageUploadProgress
 import health.openwater.openlifu3dscanner.api.model.ReconstructionProgress
 import health.openwater.openlifu3dscanner.api.model.Type
-import health.openwater.openlifu3dscanner.utils.writeToFile
+import health.openwater.openlifu3dscanner.extensions.writeToFile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -27,6 +28,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import okhttp3.ResponseBody
+import retrofit2.Response
 import java.io.BufferedInputStream
 import java.io.File
 import java.io.FileOutputStream
@@ -34,6 +36,7 @@ import java.util.concurrent.LinkedBlockingQueue
 import java.util.zip.ZipInputStream
 
 class CloudRepository(
+    private val context: Context,
     private val authService: AuthService,
     private val photocollectionService: PhotocollectionService,
     private val photoscanService: PhotoscanService,
@@ -63,6 +66,8 @@ class CloudRepository(
             authService.isSignedIn() && userRepository.isCloudAvailable()
         }
     }
+
+    fun getCurrentPhotocollection() = currentPhotocollection
 
     fun resetCurrentPhotocollection() {
         deletePhotocollection()
@@ -123,7 +128,7 @@ class CloudRepository(
                             scope
                         )
                         if (autoUpload) {
-                            imageUploader?.start(waitForCaptureEvents = true)
+                            imageUploader?.start(waitForCaptureEvents = false)
                         }
                     }
                 }
@@ -197,9 +202,11 @@ class CloudRepository(
 
     suspend fun startReconstructionProgressListener(photoscanId: Long): Photoscan? {
         val photoscan = getPhotoscan(photoscanId) ?: return null
-        reconstructionProgressFlow.emit(ReconstructionProgress(
-            photoscan.progress, photoscan.message, photoscan.status
-        ))
+        reconstructionProgressFlow.emit(
+            ReconstructionProgress(
+                photoscan.progress, photoscan.message, photoscan.status
+            )
+        )
         websocketService.connect(photoscanId, reconstructionProgressFlow)
         return photoscan
     }
@@ -214,7 +221,8 @@ class CloudRepository(
         joinCoordinates: Boolean = false
     ): Photocollection? {
         try {
-            val response = photocollectionService.getPhotocollection(id, joinPhotos, joinCoordinates)
+            val response =
+                photocollectionService.getPhotocollection(id, joinPhotos, joinCoordinates)
             if (response.isSuccessful) {
                 return response.body()
             }
@@ -270,13 +278,33 @@ class CloudRepository(
     }
 
     fun getImagesDir(referenceNumber: String) = File(
-        Environment.getExternalStorageDirectory(),
-        "$OPENLIFU_DIR/$referenceNumber"
+        context.getExternalFilesDir(null),
+        referenceNumber
     )
 
     fun isPhotoscanDownloaded(referenceNumber: String): Boolean {
         val dir = File(getImagesDir(referenceNumber), SCAN_DIR)
         return dir.exists() && (dir.list()?.count() ?: 0) > 0
+    }
+
+    suspend fun getPhotoscans(): List<Photoscan>? {
+        val uid = authService.getCurrentUser()?.uid ?: return null
+        try {
+            return photoscanService.getPhotoscans(uid).body()
+        } catch (e: Exception) {
+            Log.w(TAG, "Can't load photocollections: $e")
+            return null
+        }
+    }
+
+    suspend fun getPhotocollections(): List<Photocollection>? {
+        val uid = authService.getCurrentUser()?.uid ?: return null
+        try {
+            return photocollectionService.getPhotocollections(uid).body()
+        } catch (e: Exception) {
+            Log.w(TAG, "Can't load photocollections: $e")
+            return null
+        }
     }
 
     suspend fun getReferenceNumbers(localOnly: Boolean): Set<String> {
@@ -372,7 +400,8 @@ class CloudRepository(
 
                     for (photo in photos) {
                         Log.d(TAG, "Loading photo ${photo.fileName}")
-                        val photoResponse = photocollectionService.downloadPhoto(photocollection.id, photo.fileName)
+                        val photoResponse =
+                            photocollectionService.downloadPhoto(photocollection.id, photo.fileName)
                         if (!photoResponse.isSuccessful) return false
 
                         photoResponse.body()?.let {

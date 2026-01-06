@@ -5,6 +5,7 @@ import androidx.exifinterface.media.ExifInterface
 import health.openwater.openlifu3dscanner.api.PhotocollectionService
 import health.openwater.openlifu3dscanner.api.model.ImageUploadProgress
 import health.openwater.openlifu3dscanner.resizeJpegAsByteArray
+import health.openwater.openlifu3dscanner.resizeJpegAsSquareByteArray
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -67,7 +68,7 @@ class ImageUploader(
             try {
                 val file = File(imagesDir, filename)
                 val originalExif = ExifInterface(file)
-                val bytes = file.resizeJpegAsByteArray(IMAGE_WIDTH, JPEG_QUALITY)
+                val bytes = file.resizeJpegAsSquareByteArray(IMAGE_WIDTH, JPEG_QUALITY)
 
                 val resizedFile = File(imagesDir, "resized_$filename")
                 FileOutputStream(resizedFile).use {

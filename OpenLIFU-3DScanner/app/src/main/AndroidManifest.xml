@@ -1,123 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    package="health.openwater.openlifu3dscanner">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <uses-feature
-        android:name="android.hardware.camera"
-        android:required="true" />
+    <uses-feature android:name="android.hardware.camera" android:required="true" />
+    <uses-feature android:name="android.hardware.sensor.accelerometer" android:required="true" />
+    <uses-feature android:name="android.hardware.sensor.gyroscope" android:required="true" />
 
     <uses-permission android:name="android.permission.CAMERA" />
-    <uses-permission android:name="android.permission.USB_PERMISSION" />
-    <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.VIBRATE" />
-    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
-    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
-    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" /> <!-- For devices below Android 13 -->
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission
         android:name="android.permission.WRITE_EXTERNAL_STORAGE"
-        tools:targetApi="29" />
-    <uses-permission
-        android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
-        tools:ignore="ScopedStorage" />
-
-    <uses-feature
-        android:name="android.hardware.camera.ar"
-        android:required="true" />
-    <uses-feature android:name="android.hardware.camera.autofocus" />
-    <uses-feature android:name="com.google.ar.core.depth" />
-    <uses-feature
-        android:glEsVersion="0x00030000"
-        android:required="true" />
-    <uses-feature android:name="android.hardware.usb.host" />
+        android:maxSdkVersion="28" />
 
     <application
         android:name=".App"
         android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
-        android:requestLegacyExternalStorage="true"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/AppTheme">
+        android:theme="@style/Theme.Headscanner">
         <activity
-            android:name=".CameraActivity"
-            android:exported="false" />
-        <activity
-            android:name=".ReconstructionActivity"
-            android:exported="false"
-            android:screenOrientation="portrait" />
-        <activity
-            android:name=".ImageUploadActivity"
-            android:exported="false"
-            android:screenOrientation="portrait" />
-        <activity
-            android:name=".MainActivity"
-            android:exported="false"
-            android:screenOrientation="portrait"
-            android:theme="@style/AppTheme.NoFlicker" />
-        <activity
-            android:name=".QrActivity"
-            android:exported="false"
-            android:screenOrientation="portrait" />
-        <activity
-            android:name=".ReviewCapturesActivity"
-            android:exported="false"
-            android:screenOrientation="portrait" />
-        <activity
-            android:name=".completeCapture"
-            android:exported="false"
-            android:screenOrientation="portrait" /> <!-- <activity -->
-        <!-- android:name=".CaptureCompleteActivity" -->
-        <!-- android:exported="false" /> -->
-        <activity
-            android:name=".New_capture"
-            android:exported="false"
-            android:screenOrientation="portrait" /> <!-- <activity -->
-        <!-- android:name=".welcomeActivity" -->
-        <!-- android:exported="false" /> -->
-        <activity
-            android:name=".ImagePreview"
-            android:exported="false"
-            android:screenOrientation="portrait" /> <!-- Required metadata for ARCore to work properly -->
-        <meta-data
-            android:name="com.google.ar.core"
-            android:value="required"
-            tools:replace="android:value" />
-        <meta-data
-            android:name="com.google.mlkit.vision.DEPENDENCIES"
-            android:value="face" />
-        <meta-data
-            android:name="androidx.camera.defaultConfigProvider"
-            android:value="androidx.camera.camera2.Camera2Config" /> <!-- .ReferenceInputActivity  .welcomeActivity -->
-        <activity
-            android:name=".welcomeActivity"
+            android:name=".activity.MainActivity"
             android:exported="true"
-            android:launchMode="singleInstance"
-            android:screenOrientation="portrait">
+            android:screenOrientation="sensorPortrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity
-            android:name=".UsbScreenActivity"
-            android:exported="true"
-            android:screenOrientation="portrait">
-            <intent-filter>
-                <action android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" />
-            </intent-filter>
-        </activity>
-        <activity
-            android:name=".FaceDetectionActivity"
-            android:screenOrientation="portrait" />
-        <activity
-            android:name=".LoginActivity"
-            android:exported="false"
-            android:launchMode="singleInstance"
-            android:screenOrientation="portrait" />
+
     </application>
 
 </manifest>

@@ -1,28 +1,41 @@
-import org.ajoberstar.grgit.Grgit
+import org.gradle.kotlin.dsl.implementation
 
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.jetbrains.kotlin.android)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.compose)
+
     alias(libs.plugins.google.devtools.ksp)
     alias(libs.plugins.dagger.hilt)
     alias(libs.plugins.google.services)
-    alias(libs.plugins.grgit)
     alias(libs.plugins.firebase.crashlytics)
 }
 
 android {
     namespace = "health.openwater.openlifu3dscanner"
-    compileSdk = 35
+    compileSdk {
+        version = release(36)
+    }
+
+    applicationVariants.all {
+        val version = defaultConfig.versionName
+        val buildTypeName = buildType.name
+        outputs.all {
+            if (this is com.android.build.gradle.internal.api.BaseVariantOutputImpl) {
+                val appName = "OpenLifu3DScanner"
+                outputFileName = "$appName-v$version-$buildTypeName.apk"
+            }
+        }
+    }
 
     defaultConfig {
         applicationId = "health.openwater.openlifu3dscanner"
-        minSdk = 28
-        targetSdk = 35
-        versionCode = 1_0_0_0000 + getCommitNumber()
-        versionName = "0.5.10"
+        minSdk = 24
+        targetSdk = 36
+        versionCode = 2_0_0_0000
+        versionName = "0.6.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        vectorDrawables.useSupportLibrary = true
     }
 
     signingConfigs {
@@ -48,49 +61,34 @@ android {
             )
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_21
         targetCompatibility = JavaVersion.VERSION_21
     }
     buildFeatures {
-        viewBinding = true
-    }
-    packaging {
-        resources {
-            excludes += "/META-INF/{AL2.0,LGPL2.1}"
-        }
+        compose = true
+        buildConfig = true
     }
 }
 
 dependencies {
-//sceneView dependencies
-    implementation("io.github.sceneview:arsceneview:2.3.0")
-    implementation ("com.google.android.material:material:1.13.0-rc01")
-
-    implementation("com.google.ar:core:1.33.0")
-    implementation("com.google.mlkit:face-detection:16.1.7")
-    implementation("com.google.mlkit:face-mesh-detection:16.0.0-beta3")
-    implementation("androidx.cardview:cardview:1.0.0")
-    implementation ("com.google.mlkit:barcode-scanning:17.3.0")
-
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
-    implementation(libs.androidx.fragment.ktx)
-    implementation(libs.core)
-
-    implementation(libs.androidx.appcompat)
-    implementation(libs.androidx.constraintlayout)
-    implementation(libs.androidx.exifinterface)
-    implementation(libs.androidx.camera.core)
-    implementation(libs.androidx.camera.lifecycle)
-    implementation(libs.play.services.vision)
-    implementation(libs.androidx.camera.view)
-    implementation(libs.material)
-    implementation(libs.androidx.activity)
-    implementation(libs.androidx.recyclerview)
+    implementation(libs.androidx.activity.compose)
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.compose.ui)
+    implementation(libs.androidx.compose.ui.graphics)
+    implementation(libs.androidx.compose.ui.tooling.preview)
+    implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.camera.extensions)
+    debugImplementation(libs.androidx.compose.ui.tooling)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
 
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
+    implementation(libs.androidx.hilt.navigation.compose)
+
     implementation(libs.retrofit)
     implementation(libs.converter.gson)
     implementation(libs.okhttp)
@@ -100,23 +98,15 @@ dependencies {
     implementation(libs.firebase.auth)
     implementation(libs.firebase.crashlytics)
     implementation(libs.firebase.analytics)
-
     implementation(libs.socket.io.client)
+    implementation(libs.androidx.compose.material.icons.extended)
+    implementation(libs.coil.compose)
 
-    testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
-
-
-    // CameraX
-    implementation("androidx.camera:camera-camera2")
-
-    //image loader
-    implementation ("com.github.bumptech.glide:glide:4.14.2")
-    annotationProcessor ("com.github.bumptech.glide:compiler:4.14.2")
-}
-
-fun getCommitNumber(): Int {
-    val grgit = Grgit.open(mapOf("dir" to project.rootDir.parent))
-    return grgit.log(mapOf("includes" to listOf("HEAD"))).size
+    implementation(libs.androidx.camera.core)
+    implementation(libs.androidx.camera.camera2)
+    implementation(libs.androidx.camera.lifecycle)
+    implementation(libs.androidx.camera.view)
+    implementation(libs.face.detection)
+    implementation(libs.accompanist.permissions)
+    implementation(libs.gson)
 }
