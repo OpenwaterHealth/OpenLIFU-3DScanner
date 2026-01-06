@@ -9,6 +9,7 @@ import health.openwater.openlifu3dscanner.api.PhotoscanService
 import health.openwater.openlifu3dscanner.api.WebsocketService
 import health.openwater.openlifu3dscanner.api.dto.Coordinates
 import health.openwater.openlifu3dscanner.api.dto.CreatePhotocollectionRequest
+import health.openwater.openlifu3dscanner.api.dto.MatchingMode
 import health.openwater.openlifu3dscanner.api.dto.Photocollection
 import health.openwater.openlifu3dscanner.api.dto.Photoscan
 import health.openwater.openlifu3dscanner.api.dto.StartPhotoscanRequest
@@ -17,6 +18,7 @@ import health.openwater.openlifu3dscanner.api.model.DownloadingItem
 import health.openwater.openlifu3dscanner.api.model.ImageUploadProgress
 import health.openwater.openlifu3dscanner.api.model.ReconstructionProgress
 import health.openwater.openlifu3dscanner.api.model.Type
+import health.openwater.openlifu3dscanner.extensions.getModelsDir
 import health.openwater.openlifu3dscanner.extensions.writeToFile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -28,7 +30,6 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import okhttp3.ResponseBody
-import retrofit2.Response
 import java.io.BufferedInputStream
 import java.io.File
 import java.io.FileOutputStream
@@ -171,25 +172,25 @@ class CloudRepository(
         return startReconstruction(id)
     }
 
-    suspend fun startReconstruction(photocollectionId: Long): Long? {
+    suspend fun startReconstruction(collectionId: Long): Long? {
         return try {
             var request = StartPhotoscanRequest()
 
-            val photocollectionResponse = photocollectionService.getPhotocollection(
-                photocollectionId, joinPhotos = false, joinCoordinates = true
+            val collectionResponse = photocollectionService.getPhotocollection(
+                collectionId, joinPhotos = false, joinCoordinates = true
             )
-            if (photocollectionResponse.isSuccessful) {
-                photocollectionResponse.body()?.coordinates?.let { coordinates ->
+            if (collectionResponse.isSuccessful) {
+                collectionResponse.body()?.coordinates?.let { coordinates ->
                     request = StartPhotoscanRequest(
-                        matchingMode = "spatial",
-                        numNeighbors = 10,
+                        matchingMode = MatchingMode.spatial,
+                        numNeighbors = 20,
                         locations = coordinates.images.map { listOf(it.x, it.y, it.z) }
                     )
                 }
             }
 
             val response =
-                photocollectionService.startPhotoscan(photocollectionId, request)
+                photocollectionService.startPhotoscan(collectionId, request)
             if (response.isSuccessful)
                 response.body()?.photoscanId
             else
@@ -278,7 +279,7 @@ class CloudRepository(
     }
 
     fun getImagesDir(referenceNumber: String) = File(
-        context.getExternalFilesDir(null),
+        context.getModelsDir(),
         referenceNumber
     )
 
@@ -309,7 +310,7 @@ class CloudRepository(
 
     suspend fun getReferenceNumbers(localOnly: Boolean): Set<String> {
         val result = mutableSetOf<String>()
-        val localDir = File(Environment.getExternalStorageDirectory(), OPENLIFU_DIR)
+        val localDir = context.getModelsDir()
         if (localDir.exists()) {
             localDir.list()?.let {
                 result.addAll(it)
@@ -431,7 +432,6 @@ class CloudRepository(
 
     companion object {
         private val TAG = CloudRepository::class.simpleName
-        const val OPENLIFU_DIR = "OpenLIFU-3DScanner"
         const val SCAN_DIR = "scan"
         const val COORDINATES_FILE_NAME = "coordinates.json"
     }

@@ -1,6 +1,5 @@
 package health.openwater.openlifu3dscanner.screen.photoscan
 
-import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -42,6 +41,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import health.openwater.openlifu3dscanner.R
+import health.openwater.openlifu3dscanner.extensions.getModelsDir
 import health.openwater.openlifu3dscanner.viewmodel.CollectionViewModel
 import kotlinx.coroutines.flow.collectLatest
 import java.io.File
@@ -60,7 +60,6 @@ fun PhotoscanScreen(
 
     LaunchedEffect(scanId) {
         val existingModel = findModelDir(context, scanId, collectionViewModel)
-        Log.w("TAG", "#### Existing model: $existingModel")
         if (existingModel != null) {
             modelDir = existingModel
             downloadState = DownloadState.Success
@@ -72,8 +71,6 @@ fun PhotoscanScreen(
     LaunchedEffect(scanId) {
         collectionViewModel.getDownloadResultsFlow().collectLatest { result ->
             if (result?.item?.id == scanId) {
-                Log.w("TAG", "#### Found model: $result")
-
                 if (result.success) {
                     modelDir = findModelDir(context, scanId, collectionViewModel)
                     downloadState = DownloadState.Success
@@ -306,5 +303,7 @@ private suspend fun findModelDir(
     } ?: return null
 
     val collectionName = photocollection.name ?: return null
-    return File(context.getExternalFilesDir(null), "$collectionName/scan")
+    val file = File(context.getModelsDir(), "$collectionName/scan")
+    if (!file.exists()) return null
+    return file
 }

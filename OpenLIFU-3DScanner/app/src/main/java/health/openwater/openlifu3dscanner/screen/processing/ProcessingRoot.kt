@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
 import health.openwater.openlifu3dscanner.R
+import health.openwater.openlifu3dscanner.extensions.getModelsDir
 import java.io.File
 
 
@@ -47,7 +48,7 @@ fun ProcessingRoot(
 ) {
     val context = LocalContext.current
     val scanDir =
-        remember(collectionName) { File(context.getExternalFilesDir(null), collectionName) }
+        remember(collectionName) { File(context.getModelsDir(), collectionName) }
 
     var imageFiles by remember(scanDir) {
         mutableStateOf(
@@ -153,7 +154,7 @@ fun ProcessingRoot(
                 enabled = imageFiles.isNotEmpty()
             ) {
                 Text(
-                    text=stringResource(R.string.upload),
+                    text = stringResource(R.string.upload),
                     fontSize = 16.sp,
                     modifier = Modifier.padding(vertical = 8.dp)
                 )

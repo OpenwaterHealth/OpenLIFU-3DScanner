@@ -2,6 +2,7 @@ package health.openwater.openlifu3dscanner.screen.home
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -12,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -30,18 +32,18 @@ fun HomeScreen(
 
     Scaffold(
         bottomBar = {
-            Box(
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier
-                    .height(64.dp)
                     .fillMaxWidth()
-                    .padding(bottom = 34.dp)
+                    .padding(vertical = 28.dp)
             ) {
                 Image(
                     painter = painterResource(R.drawable.openwater),
                     contentDescription = null,
                     contentScale = ContentScale.Fit,
+                    colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onBackground),
                     modifier = Modifier
-                        .matchParentSize()
                         .alpha(0.72f)
                 )
 
@@ -50,7 +52,6 @@ fun HomeScreen(
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onBackground,
                     modifier = Modifier
-                        .align(Alignment.BottomEnd)
                         .alpha(0.72f)
                         .padding(end = 8.dp, bottom = 4.dp)
                 )

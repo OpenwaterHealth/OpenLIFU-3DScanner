@@ -18,6 +18,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import health.openwater.openlifu3dscanner.R
 import health.openwater.openlifu3dscanner.api.model.ReconstructionProgress
 import health.openwater.openlifu3dscanner.core.UploadState
+import health.openwater.openlifu3dscanner.extensions.getModelsDir
 import health.openwater.openlifu3dscanner.viewmodel.CloudViewModel
 import java.io.File
 
@@ -31,7 +32,7 @@ fun UploadingRoot(
 ) {
     val context = LocalContext.current
     val scanDir =
-        remember(collectionName) { File(context.getExternalFilesDir(null), collectionName) }
+        remember(collectionName) { File(context.getModelsDir(), collectionName) }
 
     val imageFiles = remember(scanDir) {
         scanDir

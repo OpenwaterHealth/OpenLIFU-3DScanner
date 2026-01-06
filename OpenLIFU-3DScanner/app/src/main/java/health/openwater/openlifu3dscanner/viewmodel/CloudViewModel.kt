@@ -15,6 +15,7 @@ import health.openwater.openlifu3dscanner.api.model.ReconstructionProgress
 import health.openwater.openlifu3dscanner.api.repository.CloudRepository
 import health.openwater.openlifu3dscanner.core.CaptureData
 import health.openwater.openlifu3dscanner.core.UploadState
+import health.openwater.openlifu3dscanner.extensions.getModelsDir
 import health.openwater.openlifu3dscanner.utils.PositionGenerator
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -106,7 +107,7 @@ class CloudViewModel @Inject constructor(
 
     private fun savePositionsJson() {
         val collectionName = cloudRepository.getCurrentPhotocollection()?.name ?: return
-        val scanDir = File(application.getExternalFilesDir(null), collectionName)
+        val scanDir = File(application.getModelsDir(), collectionName)
 
         val jsonFiles = scanDir
             .listFiles { f -> f.extension.equals("json", true) }

@@ -23,6 +23,8 @@ firebaseBom = "34.7.0"
 converterGson = "3.0.0"
 socketIoClient = "2.1.2"
 cameraExtensions = "1.5.2"
+material3 = "1.4.0"
+
 
 [libraries]
 accompanist-permissions = { module = "com.google.accompanist:accompanist-permissions", version.ref = "accompanistPermissions" }
@@ -40,7 +42,7 @@ androidx-compose-ui-graphics = { group = "androidx.compose.ui", name = "ui-graph
 androidx-compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
 androidx-compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
 androidx-compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
-androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3" }
+androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "material3" }
 coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coilCompose" }
 face-detection = { module = "com.google.mlkit:face-detection", version.ref = "faceDetection" }
 gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
@@ -66,4 +68,4 @@ kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "ko
 dagger-hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 google-devtools-ksp = { id = "com.google.devtools.ksp", version.ref = "googleKspPlugin" }
 google-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }
-firebase-crashlytics = { id = "com.google.firebase.crashlytics", version.ref = "crashlytics"}
+firebase-crashlytics = { id = "com.google.firebase.crashlytics", version.ref = "crashlytics" }

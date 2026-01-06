@@ -16,6 +16,10 @@ private val LightColorScheme = lightColorScheme(
     onSecondary = Color.Black,
 
     primaryContainer = Color(0xFF497073),
+    onPrimaryContainer = Color.White,
+
+    secondaryContainer = Color(0xFF2C4346),
+    onSecondaryContainer = Color.White,
 
     tertiary = Color(0xFF26A69A),     // Teal-ish accent
     onTertiary = Color.Black,
@@ -36,6 +40,10 @@ private val DarkColorScheme = darkColorScheme(
     onSecondary = Color(0xFF003300),
 
     primaryContainer = Color(0xFF497073),
+    onPrimaryContainer = Color.Black,
+
+    secondaryContainer = Color(0xFF2C4346),
+    onSecondaryContainer = Color.White,
 
     tertiary = Color(0xFF4DB6AC),
     onTertiary = Color(0xFF00201A),

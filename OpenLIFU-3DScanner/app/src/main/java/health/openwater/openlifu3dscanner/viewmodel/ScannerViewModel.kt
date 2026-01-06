@@ -26,6 +26,7 @@ import com.google.gson.Gson
 import dagger.hilt.android.lifecycle.HiltViewModel
 import health.openwater.openlifu3dscanner.core.CaptureData
 import health.openwater.openlifu3dscanner.core.FaceInfo
+import health.openwater.openlifu3dscanner.extensions.getModelsDir
 import health.openwater.openlifu3dscanner.extensions.toRotatedBitmap
 import java.io.File
 import java.io.FileOutputStream
@@ -134,7 +135,7 @@ class ScannerViewModel @Inject constructor(
         currentScanPath?.deleteRecursively()
         currentScanPath = null
 
-        val file = File(application.getExternalFilesDir(null), collectionName).apply { mkdirs() }
+        val file = File(application.getModelsDir(), collectionName).apply { mkdirs() }
         currentScanPath = file
 
         isScanning = true
