@@ -82,7 +82,8 @@ fun PhotoscanCard(photoscan: Photoscan, collection: Photocollection?, onClick: (
                     }
                     Spacer(modifier = Modifier.height(4.dp))
                     LinearProgressIndicator(
-                        progress = photoscan.progress / 100f,
+                        drawStopIndicator = { },
+                        progress = { photoscan.progress / 100f },
                         modifier = Modifier.fillMaxWidth(),
                         color = MaterialTheme.colorScheme.primary,
                         trackColor = MaterialTheme.colorScheme.surfaceVariant

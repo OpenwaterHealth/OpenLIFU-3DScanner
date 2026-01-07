@@ -12,7 +12,7 @@ data class CaptureData(
     val angle: Float,              // Relative angle from start (0-360)
     val absoluteAngle: Float,      // Absolute compass angle
     val filename: String,
-    val forwardX: Float,
-    val forwardY: Float,
-    val forwardZ: Float
+    val azimuthRad: Float,
+    val pitchRad: Float,
+    val rollRad: Float
 )

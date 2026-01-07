@@ -37,8 +37,8 @@ class ScannerViewModel @Inject constructor(
         private set
     var currentAngle by mutableFloatStateOf(0f)
         private set
-    var forward by mutableStateOf(floatArrayOf(0f, 0f, 0f))
-        private set
+//    var forward by mutableStateOf(floatArrayOf(0f, 0f, 0f))
+//        private set
 
     val captureInterval = 3f
     val totalBuckets = (360f / captureInterval).toInt()
@@ -61,6 +61,8 @@ class ScannerViewModel @Inject constructor(
     private var rotationSensor: Sensor? = null
     private var sensorListener: SensorEventListener? = null
 
+    var latestOrientation = PhotoOrientation(0f, 0f, 0f, 0L)
+
     // Prevent concurrent captures
     private var isCapturing by mutableStateOf(false)
 
@@ -75,10 +77,11 @@ class ScannerViewModel @Inject constructor(
         rotationSensor = sensorManager?.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
 
         sensorListener = object : SensorEventListener {
-            override fun onSensorChanged(event: SensorEvent) {
-                val rotationMatrix = FloatArray(9)
-                val orientation = FloatArray(3)
 
+            private val rotationMatrix = FloatArray(9)
+            private val orientation = FloatArray(3)
+
+            override fun onSensorChanged(event: SensorEvent) {
                 SensorManager.getRotationMatrixFromVector(rotationMatrix, event.values)
                 SensorManager.getOrientation(rotationMatrix, orientation)
 
@@ -86,23 +89,21 @@ class ScannerViewModel @Inject constructor(
                 if (azimuth < 0) azimuth += 360f
                 currentAngle = azimuth
 
-                val matrix =
-                    floatArrayOf(-rotationMatrix[2], -rotationMatrix[5], -rotationMatrix[8])
-                normalize(matrix)
-                forward = matrix.clone()
-            }
+                val azimuthRad = orientation[0]   // yaw
+                val pitchRad = orientation[1]
+                val rollRad = orientation[2]
 
-            private fun normalize(v: FloatArray) {
-                val len = sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2])
-                if (len > 0.0001f) {
-                    v[0] /= len
-                    v[1] /= len
-                    v[2] /= len
-                }
+                latestOrientation = PhotoOrientation(
+                    azimuthRad = azimuthRad,
+                    pitchRad = pitchRad,
+                    rollRad = rollRad,
+                    timestampNs = event.timestamp
+                )
             }
 
             override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
         }
+
 
         sensorManager?.registerListener(
             sensorListener,
@@ -161,7 +162,7 @@ class ScannerViewModel @Inject constructor(
         isCapturing = true
 
         val angleSnapshot = currentAngle
-        val forwardSnapshot = forward.clone()
+        val orientationSnapshot = latestOrientation.copy()
         val bucket = angleToBucket(angleSnapshot)
 
         val relativeAngle = bucket * captureInterval
@@ -181,9 +182,9 @@ class ScannerViewModel @Inject constructor(
                         angle = relativeAngle,
                         absoluteAngle = angleSnapshot,
                         filename = filename,
-                        forwardX = forwardSnapshot[0],
-                        forwardY = forwardSnapshot[1],
-                        forwardZ = forwardSnapshot[2]
+                        azimuthRad = orientationSnapshot.azimuthRad,
+                        pitchRad = orientationSnapshot.pitchRad,
+                        rollRad = orientationSnapshot.rollRad
                     )
 
                     capturedBuckets.add(bucket)
@@ -206,3 +207,10 @@ class ScannerViewModel @Inject constructor(
         faceDetected = face != null
     }
 }
+
+data class PhotoOrientation(
+    val azimuthRad: Float,
+    val pitchRad: Float,
+    val rollRad: Float,
+    val timestampNs: Long
+)

@@ -291,6 +291,7 @@ fun ReconstructingView(
         )
 
         LinearProgressIndicator(
+            drawStopIndicator = { },
             progress = { animatedProgress },
             modifier = Modifier
                 .fillMaxWidth()

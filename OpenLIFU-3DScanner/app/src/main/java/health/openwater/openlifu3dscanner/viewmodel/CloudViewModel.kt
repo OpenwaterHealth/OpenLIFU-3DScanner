@@ -16,13 +16,14 @@ import health.openwater.openlifu3dscanner.api.repository.CloudRepository
 import health.openwater.openlifu3dscanner.core.CaptureData
 import health.openwater.openlifu3dscanner.core.UploadState
 import health.openwater.openlifu3dscanner.extensions.getModelsDir
-import health.openwater.openlifu3dscanner.utils.PositionGenerator
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.io.File
 import javax.inject.Inject
+import kotlin.math.cos
+import kotlin.math.sin
 
 
 @HiltViewModel
@@ -125,28 +126,34 @@ class CloudViewModel @Inject constructor(
             }
         }
 
-        val positions = PositionGenerator.generatePositions(forwards = captures.map {
-            floatArrayOf(
-                it.forwardX,
-                it.forwardY,
-                it.forwardZ
-            )
-        })
         val coordinatesList = mutableListOf<ImageCoordinates>()
-
         captures.forEachIndexed { ind, capture ->
+
+            val xyz = toXYZ(capture.azimuthRad, capture.pitchRad)
+
             coordinatesList.add(
                 ImageCoordinates(
                     image = capture.filename,
-                    x = positions[ind][0],
-                    y = positions[ind][1],
-                    z = positions[ind][2]
+                    x = xyz.first,
+                    y = xyz.second,
+                    z = xyz.third
                 )
             )
         }
 
         val coordinates = Coordinates(images = coordinatesList)
         cloudRepository.uploadCoordinates(coordinates)
+    }
+
+    fun toXYZ(
+        azimuth: Float,
+        pitch: Float,
+        radius: Float = 1f
+    ): Triple<Float, Float, Float> {
+        val x = radius * cos(pitch) * cos(azimuth)
+        val y = radius * cos(pitch) * sin(azimuth)
+        val z = radius * sin(pitch)
+        return Triple(x, y, z)
     }
 
     fun start(collectionId: String) {

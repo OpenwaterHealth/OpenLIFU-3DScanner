@@ -4,7 +4,6 @@ import android.util.Log
 import androidx.exifinterface.media.ExifInterface
 import health.openwater.openlifu3dscanner.api.PhotocollectionService
 import health.openwater.openlifu3dscanner.api.model.ImageUploadProgress
-import health.openwater.openlifu3dscanner.resizeJpegAsByteArray
 import health.openwater.openlifu3dscanner.resizeJpegAsSquareByteArray
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
