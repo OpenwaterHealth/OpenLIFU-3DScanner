@@ -8,7 +8,7 @@ import com.google.mlkit.vision.face.FaceDetection
 import com.google.mlkit.vision.face.FaceDetectorOptions
 
 class FaceAnalyzer(
-    private val onFaceDetected: (FaceInfo?) -> Unit,
+    private val onFaceDetected: (Boolean) -> Unit,
 ) : ImageAnalysis.Analyzer {
 
     private val options = FaceDetectorOptions.Builder()
@@ -33,16 +33,9 @@ class FaceAnalyzer(
                     if (faces.isNotEmpty()) {
                         val face = faces[0]
                         val box = face.boundingBox
-                        onFaceDetected(
-                            FaceInfo(
-                                centerX = box.centerX().toFloat(),
-                                centerY = box.centerY().toFloat(),
-                                width = box.width(),
-                                height = box.height()
-                            )
-                        )
+                        onFaceDetected(true)
                     } else {
-                        onFaceDetected(null)
+                        onFaceDetected(false)
                     }
                 }
                 .addOnCompleteListener {

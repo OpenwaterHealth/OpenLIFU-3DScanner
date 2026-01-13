@@ -16,7 +16,6 @@ interface PhotoscanService {
     @GET("photoscan/account/{uid}")
     suspend fun getPhotoscans(
         @Path("uid") uid: String,
-        @Query("join_meshroom_config") joinMeshroomConfig: Boolean = false,
         @Query("join_progress_history") joinProgressHistory: Boolean = false
     ): Response<List<Photoscan>>
 

@@ -1,4 +1,4 @@
-package health.openwater.openlifu3dscanner.screen.processing
+package health.openwater.openlifu3dscanner.screen.scanner
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect

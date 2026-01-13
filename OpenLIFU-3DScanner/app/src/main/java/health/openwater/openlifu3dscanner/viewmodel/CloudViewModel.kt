@@ -2,28 +2,18 @@ package health.openwater.openlifu3dscanner.viewmodel
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.application
 import androidx.lifecycle.viewModelScope
-import com.google.gson.Gson
-import com.google.gson.JsonSyntaxException
 import dagger.hilt.android.lifecycle.HiltViewModel
-import health.openwater.openlifu3dscanner.api.dto.Coordinates
-import health.openwater.openlifu3dscanner.api.dto.ImageCoordinates
 import health.openwater.openlifu3dscanner.api.dto.PhotoscanStatus
 import health.openwater.openlifu3dscanner.api.model.ImageUploadProgress
 import health.openwater.openlifu3dscanner.api.model.ReconstructionProgress
 import health.openwater.openlifu3dscanner.api.repository.CloudRepository
-import health.openwater.openlifu3dscanner.core.CaptureData
 import health.openwater.openlifu3dscanner.core.UploadState
-import health.openwater.openlifu3dscanner.extensions.getModelsDir
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import java.io.File
 import javax.inject.Inject
-import kotlin.math.cos
-import kotlin.math.sin
 
 
 @HiltViewModel
@@ -42,7 +32,7 @@ class CloudViewModel @Inject constructor(
     val reconstructionProgress: StateFlow<ReconstructionProgress?> =
         _reconstructionProgress.asStateFlow()
 
-    private var currentPhotoscanId: Long? = null
+    var currentPhotoscanId: Long? = null
 
     init {
         observeProgress()
@@ -61,8 +51,6 @@ class CloudViewModel @Inject constructor(
 
                     if (progress.uploadedImages == progress.totalImages && progress.totalImages > 0) {
                         _uploadState.value = UploadState.UploadComplete
-
-                        savePositionsJson()
                     }
                 }
             }
@@ -105,67 +93,14 @@ class CloudViewModel @Inject constructor(
         }
     }
 
-
-    private fun savePositionsJson() {
-        val collectionName = cloudRepository.getCurrentPhotocollection()?.name ?: return
-        val scanDir = File(application.getModelsDir(), collectionName)
-
-        val jsonFiles = scanDir
-            .listFiles { f -> f.extension.equals("json", true) }
-            ?.sortedBy { it.name }
-            ?: emptyList()
-
-        val captures = jsonFiles.mapNotNull {
-            try {
-                Gson().fromJson(
-                    it.readText(),
-                    CaptureData::class.java
-                )
-            } catch (_: JsonSyntaxException) {
-                null
-            }
-        }
-
-        val coordinatesList = mutableListOf<ImageCoordinates>()
-        captures.forEachIndexed { ind, capture ->
-
-            val xyz = toXYZ(capture.azimuthRad, capture.pitchRad)
-
-            coordinatesList.add(
-                ImageCoordinates(
-                    image = capture.filename,
-                    x = xyz.first,
-                    y = xyz.second,
-                    z = xyz.third
-                )
-            )
-        }
-
-        val coordinates = Coordinates(images = coordinatesList)
-        cloudRepository.uploadCoordinates(coordinates)
-    }
-
-    fun toXYZ(
-        azimuth: Float,
-        pitch: Float,
-        radius: Float = 1f
-    ): Triple<Float, Float, Float> {
-        val x = radius * cos(pitch) * cos(azimuth)
-        val y = radius * cos(pitch) * sin(azimuth)
-        val z = radius * sin(pitch)
-        return Triple(x, y, z)
-    }
-
-    fun start(collectionId: String) {
-        if (!cloudRepository.isLoggedInAndOnline()) {
-            _uploadState.value = UploadState.Error("Not logged in or offline")
-            return
-        }
-
+    fun start(collectionName: String, autoUpload: Boolean) {
         viewModelScope.launch {
             try {
                 _uploadState.value = UploadState.Uploading
-                cloudRepository.createPhotocollection(collectionId, autoUpload = true)
+                cloudRepository.createPhotocollection(
+                    name = collectionName,
+                    autoUpload = autoUpload
+                )
             } catch (e: Exception) {
                 _uploadState.value = UploadState.Error(
                     e.message ?: "Failed to start upload"
@@ -196,9 +131,7 @@ class CloudViewModel @Inject constructor(
         }
     }
 
-    fun uploadRemainingPhotos() {
-        cloudRepository.uploadRemainingPhotos()
-    }
+    fun uploadRemainingPhotos() = cloudRepository.uploadRemainingPhotos()
 
     fun reset() {
         currentPhotoscanId?.let {

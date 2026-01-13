@@ -1,5 +1,11 @@
 package health.openwater.openlifu3dscanner.screen.scanner
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -12,6 +18,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -179,13 +186,23 @@ fun ScanControls(
             Spacer(modifier = Modifier.height(25.dp))
         }
 
+        val infiniteTransition = rememberInfiniteTransition(label = "blink")
+        val blinkAlpha by infiniteTransition.animateFloat(
+            initialValue = 1f,
+            targetValue = 0.3f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(600, easing = FastOutSlowInEasing),
+                repeatMode = RepeatMode.Reverse
+            ),
+            label = "blinkAlpha"
+        )
+
         Canvas(modifier = Modifier.fillMaxSize()) {
             if (!viewModel.isScanning) return@Canvas
 
             val centerX = size.width / 2f
             val centerY = size.height / 2f - size.height * 0.2f
 
-            // ---- Oval parameters (matching ScanControls) ----
             val ovalRadiusX = size.width * 0.65f / 2f  // Horizontal radius
             val ovalRadiusY = size.height * 0.45f / 2f // Vertical radius
             val ovalCenter = Offset(centerX, centerY)
@@ -199,7 +216,7 @@ fun ScanControls(
                 val isCurrent = (viewModel.currentAngle / viewModel.captureInterval).toInt() == i
 
                 val petalColor = when {
-                    isCurrent -> Color.Cyan
+                    isCurrent -> Color.Yellow
                     isCaptured -> Color.Green
                     else -> Color.White.copy(alpha = 0.3f)
                 }
@@ -211,7 +228,8 @@ fun ScanControls(
                     radiusY = ovalRadiusY,
                     color = petalColor,
                     isCaptured = isCaptured,
-                    isCurrent = isCurrent
+                    isCurrent = isCurrent,
+                    blinkAlpha = if (isCurrent) blinkAlpha else 1f
                 )
             }
         }

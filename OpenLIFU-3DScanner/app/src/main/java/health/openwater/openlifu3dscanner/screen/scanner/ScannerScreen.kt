@@ -1,6 +1,7 @@
 package health.openwater.openlifu3dscanner.screen.scanner
 
 import android.Manifest
+import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -28,20 +29,28 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.sp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import health.openwater.openlifu3dscanner.R
-import health.openwater.openlifu3dscanner.screen.processing.KeepScreenOn
+import health.openwater.openlifu3dscanner.viewmodel.CloudViewModel
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @Composable
 fun ScannerScreen(
     collectionName: String,
+    autoUploadEnabled: Boolean,
     onNavigateBack: () -> Unit,
-    onNavigateToProcessing: () -> Unit
+    onNavigateToProcessing: (autoUploadEnabled: Boolean) -> Unit,
+    cloudViewModel: CloudViewModel = hiltViewModel(),
 ) {
     var completed by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        Log.w("ScannerScreen", "Starting scan with collectionName: $collectionName, $autoUploadEnabled")
+        cloudViewModel.start(collectionName, autoUploadEnabled)
+    }
 
     KeepScreenOn()
 
@@ -62,7 +71,7 @@ fun ScannerScreen(
                         enabled = completed,
                         modifier = Modifier.alpha(if (completed) 1f else 0.5f),
                         onClick = {
-                            onNavigateToProcessing()
+                            onNavigateToProcessing(autoUploadEnabled)
                         }
                     ) {
                         Text(
@@ -108,7 +117,11 @@ fun ScannerScreen(
                         .fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(stringResource(R.string.camera_permission_required), color = Color.White, fontSize = 18.sp)
+                    Text(
+                        stringResource(R.string.camera_permission_required),
+                        color = Color.White,
+                        fontSize = 18.sp
+                    )
                 }
             }
         }

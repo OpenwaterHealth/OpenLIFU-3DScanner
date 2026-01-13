@@ -17,12 +17,14 @@ sealed class Screen(val route: String) {
     object Home : Screen("home")
     object ViewCollection : Screen("photoscan")
 
-    object Photoscan : Screen("photoscan/{scanId}") {
-        fun createRoute(scanId: String) = "photoscan/$scanId"
+    object Photoscan : Screen("photoscan/{scanId}/{autoDownloadEnabled}") {
+        fun createRoute(scanId: Long, autoDownloadEnabled: Boolean) =
+            "photoscan/$scanId/$autoDownloadEnabled"
     }
 
-    object Scanner : Screen("scanner/{collectionName}") {
-        fun createRoute(collectionName: String) = "scanner/$collectionName"
+    object Scanner : Screen("scanner/{collectionName}/{autoUploadEnabled}") {
+        fun createRoute(collectionName: String, autoUploadEnabled: Boolean) =
+            "scanner/$collectionName/$autoUploadEnabled"
     }
 
     object Processing : Screen("processing/{collectionName}") {
@@ -44,8 +46,13 @@ fun AppNavigation() {
     ) {
         composable(Screen.Home.route) {
             HomeScreen(
-                onStartScan = { collectionName ->
-                    navController.navigate(Screen.Scanner.createRoute(collectionName))
+                onStartScan = { collectionName, autoUploadEnabled ->
+                    navController.navigate(
+                        Screen.Scanner.createRoute(
+                            collectionName,
+                            autoUploadEnabled
+                        )
+                    )
                 },
                 onViewCollection = {
                     navController.navigate(Screen.ViewCollection.route)
@@ -57,7 +64,7 @@ fun AppNavigation() {
             ViewCollectionScreen(
                 onNavigateBack = { navController.popBackStack() },
                 onPhotoscanClick = { scanId ->
-                    navController.navigate(Screen.Photoscan.createRoute(scanId.toString()))
+                    navController.navigate(Screen.Photoscan.createRoute(scanId, false))
                 }
             )
         }
@@ -65,12 +72,16 @@ fun AppNavigation() {
         composable(
             route = Screen.Photoscan.route,
             arguments = listOf(
-                navArgument("scanId") { type = NavType.StringType }
+                navArgument("scanId") { type = NavType.StringType },
+                navArgument("autoDownloadEnabled") { type = NavType.BoolType }
             )
         ) { backStackEntry ->
             val scanId = backStackEntry.arguments?.getString("scanId") ?: ""
+            val autoDownloadEnabled = backStackEntry.arguments?.getBoolean("autoDownloadEnabled") ?: false
+
             PhotoscanScreen(
                 scanId = scanId.toLong(),
+                autoDownloadEnabled = autoDownloadEnabled,
                 onNavigateBack = { navController.popBackStack() },
             )
         }
@@ -78,18 +89,32 @@ fun AppNavigation() {
         composable(
             route = Screen.Scanner.route,
             arguments = listOf(
-                navArgument("collectionName") { type = NavType.StringType }
+                navArgument("collectionName") { type = NavType.StringType },
+                navArgument("autoUploadEnabled") { type = NavType.BoolType }
             )
         ) { backStackEntry ->
             val collectionName = backStackEntry.arguments?.getString("collectionName") ?: ""
+            val autoUploadEnabled =
+                backStackEntry.arguments?.getBoolean("autoUploadEnabled") ?: false
+
             ScannerScreen(
+                autoUploadEnabled = autoUploadEnabled,
                 collectionName = collectionName,
                 onNavigateBack = { navController.popBackStack() },
-                onNavigateToProcessing = {
-                    navController.navigate(
-                        Screen.Processing.createRoute(collectionName)
-                    ) {
-                        popUpTo(Screen.Scanner.route) { inclusive = true }
+                onNavigateToProcessing = { autoUploadEnabled ->
+
+                    if (autoUploadEnabled) {
+                        navController.navigate(
+                            Screen.Uploading.createRoute(collectionName)
+                        ) {
+                            popUpTo(Screen.Scanner.route) { inclusive = true }
+                        }
+                    } else {
+                        navController.navigate(
+                            Screen.Processing.createRoute(collectionName)
+                        ) {
+                            popUpTo(Screen.Scanner.route) { inclusive = true }
+                        }
                     }
                 }
             )
@@ -125,6 +150,13 @@ fun AppNavigation() {
             UploadingScreen(
                 collectionName = collectionName,
                 onNavigateBack = { navController.popBackStack() },
+                onViewModel = { scanId ->
+                    navController.navigate(
+                        Screen.Photoscan.createRoute(scanId, true)
+                    ) {
+                        popUpTo(Screen.Home.route) { inclusive = false }
+                    }
+                }
             )
         }
     }

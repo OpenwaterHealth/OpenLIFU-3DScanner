@@ -8,6 +8,7 @@ import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
 import kotlin.math.cos
 import kotlin.math.sin
+import kotlin.math.sqrt
 
 fun DrawScope.drawPetal(
     center: Offset,
@@ -17,57 +18,64 @@ fun DrawScope.drawPetal(
     color: Color,
     isCaptured: Boolean,
     isCurrent: Boolean,
+    blinkAlpha: Float = 1f, // Add this parameter
 ) {
-    val petalLength = if (isCurrent) 180f else 120f
+    val petalLength = if (isCurrent) 40f else 20f
     val petalWidth = 20f
     val filled = isCaptured || isCurrent
 
     val rad = Math.toRadians(angle.toDouble() - 90)
+    val cosAngle = cos(rad).toFloat()
+    val sinAngle = sin(rad).toFloat()
 
     // Calculate point on oval perimeter
-    val ovalX = center.x + radiusX * cos(rad).toFloat()
-    val ovalY = center.y + radiusY * sin(rad).toFloat()
+    val ovalX = center.x + radiusX * cosAngle
+    val ovalY = center.y + radiusY * sinAngle
 
-    // Calculate distance from center to oval point
-    val distToOval = kotlin.math.sqrt(
-        ((ovalX - center.x) * (ovalX - center.x) +
-                (ovalY - center.y) * (ovalY - center.y))
-    )
+    // Calculate the normal to the ellipse at this point
+    val normalX = (radiusX * cosAngle) / (radiusX * radiusX)
+    val normalY = (radiusY * sinAngle) / (radiusY * radiusY)
+    val normalMag = sqrt(normalX * normalX + normalY * normalY)
+    val normX = normalX / normalMag
+    val normY = normalY / normalMag
 
-    // Normalized direction vector
-    val dirX = (ovalX - center.x) / distToOval
-    val dirY = (ovalY - center.y) / distToOval
+    // The tangent is perpendicular to the normal
+    val tangentX = -normY
+    val tangentY = normX
 
     // Base of petal (on oval perimeter)
     val baseX = ovalX
     val baseY = ovalY
 
-    // Tip of petal (extending outward)
-    val tipX = baseX + dirX * petalLength
-    val tipY = baseY + dirY * petalLength
-
-    // Perpendicular direction for petal width
-    val perpX = -dirY
-    val perpY = dirX
+    // Tip of petal (extending outward along the normal)
+    val tipX = baseX + normX * petalLength
+    val tipY = baseY + normY * petalLength
 
     val path = Path().apply {
         moveTo(
-            baseX + perpX * petalWidth / 2,
-            baseY + perpY * petalWidth / 2
+            baseX + tangentX * petalWidth / 2,
+            baseY + tangentY * petalWidth / 2
         )
 
         quadraticBezierTo(
             tipX, tipY,
-            baseX - perpX * petalWidth / 2,
-            baseY - perpY * petalWidth / 2
+            baseX - tangentX * petalWidth / 2,
+            baseY - tangentY * petalWidth / 2
         )
 
         close()
     }
 
-    if (filled) {
-        drawPath(path, color, style = Fill)
+    // Apply blinking alpha to current petal
+    val finalColor = if (isCurrent) {
+        color.copy(alpha = color.alpha * blinkAlpha)
     } else {
-        drawPath(path, color, style = Stroke(width = 2f))
+        color
+    }
+
+    if (filled) {
+        drawPath(path, finalColor, style = Fill)
+    } else {
+        drawPath(path, finalColor, style = Stroke(width = 2f))
     }
 }

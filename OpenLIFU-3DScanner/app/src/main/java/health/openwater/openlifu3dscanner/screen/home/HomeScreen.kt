@@ -1,8 +1,11 @@
 package health.openwater.openlifu3dscanner.screen.home
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -25,11 +28,12 @@ import health.openwater.openlifu3dscanner.utils.CollectionIdGenerator
 
 @Composable
 fun HomeScreen(
-    onStartScan: (String) -> Unit,
+    onStartScan: (collectionName: String, autoUploadEnabled: Boolean) -> Unit,
     onViewCollection: () -> Unit
 ) {
     var showCollectionDialog by remember { mutableStateOf(false) }
     var collectionName by remember { mutableStateOf("") }
+    var autoUploadEnabled by remember { mutableStateOf(true) }
 
     Scaffold(
         bottomBar = {
@@ -74,6 +78,7 @@ fun HomeScreen(
     }
 
     if (showCollectionDialog) {
+
         AlertDialog(
             onDismissRequest = {
                 showCollectionDialog = false
@@ -82,20 +87,45 @@ fun HomeScreen(
                 Text(text = stringResource(R.string.enter_collection_id))
             },
             text = {
-                OutlinedTextField(
-                    value = collectionName,
-                    onValueChange = { collectionName = it },
-                    label = { Text(stringResource(R.string.collection_id)) },
-                    singleLine = true
-                )
+                Column {
+                    OutlinedTextField(
+                        value = collectionName,
+                        onValueChange = { collectionName = it },
+                        label = { Text(stringResource(R.string.collection_id)) },
+                        singleLine = true
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { autoUploadEnabled = !autoUploadEnabled }
+                            .padding(vertical = 4.dp)
+                    ) {
+                        Checkbox(
+                            checked = autoUploadEnabled,
+                            onCheckedChange = { autoUploadEnabled = it }
+                        )
+                        Text(
+                            text = "Auto Upload",
+                            modifier = Modifier.padding(start = 8.dp)
+                        )
+                    }
+                }
             },
             confirmButton = {
                 TextButton(
                     enabled = collectionName.isNotBlank(),
                     onClick = {
                         showCollectionDialog = false
-                        onStartScan(collectionName.trim())
+                        onStartScan(
+                            collectionName.trim(),
+                            autoUploadEnabled
+                        )
                         collectionName = ""
+                        autoUploadEnabled = true
                     }
                 ) {
                     Text(stringResource(R.string.start_scan))
@@ -106,11 +136,13 @@ fun HomeScreen(
                     onClick = {
                         showCollectionDialog = false
                         collectionName = ""
+                        autoUploadEnabled = true
                     }
                 ) {
                     Text(stringResource(R.string.cancel))
                 }
             }
         )
+
     }
 }

@@ -38,7 +38,7 @@ fun HomeRoot(
 
 
     val isLoggedIn = userInfo != null
-    var hasStorageAccess by remember { mutableStateOf(context.hasAllFilesAccess()) }
+    var hasStorageAccess by remember { mutableStateOf(hasAllFilesAccess()) }
 
     LaunchedEffect(Unit) {
         userViewModel.refreshUserInfo()
@@ -47,7 +47,7 @@ fun HomeRoot(
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
-                hasStorageAccess = context.hasAllFilesAccess()
+                hasStorageAccess = hasAllFilesAccess()
             }
         }
 

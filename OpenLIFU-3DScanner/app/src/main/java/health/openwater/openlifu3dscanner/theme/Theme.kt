@@ -34,7 +34,7 @@ private val LightColorScheme = lightColorScheme(
 /* --- Dark theme --- */
 private val DarkColorScheme = darkColorScheme(
     primary = Color(0xFF62979A),      // Green 300
-    onPrimary = Color(0xFF003300),
+    onPrimary = Color.White,
 
     secondary = Color(0xFFA5D6A7),    // Green 200
     onSecondary = Color(0xFF003300),

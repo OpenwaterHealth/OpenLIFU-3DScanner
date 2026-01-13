@@ -37,6 +37,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
@@ -50,6 +51,7 @@ import java.io.File
 @Composable
 fun PhotoscanScreen(
     scanId: Long,
+    autoDownloadEnabled: Boolean,
     onNavigateBack: () -> Unit,
     collectionViewModel: CollectionViewModel = hiltViewModel()
 ) {
@@ -65,6 +67,10 @@ fun PhotoscanScreen(
             downloadState = DownloadState.Success
         } else {
             downloadState = DownloadState.Idle
+            if (autoDownloadEnabled) {
+                downloadState = DownloadState.Downloading
+                collectionViewModel.downloadMesh(scanId)
+            }
         }
     }
 
@@ -74,6 +80,10 @@ fun PhotoscanScreen(
                 if (result.success) {
                     modelDir = findModelDir(context, scanId, collectionViewModel)
                     downloadState = DownloadState.Success
+                    if (autoDownloadEnabled) {
+                        showViewer = true
+                    }
+
                 } else {
                     downloadState = DownloadState.Failed
                 }
@@ -91,7 +101,11 @@ fun PhotoscanScreen(
                 navigationIcon = {
                     IconButton(onClick = {
                         if (showViewer) {
-                            showViewer = false
+                            if (autoDownloadEnabled) {
+                                onNavigateBack()
+                            } else {
+                                showViewer = false
+                            }
                         } else {
                             onNavigateBack()
                         }
@@ -170,7 +184,11 @@ fun PhotoscanScreen(
                                     modifier = Modifier.size(20.dp)
                                 )
                                 Spacer(modifier = Modifier.size(8.dp))
-                                Text(stringResource(R.string.download_mesh))
+                                Text(
+                                    text = stringResource(R.string.download_mesh),
+                                    fontSize = 16.sp,
+                                    modifier = Modifier.padding(vertical = 8.dp)
+                                )
                             }
                         }
 
@@ -235,7 +253,11 @@ fun PhotoscanScreen(
                                     modifier = Modifier.size(20.dp)
                                 )
                                 Spacer(modifier = Modifier.size(8.dp))
-                                Text(stringResource(R.string.view_model))
+                                Text(
+                                    text = stringResource(R.string.view_model),
+                                    fontSize = 16.sp,
+                                    modifier = Modifier.padding(vertical = 8.dp)
+                                )
                             }
                         }
 
@@ -273,7 +295,11 @@ fun PhotoscanScreen(
                                 },
                                 modifier = Modifier.fillMaxWidth()
                             ) {
-                                Text(stringResource(R.string.retry_download))
+                                Text(
+                                    text = stringResource(R.string.retry_download),
+                                    fontSize = 16.sp,
+                                    modifier = Modifier.padding(vertical = 8.dp)
+                                )
                             }
                         }
 

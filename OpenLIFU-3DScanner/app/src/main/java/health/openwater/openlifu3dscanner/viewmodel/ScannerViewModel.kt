@@ -6,30 +6,26 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
-import android.util.Log
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableStateSetOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
-import com.google.gson.Gson
 import dagger.hilt.android.lifecycle.HiltViewModel
-import health.openwater.openlifu3dscanner.core.CaptureData
-import health.openwater.openlifu3dscanner.core.FaceInfo
+import health.openwater.openlifu3dscanner.api.repository.CloudRepository
 import health.openwater.openlifu3dscanner.extensions.getModelsDir
 import java.io.File
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import javax.inject.Inject
-import kotlin.math.sqrt
 
 @HiltViewModel
 class ScannerViewModel @Inject constructor(
     private val application: Application,
+    private val cloudRepository: CloudRepository
 ) : AndroidViewModel(application) {
 
     // ---- Scanner state ----
@@ -37,17 +33,12 @@ class ScannerViewModel @Inject constructor(
         private set
     var currentAngle by mutableFloatStateOf(0f)
         private set
-//    var forward by mutableStateOf(floatArrayOf(0f, 0f, 0f))
-//        private set
 
     val captureInterval = 3f
     val totalBuckets = (360f / captureInterval).toInt()
     val capturedBuckets = mutableStateSetOf<Int>()
-    val captureHistory = mutableStateListOf<CaptureData>()
 
     var faceDetected by mutableStateOf(false)
-        private set
-    var faceInfo by mutableStateOf<FaceInfo?>(null)
         private set
 
     var currentScanPath by mutableStateOf<File?>(null)
@@ -60,8 +51,6 @@ class ScannerViewModel @Inject constructor(
     private var sensorManager: SensorManager? = null
     private var rotationSensor: Sensor? = null
     private var sensorListener: SensorEventListener? = null
-
-    var latestOrientation = PhotoOrientation(0f, 0f, 0f, 0L)
 
     // Prevent concurrent captures
     private var isCapturing by mutableStateOf(false)
@@ -88,17 +77,6 @@ class ScannerViewModel @Inject constructor(
                 var azimuth = Math.toDegrees(orientation[0].toDouble()).toFloat()
                 if (azimuth < 0) azimuth += 360f
                 currentAngle = azimuth
-
-                val azimuthRad = orientation[0]   // yaw
-                val pitchRad = orientation[1]
-                val rollRad = orientation[2]
-
-                latestOrientation = PhotoOrientation(
-                    azimuthRad = azimuthRad,
-                    pitchRad = pitchRad,
-                    rollRad = rollRad,
-                    timestampNs = event.timestamp
-                )
             }
 
             override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
@@ -127,17 +105,10 @@ class ScannerViewModel @Inject constructor(
 
         isScanning = true
         capturedBuckets.clear()
-        captureHistory.clear()
     }
 
     fun stopScanning(onComplete: () -> Unit) {
         isScanning = false
-
-        currentScanPath?.let { path ->
-            val summaryFile = File(path, "summary.json")
-            summaryFile.writeText(Gson().toJson(captureHistory.toList()))
-        }
-
         onComplete()
     }
 
@@ -152,9 +123,7 @@ class ScannerViewModel @Inject constructor(
         return bucket !in capturedBuckets
     }
 
-    // ---- Capture photo with auto-focus ----
     fun capturePhoto() {
-        // Prevent concurrent captures
         if (isCapturing) {
             return
         }
@@ -162,12 +131,11 @@ class ScannerViewModel @Inject constructor(
         isCapturing = true
 
         val angleSnapshot = currentAngle
-        val orientationSnapshot = latestOrientation.copy()
         val bucket = angleToBucket(angleSnapshot)
 
         val relativeAngle = bucket * captureInterval
         val timestamp = System.currentTimeMillis()
-        val filename = "scan_${timestamp}_A${relativeAngle.toInt()}.jpg"
+        val filename = "A${relativeAngle.toInt()}_${timestamp}.jpg"
         val outputFileOptions =
             ImageCapture.OutputFileOptions.Builder(File(currentScanPath, filename)).build()
 
@@ -176,23 +144,8 @@ class ScannerViewModel @Inject constructor(
             cameraExecutor,
             object : ImageCapture.OnImageSavedCallback {
                 override fun onImageSaved(output: ImageCapture.OutputFileResults) {
-
-                    val captureData = CaptureData(
-                        timestamp = timestamp,
-                        angle = relativeAngle,
-                        absoluteAngle = angleSnapshot,
-                        filename = filename,
-                        azimuthRad = orientationSnapshot.azimuthRad,
-                        pitchRad = orientationSnapshot.pitchRad,
-                        rollRad = orientationSnapshot.rollRad
-                    )
-
                     capturedBuckets.add(bucket)
-                    captureHistory.add(captureData)
-
-                    val metadataFile = File(currentScanPath, filename.replace(".jpg", ".json"))
-                    metadataFile.writeText(Gson().toJson(captureData))
-
+                    cloudRepository.onImageCaptured()
                     isCapturing = false
                 }
 
@@ -202,15 +155,7 @@ class ScannerViewModel @Inject constructor(
             })
     }
 
-    fun setFace(face: FaceInfo?) {
-        faceInfo = face
-        faceDetected = face != null
+    fun setFace(face: Boolean) {
+        faceDetected = face
     }
 }
-
-data class PhotoOrientation(
-    val azimuthRad: Float,
-    val pitchRad: Float,
-    val rollRad: Float,
-    val timestampNs: Long
-)

@@ -1,15 +1,12 @@
 package health.openwater.openlifu3dscanner.api.repository
 
 import android.content.Context
-import android.os.Environment
 import android.util.Log
 import health.openwater.openlifu3dscanner.api.AuthService
 import health.openwater.openlifu3dscanner.api.PhotocollectionService
 import health.openwater.openlifu3dscanner.api.PhotoscanService
 import health.openwater.openlifu3dscanner.api.WebsocketService
-import health.openwater.openlifu3dscanner.api.dto.Coordinates
 import health.openwater.openlifu3dscanner.api.dto.CreatePhotocollectionRequest
-import health.openwater.openlifu3dscanner.api.dto.MatchingMode
 import health.openwater.openlifu3dscanner.api.dto.Photocollection
 import health.openwater.openlifu3dscanner.api.dto.Photoscan
 import health.openwater.openlifu3dscanner.api.dto.StartPhotoscanRequest
@@ -19,7 +16,6 @@ import health.openwater.openlifu3dscanner.api.model.ImageUploadProgress
 import health.openwater.openlifu3dscanner.api.model.ReconstructionProgress
 import health.openwater.openlifu3dscanner.api.model.Type
 import health.openwater.openlifu3dscanner.extensions.getModelsDir
-import health.openwater.openlifu3dscanner.extensions.writeToFile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -129,7 +125,7 @@ class CloudRepository(
                             scope
                         )
                         if (autoUpload) {
-                            imageUploader?.start(waitForCaptureEvents = false)
+                            imageUploader?.start(autoUpload = true)
                         }
                     }
                 }
@@ -164,7 +160,7 @@ class CloudRepository(
     }
 
     fun uploadRemainingPhotos() {
-        imageUploader?.start(waitForCaptureEvents = false)
+        imageUploader?.start(autoUpload = false)
     }
 
     suspend fun startReconstruction(): Long? {
@@ -174,23 +170,8 @@ class CloudRepository(
 
     suspend fun startReconstruction(collectionId: Long): Long? {
         return try {
-            var request = StartPhotoscanRequest()
-
-            val collectionResponse = photocollectionService.getPhotocollection(
-                collectionId, joinPhotos = false, joinCoordinates = true
-            )
-            if (collectionResponse.isSuccessful) {
-                collectionResponse.body()?.coordinates?.let { coordinates ->
-                    request = StartPhotoscanRequest(
-                        matchingMode = MatchingMode.spatial,
-                        numNeighbors = 16,
-                        locations = coordinates.images.map { listOf(it.x, it.y, it.z) }
-                    )
-                }
-            }
-
             val response =
-                photocollectionService.startPhotoscan(collectionId, request)
+                photocollectionService.startPhotoscan(collectionId, StartPhotoscanRequest())
             if (response.isSuccessful)
                 response.body()?.photoscanId
             else
@@ -264,18 +245,6 @@ class CloudRepository(
             e.printStackTrace()
         }
         return false
-    }
-
-    fun uploadCoordinates(coordinates: Coordinates) {
-        currentPhotocollection?.let { photocollection ->
-            scope.launch {
-                try {
-                    photocollectionService.uploadCoordinates(photocollection.id, coordinates)
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
-            }
-        }
     }
 
     fun getImagesDir(referenceNumber: String) = File(
@@ -390,14 +359,10 @@ class CloudRepository(
                 id, joinPhotos = true, joinCoordinates = true
             )
             if (response.isSuccessful) {
-                Log.d(TAG, "Loading photocollection $id")
-
                 response.body()?.let { photocollection ->
                     val photos = photocollection.photos ?: listOf()
                     val outputDir = getImagesDir(photocollection.name ?: return false)
                     if (!outputDir.exists()) outputDir.mkdirs()
-
-                    photocollection.coordinates?.writeToFile(outputDir)
 
                     for (photo in photos) {
                         Log.d(TAG, "Loading photo ${photo.fileName}")

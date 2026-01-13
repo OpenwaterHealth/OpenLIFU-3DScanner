@@ -33,13 +33,14 @@ import health.openwater.openlifu3dscanner.viewmodel.CloudViewModel
 fun UploadingScreen(
     collectionName: String,
     onNavigateBack: () -> Unit,
+    onViewModel: (scanId: Long) -> Unit,
     cloudViewModel: CloudViewModel = hiltViewModel()
 ) {
     var showCancelDialog by remember { mutableStateOf(false) }
-    var isCompleted by remember { mutableStateOf(false) }
+    var isReconstructionStarted by remember { mutableStateOf(false) }
 
     fun onBack() {
-        if (isCompleted) {
+        if (isReconstructionStarted) {
             onNavigateBack()
         } else {
             showCancelDialog = true
@@ -78,10 +79,11 @@ fun UploadingScreen(
         ) {
             UploadingRoot(
                 collectionName = collectionName,
-                onComplete = {
+                onReconstructionStarted = {
                     Log.w("TAG", "Upload state changed: onComplete")
-                    isCompleted = true
+                    isReconstructionStarted = true
                 },
+                onViewModel = onViewModel,
                 onNavigateBack = onNavigateBack
             )
         }

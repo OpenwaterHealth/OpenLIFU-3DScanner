@@ -1,12 +1,35 @@
 package health.openwater.openlifu3dscanner.screen.uploading
 
-import android.util.Log
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.CloudUpload
+import androidx.compose.material.icons.filled.CropRotate
+import androidx.compose.material.icons.filled.Error
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -16,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import health.openwater.openlifu3dscanner.R
+import health.openwater.openlifu3dscanner.api.model.ImageUploadProgress
 import health.openwater.openlifu3dscanner.api.model.ReconstructionProgress
 import health.openwater.openlifu3dscanner.core.UploadState
 import health.openwater.openlifu3dscanner.extensions.getModelsDir
@@ -27,7 +51,8 @@ import java.io.File
 fun UploadingRoot(
     collectionName: String,
     onNavigateBack: () -> Unit,
-    onComplete: () -> Unit,
+    onReconstructionStarted: () -> Unit,
+    onViewModel: (scanId: Long) -> Unit,
     cloudViewModel: CloudViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
@@ -47,13 +72,13 @@ fun UploadingRoot(
 
     LaunchedEffect(imageFiles) {
         if (imageFiles.isNotEmpty()) {
-            cloudViewModel.start(collectionName)
+            cloudViewModel.uploadRemainingPhotos()
         }
     }
 
     LaunchedEffect(uploadState) {
         if (uploadState is UploadState.Reconstructing) {
-            onComplete()
+            onReconstructionStarted()
         }
     }
 
@@ -86,7 +111,7 @@ fun UploadingRoot(
 
             is UploadState.ReconstructionComplete -> {
                 ReconstructionCompleteView(
-                    onComplete = onNavigateBack
+                    onViewModel = { cloudViewModel.currentPhotoscanId?.let { onViewModel(it) } }
                 )
             }
 
@@ -121,7 +146,7 @@ fun IdleView(imageCount: Int) {
 
 @Composable
 fun UploadingView(
-    progress: health.openwater.openlifu3dscanner.api.model.ImageUploadProgress?,
+    progress: ImageUploadProgress?,
     totalImages: Int
 ) {
     Column(
@@ -318,7 +343,7 @@ fun ReconstructingView(
 }
 
 @Composable
-fun ReconstructionCompleteView(onComplete: () -> Unit) {
+fun ReconstructionCompleteView(onViewModel: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -353,11 +378,11 @@ fun ReconstructionCompleteView(onComplete: () -> Unit) {
         Spacer(modifier = Modifier.height(32.dp))
 
         Button(
-            onClick = onComplete,
+            onClick = { onViewModel() },
             modifier = Modifier.fillMaxWidth()
         ) {
             Text(
-                text = stringResource(R.string.done),
+                text = stringResource(R.string.view_model),
                 fontSize = 16.sp,
                 modifier = Modifier.padding(vertical = 8.dp)
             )
