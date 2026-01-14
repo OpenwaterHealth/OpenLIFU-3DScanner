@@ -109,4 +109,6 @@ dependencies {
     implementation(libs.face.detection)
     implementation(libs.accompanist.permissions)
     implementation(libs.gson)
+
+    implementation(libs.preference)
 }

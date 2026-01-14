@@ -6,6 +6,7 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
+import android.preference.PreferenceManager
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
 import androidx.compose.runtime.getValue
@@ -17,6 +18,7 @@ import androidx.lifecycle.AndroidViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import health.openwater.openlifu3dscanner.api.repository.CloudRepository
 import health.openwater.openlifu3dscanner.extensions.getModelsDir
+import health.openwater.openlifu3dscanner.preferences.Prefs
 import java.io.File
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -28,14 +30,18 @@ class ScannerViewModel @Inject constructor(
     private val cloudRepository: CloudRepository
 ) : AndroidViewModel(application) {
 
+    private val prefs = PreferenceManager.getDefaultSharedPreferences(application)
+
     // ---- Scanner state ----
     var isScanning by mutableStateOf(false)
         private set
     var currentAngle by mutableFloatStateOf(0f)
         private set
 
-    val captureInterval = 3f
-    val totalBuckets = (360f / captureInterval).toInt()
+    val totalBuckets =
+        prefs.getString(Prefs.PHOTO_COUNT_KEY, Prefs.PHOTO_COUNT_DEFAULT)?.toIntOrNull() ?: 120
+
+    val captureInterval = 360 / totalBuckets.toFloat()
     val capturedBuckets = mutableStateSetOf<Int>()
 
     var faceDetected by mutableStateOf(false)

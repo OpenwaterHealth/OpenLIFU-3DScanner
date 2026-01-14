@@ -118,11 +118,12 @@ class CloudRepository(
                     currentPhotocollection?.id?.let { id ->
                         Log.d(TAG, "Photocollection created: $id")
                         imageUploader = ImageUploader(
-                            id,
-                            getImagesDir(name),
-                            imageUploadProgressFlow,
-                            photocollectionService,
-                            scope
+                            context = context,
+                            photocollectionId = id,
+                            imagesDir = getImagesDir(name),
+                            imageUploadProgressFlow = imageUploadProgressFlow,
+                            photocollectionService = photocollectionService,
+                            scope = scope
                         )
                         if (autoUpload) {
                             imageUploader?.start(autoUpload = true)

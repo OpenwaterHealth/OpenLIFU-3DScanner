@@ -29,7 +29,8 @@ import health.openwater.openlifu3dscanner.utils.CollectionIdGenerator
 @Composable
 fun HomeScreen(
     onStartScan: (collectionName: String, autoUploadEnabled: Boolean) -> Unit,
-    onViewCollection: () -> Unit
+    onViewCollection: () -> Unit,
+    onSettings: () -> Unit,
 ) {
     var showCollectionDialog by remember { mutableStateOf(false) }
     var collectionName by remember { mutableStateOf("") }
@@ -72,6 +73,7 @@ fun HomeScreen(
                     showCollectionDialog = true
                     collectionName = CollectionIdGenerator.generate()
                 },
+                onSettings = onSettings,
                 onViewCollection = onViewCollection
             )
         }

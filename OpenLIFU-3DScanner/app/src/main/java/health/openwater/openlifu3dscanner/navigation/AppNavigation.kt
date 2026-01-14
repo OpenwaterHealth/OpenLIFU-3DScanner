@@ -12,9 +12,11 @@ import health.openwater.openlifu3dscanner.screen.scanner.ScannerScreen
 import health.openwater.openlifu3dscanner.screen.uploading.UploadingScreen
 import health.openwater.openlifu3dscanner.screen.collection.ViewCollectionScreen
 import health.openwater.openlifu3dscanner.screen.photoscan.PhotoscanScreen
+import health.openwater.openlifu3dscanner.screen.settings.SettingsScreen
 
 sealed class Screen(val route: String) {
     object Home : Screen("home")
+    object Settings : Screen("settings")
     object ViewCollection : Screen("photoscan")
 
     object Photoscan : Screen("photoscan/{scanId}/{autoDownloadEnabled}") {
@@ -54,9 +56,16 @@ fun AppNavigation() {
                         )
                     )
                 },
+                onSettings = { navController.navigate(Screen.Settings.route) },
                 onViewCollection = {
                     navController.navigate(Screen.ViewCollection.route)
                 }
+            )
+        }
+
+        composable(Screen.Settings.route) {
+            SettingsScreen(
+                onNavigateBack = { navController.popBackStack() },
             )
         }
 
@@ -77,7 +86,8 @@ fun AppNavigation() {
             )
         ) { backStackEntry ->
             val scanId = backStackEntry.arguments?.getString("scanId") ?: ""
-            val autoDownloadEnabled = backStackEntry.arguments?.getBoolean("autoDownloadEnabled") ?: false
+            val autoDownloadEnabled =
+                backStackEntry.arguments?.getBoolean("autoDownloadEnabled") ?: false
 
             PhotoscanScreen(
                 scanId = scanId.toLong(),

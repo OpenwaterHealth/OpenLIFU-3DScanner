@@ -18,10 +18,10 @@ fun DrawScope.drawPetal(
     color: Color,
     isCaptured: Boolean,
     isCurrent: Boolean,
-    blinkAlpha: Float = 1f, // Add this parameter
+    petalWidth: Float,
+    blinkAlpha: Float
 ) {
-    val petalLength = if (isCurrent) 40f else 20f
-    val petalWidth = 20f
+    val petalLength = if (isCurrent) petalWidth * 2 else petalWidth
     val filled = isCaptured || isCurrent
 
     val rad = Math.toRadians(angle.toDouble() - 90)

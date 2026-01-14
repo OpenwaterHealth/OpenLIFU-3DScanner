@@ -18,6 +18,7 @@ crashlytics = "3.0.6"
 loggingInterceptor = "5.3.2"
 materialIconsExtended = "1.7.8"
 okhttp = "5.3.2"
+preference = "2.1.1"
 retrofit = "3.0.0"
 firebaseBom = "34.7.0"
 converterGson = "3.0.0"
@@ -48,6 +49,7 @@ face-detection = { module = "com.google.mlkit:face-detection", version.ref = "fa
 gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
 logging-interceptor = { module = "com.squareup.okhttp3:logging-interceptor", version.ref = "loggingInterceptor" }
 okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
+preference = { module = "me.zhanghai.compose.preference:preference", version.ref = "preference" }
 retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
 converter-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref = "converterGson" }
 firebase-auth = { module = "com.google.firebase:firebase-auth" }

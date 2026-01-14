@@ -229,6 +229,7 @@ fun ScanControls(
                     color = petalColor,
                     isCaptured = isCaptured,
                     isCurrent = isCurrent,
+                    petalWidth = 360 / totalPetals.toFloat() * 6,
                     blinkAlpha = if (isCurrent) blinkAlpha else 1f
                 )
             }

@@ -3,6 +3,10 @@ package health.openwater.openlifu3dscanner.screen.home
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -27,6 +31,7 @@ import health.openwater.openlifu3dscanner.viewmodel.UserViewModel
 fun HomeRoot(
     onStartScan: () -> Unit,
     onViewCollection: () -> Unit,
+    onSettings: () -> Unit,
     userViewModel: UserViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
@@ -34,8 +39,6 @@ fun HomeRoot(
 
     val userInfo by userViewModel.getUserInfo().collectAsState()
     val isLoading by userViewModel.isLoading.collectAsState()
-    val isCloudAvailable by userViewModel.getCloudAvailability().collectAsState()
-
 
     val isLoggedIn = userInfo != null
     var hasStorageAccess by remember { mutableStateOf(hasAllFilesAccess()) }
@@ -91,13 +94,13 @@ fun HomeRoot(
             }
         }
 
-        if (!isLoading) {
-            CloudStatusIndicator(
-                isAvailable = isCloudAvailable,
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(16.dp)
-            )
+        IconButton(
+            onClick = onSettings,
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(16.dp)
+        ) {
+            Icon(imageVector = Icons.Default.Settings, contentDescription = null)
         }
 
         if (isLoggedIn) {
