@@ -2,7 +2,7 @@ name: Android CI
 
 on:
   push:
-    branches: [ "v0.5_arcore_cloud" ]
+    branches: [ "v0.5_arcore_cloud", "v0.7" ]
   pull_request:
     branches: [ "main" ]
   workflow_dispatch:
