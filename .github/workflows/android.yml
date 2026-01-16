@@ -2,7 +2,7 @@ name: Android CI
 
 on:
   push:
-    branches: [ "v0.5_arcore_cloud" ]
+    branches: [ "v0.5_arcore_cloud", "v0.7" ]
   pull_request:
     branches: [ "main" ]
   workflow_dispatch:
@@ -32,8 +32,7 @@ jobs:
         credentials_json: ${{ secrets.FIREBASE_TOKEN_JSON }}
 
     - name: Install Firebase CLI
-      run: |
-        curl -sL https://firebase.tools | bash
+      run: npm install -g firebase-tools
 
     - name: Grant execute permission for gradlew
       run: chmod +x OpenLIFU-3DScanner/gradlew
@@ -59,7 +58,7 @@ jobs:
     - name: Upload to Firebase App Distribution
       run: |
         firebase appdistribution:distribute \
-          OpenLIFU-3DScanner/app/build/outputs/apk/release/app-release.apk \
+          OpenLIFU-3DScanner/app/build/outputs/apk/release/*.apk \
           --app "1:341318872140:android:73e3bcd90afaba077b18e9" \
           --groups "testers" \
           --release-notes "$notes"
