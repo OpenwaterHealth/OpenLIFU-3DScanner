@@ -33,7 +33,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -55,13 +54,12 @@ fun PhotoscanScreen(
     onNavigateBack: () -> Unit,
     collectionViewModel: CollectionViewModel = hiltViewModel()
 ) {
-    val context = LocalContext.current
     var downloadState by remember { mutableStateOf<DownloadState?>(null) }
     var modelDir by remember { mutableStateOf<File?>(null) }
     var showViewer by remember { mutableStateOf(false) }
 
     LaunchedEffect(scanId) {
-        val existingModel = findModelDir(context, scanId, collectionViewModel)
+        val existingModel = findModelDir(scanId, collectionViewModel)
         if (existingModel != null) {
             modelDir = existingModel
             downloadState = DownloadState.Success
@@ -78,7 +76,7 @@ fun PhotoscanScreen(
         collectionViewModel.getDownloadResultsFlow().collectLatest { result ->
             if (result?.item?.id == scanId) {
                 if (result.success) {
-                    modelDir = findModelDir(context, scanId, collectionViewModel)
+                    modelDir = findModelDir(scanId, collectionViewModel)
                     downloadState = DownloadState.Success
                     if (autoDownloadEnabled) {
                         showViewer = true
@@ -319,7 +317,6 @@ sealed class DownloadState {
 }
 
 private suspend fun findModelDir(
-    context: android.content.Context,
     scanId: Long,
     viewModel: CollectionViewModel
 ): File? {
@@ -329,7 +326,7 @@ private suspend fun findModelDir(
     } ?: return null
 
     val collectionName = photocollection.name ?: return null
-    val file = File(context.getModelsDir(), "$collectionName/scan")
+    val file = File(getModelsDir(), "$collectionName/scan")
     if (!file.exists()) return null
     return file
 }

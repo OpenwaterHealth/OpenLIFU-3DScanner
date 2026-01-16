@@ -92,4 +92,7 @@
     <string name="welcome_back">Welcome back, %1$s</string>
     <string name="auto_upload">Auto Upload</string>
     <string name="settings">Settings</string>
+    <string name="transfer_to_pc">Transfer to PC</string>
+    <string name="usb_connected">USB Connected</string>
+    <string name="usb_disconnected">USB Disconnected</string>
 </resources>

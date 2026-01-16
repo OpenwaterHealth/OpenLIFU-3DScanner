@@ -23,6 +23,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -31,24 +32,29 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil.compose.rememberAsyncImagePainter
 import health.openwater.openlifu3dscanner.R
 import health.openwater.openlifu3dscanner.extensions.getModelsDir
+import health.openwater.openlifu3dscanner.viewmodel.UserViewModel
 import java.io.File
 
 
 @Composable
 fun ProcessingRoot(
     collectionName: String,
-    onUpload: () -> Unit
+    onUpload: () -> Unit,
+    onTransferToPc: () -> Unit,
+    userViewModel: UserViewModel = hiltViewModel()
 ) {
-    val context = LocalContext.current
+    val userInfo by userViewModel.getUserInfo().collectAsState(initial = null)
+    val isLoggedIn = userInfo != null
+
     val scanDir =
-        remember(collectionName) { File(context.getModelsDir(), collectionName) }
+        remember(collectionName) { File(getModelsDir(), collectionName) }
 
     var imageFiles by remember(scanDir) {
         mutableStateOf(
@@ -146,7 +152,11 @@ fun ProcessingRoot(
         Surface(shadowElevation = 8.dp) {
             Button(
                 onClick = {
-                    onUpload()
+                    if (!isLoggedIn) {
+                        onTransferToPc()
+                    } else {
+                        onUpload()
+                    }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -154,7 +164,7 @@ fun ProcessingRoot(
                 enabled = imageFiles.isNotEmpty()
             ) {
                 Text(
-                    text = stringResource(R.string.upload),
+                    text = stringResource(if (isLoggedIn) R.string.upload else R.string.transfer_to_pc),
                     fontSize = 16.sp,
                     modifier = Modifier.padding(vertical = 8.dp)
                 )

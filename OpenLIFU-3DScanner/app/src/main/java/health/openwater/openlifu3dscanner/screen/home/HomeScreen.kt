@@ -22,19 +22,26 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import health.openwater.openlifu3dscanner.BuildConfig
 import health.openwater.openlifu3dscanner.R
 import health.openwater.openlifu3dscanner.utils.CollectionIdGenerator
+import health.openwater.openlifu3dscanner.viewmodel.UserViewModel
 
 @Composable
 fun HomeScreen(
     onStartScan: (collectionName: String, autoUploadEnabled: Boolean) -> Unit,
     onViewCollection: () -> Unit,
     onSettings: () -> Unit,
+    onSignIn: () -> Unit,
+    userViewModel: UserViewModel = hiltViewModel()
 ) {
     var showCollectionDialog by remember { mutableStateOf(false) }
     var collectionName by remember { mutableStateOf("") }
     var autoUploadEnabled by remember { mutableStateOf(true) }
+
+    val userInfo by userViewModel.getUserInfo().collectAsState(initial = null)
+    val isLoggedIn = userInfo != null
 
     Scaffold(
         bottomBar = {
@@ -74,7 +81,8 @@ fun HomeScreen(
                     collectionName = CollectionIdGenerator.generate()
                 },
                 onSettings = onSettings,
-                onViewCollection = onViewCollection
+                onViewCollection = onViewCollection,
+                onSignIn = onSignIn
             )
         }
     }
@@ -99,21 +107,23 @@ fun HomeScreen(
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { autoUploadEnabled = !autoUploadEnabled }
-                            .padding(vertical = 4.dp)
-                    ) {
-                        Checkbox(
-                            checked = autoUploadEnabled,
-                            onCheckedChange = { autoUploadEnabled = it }
-                        )
-                        Text(
-                            text = "Auto Upload",
-                            modifier = Modifier.padding(start = 8.dp)
-                        )
+                    if (isLoggedIn) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp)
+                                .clickable { autoUploadEnabled = !autoUploadEnabled }
+                        ) {
+                            Checkbox(
+                                checked = autoUploadEnabled,
+                                onCheckedChange = { autoUploadEnabled = it }
+                            )
+                            Text(
+                                text = "Auto Upload",
+                                modifier = Modifier.padding(start = 8.dp)
+                            )
+                        }
                     }
                 }
             },

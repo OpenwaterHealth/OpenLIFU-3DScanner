@@ -133,12 +133,16 @@ class CloudViewModel @Inject constructor(
 
     fun uploadRemainingPhotos() = cloudRepository.uploadRemainingPhotos()
 
-    fun reset() {
+    fun isLoggedInAndOnline() = cloudRepository.isLoggedInAndOnline()
+
+    fun reset(removeLocalCollection: Boolean) {
         currentPhotoscanId?.let {
             cloudRepository.stopReconstructionProgressListener(it)
         }
         currentPhotoscanId = null
-        cloudRepository.resetCurrentPhotocollection()
+        if (removeLocalCollection) {
+            cloudRepository.resetCurrentPhotocollection()
+        }
         _uploadState.value = UploadState.Idle
         _imageUploadProgress.value = null
         _reconstructionProgress.value = null

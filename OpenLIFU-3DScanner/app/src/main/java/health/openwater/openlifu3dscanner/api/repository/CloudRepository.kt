@@ -64,8 +64,6 @@ class CloudRepository(
         }
     }
 
-    fun getCurrentPhotocollection() = currentPhotocollection
-
     fun resetCurrentPhotocollection() {
         deletePhotocollection()
         currentReferenceNumber?.let {
@@ -249,7 +247,7 @@ class CloudRepository(
     }
 
     fun getImagesDir(referenceNumber: String) = File(
-        context.getModelsDir(),
+        getModelsDir(),
         referenceNumber
     )
 
@@ -280,7 +278,7 @@ class CloudRepository(
 
     suspend fun getReferenceNumbers(localOnly: Boolean): Set<String> {
         val result = mutableSetOf<String>()
-        val localDir = context.getModelsDir()
+        val localDir = getModelsDir()
         if (localDir.exists()) {
             localDir.list()?.let {
                 result.addAll(it)

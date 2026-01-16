@@ -9,14 +9,17 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import health.openwater.openlifu3dscanner.R
+import health.openwater.openlifu3dscanner.viewmodel.UserViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProcessingScreen(
     collectionName: String,
     onNavigateBack: () -> Unit,
-    onNavigateToUploading: () -> Unit
+    onNavigateToUploading: () -> Unit,
+    onNavigateToTransfer: () -> Unit,
 ) {
     var showCancelDialog by remember { mutableStateOf(false) }
 
@@ -52,7 +55,8 @@ fun ProcessingScreen(
         ) {
             ProcessingRoot(
                 collectionName = collectionName,
-                onUpload = onNavigateToUploading
+                onUpload = onNavigateToUploading,
+                onTransferToPc = onNavigateToTransfer
             )
         }
     }

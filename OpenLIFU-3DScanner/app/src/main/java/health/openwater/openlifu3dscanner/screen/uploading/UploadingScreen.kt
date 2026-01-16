@@ -80,7 +80,6 @@ fun UploadingScreen(
             UploadingRoot(
                 collectionName = collectionName,
                 onReconstructionStarted = {
-                    Log.w("TAG", "Upload state changed: onComplete")
                     isReconstructionStarted = true
                 },
                 onViewModel = onViewModel,
@@ -102,7 +101,7 @@ fun UploadingScreen(
                 TextButton(
                     onClick = {
                         showCancelDialog = false
-                        cloudViewModel.reset()
+                        cloudViewModel.reset(true)
                         onNavigateBack()
                     }
                 ) {

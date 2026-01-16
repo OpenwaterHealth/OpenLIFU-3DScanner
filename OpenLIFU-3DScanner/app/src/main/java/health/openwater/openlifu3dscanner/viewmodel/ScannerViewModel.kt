@@ -106,7 +106,7 @@ class ScannerViewModel @Inject constructor(
         currentScanPath?.deleteRecursively()
         currentScanPath = null
 
-        val file = File(application.getModelsDir(), collectionName).apply { mkdirs() }
+        val file = File(getModelsDir(), collectionName).apply { mkdirs() }
         currentScanPath = file
 
         isScanning = true

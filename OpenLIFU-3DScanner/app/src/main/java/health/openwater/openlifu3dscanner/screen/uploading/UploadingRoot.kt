@@ -55,9 +55,8 @@ fun UploadingRoot(
     onViewModel: (scanId: Long) -> Unit,
     cloudViewModel: CloudViewModel = hiltViewModel()
 ) {
-    val context = LocalContext.current
     val scanDir =
-        remember(collectionName) { File(context.getModelsDir(), collectionName) }
+        remember(collectionName) { File(getModelsDir(), collectionName) }
 
     val imageFiles = remember(scanDir) {
         scanDir

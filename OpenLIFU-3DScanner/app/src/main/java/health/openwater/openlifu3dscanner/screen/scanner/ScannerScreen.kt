@@ -19,6 +19,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -35,6 +36,7 @@ import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import health.openwater.openlifu3dscanner.R
 import health.openwater.openlifu3dscanner.viewmodel.CloudViewModel
+import health.openwater.openlifu3dscanner.viewmodel.UserViewModel
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @Composable
@@ -42,14 +44,21 @@ fun ScannerScreen(
     collectionName: String,
     autoUploadEnabled: Boolean,
     onNavigateBack: () -> Unit,
-    onNavigateToProcessing: (autoUploadEnabled: Boolean) -> Unit,
+    onNavigateToProcessing: (autoUploadEnabled: Boolean, isLoggedIn: Boolean) -> Unit,
     cloudViewModel: CloudViewModel = hiltViewModel(),
+    userViewModel: UserViewModel = hiltViewModel()
 ) {
     var completed by remember { mutableStateOf(false) }
 
+    val userInfo by userViewModel.getUserInfo().collectAsState(initial = null)
+    val isLoggedIn = userInfo != null
+
     LaunchedEffect(Unit) {
-        Log.w("ScannerScreen", "Starting scan with collectionName: $collectionName, $autoUploadEnabled")
-        cloudViewModel.start(collectionName, autoUploadEnabled)
+        cloudViewModel.reset(false)
+
+        if (cloudViewModel.isLoggedInAndOnline()) {
+            cloudViewModel.start(collectionName, autoUploadEnabled)
+        }
     }
 
     KeepScreenOn()
@@ -71,7 +80,7 @@ fun ScannerScreen(
                         enabled = completed,
                         modifier = Modifier.alpha(if (completed) 1f else 0.5f),
                         onClick = {
-                            onNavigateToProcessing(autoUploadEnabled)
+                            onNavigateToProcessing(autoUploadEnabled, isLoggedIn)
                         }
                     ) {
                         Text(

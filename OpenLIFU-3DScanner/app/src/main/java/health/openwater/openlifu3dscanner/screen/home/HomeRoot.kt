@@ -31,6 +31,7 @@ import health.openwater.openlifu3dscanner.viewmodel.UserViewModel
 fun HomeRoot(
     onStartScan: () -> Unit,
     onViewCollection: () -> Unit,
+    onSignIn: () -> Unit,
     onSettings: () -> Unit,
     userViewModel: UserViewModel = hiltViewModel()
 ) {
@@ -40,7 +41,6 @@ fun HomeRoot(
     val userInfo by userViewModel.getUserInfo().collectAsState()
     val isLoading by userViewModel.isLoading.collectAsState()
 
-    val isLoggedIn = userInfo != null
     var hasStorageAccess by remember { mutableStateOf(hasAllFilesAccess()) }
 
     LaunchedEffect(Unit) {
@@ -66,7 +66,7 @@ fun HomeRoot(
                 LoadingScreen()
             }
 
-            isLoggedIn && !hasStorageAccess -> {
+            !isLoading && !hasStorageAccess -> {
                 StoragePermissionScreen(
                     onGrantPermission = {
                         context.requestAllFilesAccess()
@@ -74,22 +74,11 @@ fun HomeRoot(
                 )
             }
 
-            isLoggedIn -> {
+            else -> {
                 WelcomeScreen(
                     userInfo = userInfo,
                     onStartScan = onStartScan,
                     onViewCollection = onViewCollection
-                )
-            }
-
-            else -> {
-                LoginScreen(
-                    onSignIn = { email, password ->
-                        userViewModel.signIn(email, password)
-                    },
-                    onResetPassword = { email ->
-                        userViewModel.resetPassword(email)
-                    }
                 )
             }
         }
@@ -103,8 +92,9 @@ fun HomeRoot(
             Icon(imageVector = Icons.Default.Settings, contentDescription = null)
         }
 
-        if (isLoggedIn) {
-            UserAvatar(
+        if (!isLoading) {
+            UserProfileBadge(
+                onSignIn = onSignIn,
                 modifier = Modifier
                     .align(Alignment.TopStart)
                     .padding(16.dp)
