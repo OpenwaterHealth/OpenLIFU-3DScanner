@@ -1,11 +1,12 @@
 package health.openwater.openlifu3dscanner.api.repository
 
 import android.content.Context
+import android.preference.PreferenceManager
 import android.util.Log
 import health.openwater.openlifu3dscanner.api.PhotocollectionService
 import health.openwater.openlifu3dscanner.api.model.ImageUploadProgress
 import health.openwater.openlifu3dscanner.preferences.Prefs
-import health.openwater.openlifu3dscanner.resizeJpegAsSquareByteArray
+import health.openwater.openlifu3dscanner.utils.resizeJpegAsSquareByteArray
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -28,10 +29,6 @@ class ImageUploader(
     private val uploadedImages = mutableSetOf<String>()
     private var job: Job? = null
     private val imageCapturedChannel = Channel<Unit>(Channel.RENDEZVOUS)
-
-    private val prefs by lazy {
-        context.getSharedPreferences("compose_prefs", Context.MODE_PRIVATE)
-    }
 
     fun start(autoUpload: Boolean) {
         stop()
@@ -63,8 +60,7 @@ class ImageUploader(
     private suspend fun uploadNextImage(scope: CoroutineScope): Boolean {
         val files = getFiles()
         val filename = files.filter { !uploadedImages.contains(it) }.minOrNull() ?: return false
-        val imageSize = prefs.getString(Prefs.IMAGE_SIZE_KEY, Prefs.IMAGE_SIZE_DEFAULT)
-            ?: Prefs.IMAGE_SIZE_DEFAULT
+        val imageSize = Prefs.getImageSize(context)
 
         var retries = 3
         while (scope.isActive && retries > 0) {

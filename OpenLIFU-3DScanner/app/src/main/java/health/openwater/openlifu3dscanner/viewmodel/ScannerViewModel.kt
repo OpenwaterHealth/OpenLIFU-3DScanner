@@ -30,17 +30,13 @@ class ScannerViewModel @Inject constructor(
     private val cloudRepository: CloudRepository
 ) : AndroidViewModel(application) {
 
-    private val prefs = PreferenceManager.getDefaultSharedPreferences(application)
-
     // ---- Scanner state ----
     var isScanning by mutableStateOf(false)
         private set
     var currentAngle by mutableFloatStateOf(0f)
         private set
 
-    val totalBuckets =
-        prefs.getString(Prefs.PHOTO_COUNT_KEY, Prefs.PHOTO_COUNT_DEFAULT)?.toIntOrNull() ?: 120
-
+    val totalBuckets = Prefs.getPhotoCount(application)
     val captureInterval = 360 / totalBuckets.toFloat()
     val capturedBuckets = mutableStateSetOf<Int>()
 
@@ -141,7 +137,7 @@ class ScannerViewModel @Inject constructor(
 
         val relativeAngle = bucket * captureInterval
         val timestamp = System.currentTimeMillis()
-        val filename = "A${relativeAngle.toInt()}_${timestamp}.jpg"
+        val filename = "A_${timestamp}_${relativeAngle.toInt()}.jpg"
         val outputFileOptions =
             ImageCapture.OutputFileOptions.Builder(File(currentScanPath, filename)).build()
 

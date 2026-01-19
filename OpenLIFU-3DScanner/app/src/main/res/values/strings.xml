@@ -84,7 +84,7 @@
     <string name="downloading">Downloading…</string>
     <string name="download_mesh">Download Model</string>
     <string name="download_the_3d_mesh_for_this_scan">Download the 3D model for this scan</string>
-    <string name="mesh_ready_to_download">Mesh Ready to Download</string>
+    <string name="mesh_ready_to_download">Model Ready to Download</string>
     <string name="download">Download</string>
     <string name="storage_access_required">Storage access required</string>
     <string name="we_need_access_to_your_media_to_save_and_view_scans">We need access to your media to save and view scans.</string>
@@ -95,4 +95,5 @@
     <string name="transfer_to_pc">Transfer to PC</string>
     <string name="usb_connected">USB Connected</string>
     <string name="usb_disconnected">USB Disconnected</string>
+    <string name="failed_to_load_photo_scans">Failed to load photo scans</string>
 </resources>

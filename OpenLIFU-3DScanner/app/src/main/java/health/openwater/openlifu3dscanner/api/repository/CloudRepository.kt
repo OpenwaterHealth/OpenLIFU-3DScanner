@@ -397,7 +397,6 @@ class CloudRepository(
     companion object {
         private val TAG = CloudRepository::class.simpleName
         const val SCAN_DIR = "scan"
-        const val COORDINATES_FILE_NAME = "coordinates.json"
     }
 
 }

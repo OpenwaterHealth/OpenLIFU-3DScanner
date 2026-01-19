@@ -1,4 +1,4 @@
-package health.openwater.openlifu3dscanner
+package health.openwater.openlifu3dscanner.utils
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -26,7 +26,6 @@ fun File.resizeJpegAsSquareByteArray(
     // 2) Handle EXIF rotation
     val rotate = exifRotationDegrees(absolutePath)
     val logicalW = if (rotate == 90 || rotate == 270) srcH else srcW
-    val logicalH = if (rotate == 90 || rotate == 270) srcW else srcH
 
     // 3) Aggressive sampling
     var inSampleSize = 1

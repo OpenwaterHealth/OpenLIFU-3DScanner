@@ -16,11 +16,13 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import health.openwater.openlifu3dscanner.R
 import health.openwater.openlifu3dscanner.preferences.Prefs
 import me.zhanghai.compose.preference.ProvidePreferenceLocals
+import me.zhanghai.compose.preference.createPreferenceFlow
 import me.zhanghai.compose.preference.listPreference
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -28,6 +30,9 @@ import me.zhanghai.compose.preference.listPreference
 fun SettingsScreen(
     onNavigateBack: () -> Unit
 ) {
+    val context = LocalContext.current
+    val prefs = Prefs.getInstance(context)
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -54,7 +59,9 @@ fun SettingsScreen(
                 .fillMaxSize()
                 .padding(contentPadding)
         ) {
-            ProvidePreferenceLocals  {
+            ProvidePreferenceLocals(
+                flow = createPreferenceFlow(prefs)
+            ) {
                 LazyColumn {
 
                     // Image Size Preference
@@ -63,8 +70,8 @@ fun SettingsScreen(
                         defaultValue = Prefs.IMAGE_SIZE_DEFAULT,
                         values = Prefs.IMAGE_SIZE_MAP.keys.toList(),
                         title = { Text("Image Size") },
-                        valueToText = { AnnotatedString(Prefs.IMAGE_SIZE_MAP[it] ?: it) },
-                        summary = { Text(Prefs.IMAGE_SIZE_MAP[it] ?: it) }
+                        valueToText = { AnnotatedString(Prefs.IMAGE_SIZE_MAP[it] ?: it.toString()) },
+                        summary = { Text(Prefs.IMAGE_SIZE_MAP[it] ?: it.toString()) }
                     )
 
                     // Photo Count Preference
@@ -73,8 +80,8 @@ fun SettingsScreen(
                         defaultValue = Prefs.PHOTO_COUNT_DEFAULT,
                         values = Prefs.PHOTO_COUNT_MAP.keys.toList(),
                         title = { Text("Photo Count") },
-                        valueToText = { AnnotatedString(Prefs.PHOTO_COUNT_MAP[it] ?: it) },
-                        summary = { Text(Prefs.PHOTO_COUNT_MAP[it] ?: it) }
+                        valueToText = { AnnotatedString(Prefs.PHOTO_COUNT_MAP[it] ?: it.toString()) },
+                        summary = { Text(Prefs.PHOTO_COUNT_MAP[it] ?: it.toString()) }
                     )
                 }
             }

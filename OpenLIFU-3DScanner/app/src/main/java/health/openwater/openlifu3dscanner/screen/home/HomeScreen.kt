@@ -59,11 +59,10 @@ fun HomeScreen(
                 )
 
                 Text(
-                    text = "v${BuildConfig.VERSION_NAME}",
+                    text = "v${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onBackground,
                     modifier = Modifier
-                        .offset(y = (-8).dp)
                         .padding(end = 8.dp, bottom = 4.dp)
                 )
             }

@@ -1,4 +1,5 @@
 import org.gradle.kotlin.dsl.implementation
+import org.ajoberstar.grgit.Grgit
 
 plugins {
     alias(libs.plugins.android.application)
@@ -8,6 +9,7 @@ plugins {
     alias(libs.plugins.google.devtools.ksp)
     alias(libs.plugins.dagger.hilt)
     alias(libs.plugins.google.services)
+    alias(libs.plugins.grgit)
     alias(libs.plugins.firebase.crashlytics)
 }
 
@@ -32,7 +34,7 @@ android {
         applicationId = "health.openwater.openlifu3dscanner"
         minSdk = 24
         targetSdk = 36
-        versionCode = 2_0_0_0000
+        versionCode = 2_0_0_0000 + getCommitNumber()
         versionName = "0.7.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -111,4 +113,9 @@ dependencies {
     implementation(libs.gson)
 
     implementation(libs.preference)
+}
+
+fun getCommitNumber(): Int {
+    val grgit = Grgit.open(mapOf("dir" to project.rootDir.parent))
+    return grgit.log(mapOf("includes" to listOf("HEAD"))).size
 }
