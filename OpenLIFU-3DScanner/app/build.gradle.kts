@@ -1,3 +1,4 @@
+import com.android.build.gradle.internal.api.BaseVariantOutputImpl
 import org.gradle.kotlin.dsl.implementation
 import org.ajoberstar.grgit.Grgit
 
@@ -23,7 +24,7 @@ android {
         val version = defaultConfig.versionName
         val buildTypeName = buildType.name
         outputs.all {
-            if (this is com.android.build.gradle.internal.api.BaseVariantOutputImpl) {
+            if (this is BaseVariantOutputImpl) {
                 val appName = "OpenLifu3DScanner"
                 outputFileName = "$appName-v$version-$buildTypeName.apk"
             }
@@ -75,6 +76,8 @@ android {
 }
 
 dependencies {
+    implementation(libs.androidx.appcompat)
+//    implementation("com.google.android.material:material:1.13.0")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)

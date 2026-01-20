@@ -6,7 +6,6 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
-import android.preference.PreferenceManager
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
 import androidx.compose.runtime.getValue
@@ -19,6 +18,8 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import health.openwater.openlifu3dscanner.api.repository.CloudRepository
 import health.openwater.openlifu3dscanner.extensions.getModelsDir
 import health.openwater.openlifu3dscanner.preferences.Prefs
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import java.io.File
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -39,6 +40,9 @@ class ScannerViewModel @Inject constructor(
     val totalBuckets = Prefs.getPhotoCount(application)
     val captureInterval = 360 / totalBuckets.toFloat()
     val capturedBuckets = mutableStateSetOf<Int>()
+
+    val _capturedBucketsCount = MutableStateFlow(0)
+    fun capturedBucketsCount() = _capturedBucketsCount.asStateFlow()
 
     var faceDetected by mutableStateOf(false)
         private set
@@ -107,6 +111,7 @@ class ScannerViewModel @Inject constructor(
 
         isScanning = true
         capturedBuckets.clear()
+        _capturedBucketsCount.value = 0
     }
 
     fun stopScanning(onComplete: () -> Unit) {
@@ -147,6 +152,8 @@ class ScannerViewModel @Inject constructor(
             object : ImageCapture.OnImageSavedCallback {
                 override fun onImageSaved(output: ImageCapture.OutputFileResults) {
                     capturedBuckets.add(bucket)
+                    _capturedBucketsCount.value = capturedBuckets.size
+
                     cloudRepository.onImageCaptured()
                     isCapturing = false
                 }

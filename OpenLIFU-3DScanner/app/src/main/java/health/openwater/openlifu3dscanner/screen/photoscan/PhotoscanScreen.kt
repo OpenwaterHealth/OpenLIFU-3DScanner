@@ -26,6 +26,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -52,16 +53,19 @@ fun PhotoscanScreen(
     onNavigateBack: () -> Unit,
     collectionViewModel: CollectionViewModel = hiltViewModel()
 ) {
-    var downloadState by remember { mutableStateOf<DownloadState?>(null) }
-    var modelDir by remember { mutableStateOf<File?>(null) }
+    var downloadState by remember { mutableStateOf<DownloadState>(DownloadState.Idle) }
+    var modelPath by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(scanId) {
         val collection = collectionViewModel.getPhotocollection(scanId)
         if (collection != null) {
-            modelDir = File(getModelsDir(), "${collection.name}/scan")
-            if (modelDir?.exists() == true) {
+            val dir = File(getModelsDir(), "${collection.name}/scan")
+
+            if (dir.exists()) {
+                modelPath = dir.absolutePath
                 downloadState = DownloadState.Success
             } else {
+                modelPath = null
                 downloadState = DownloadState.Idle
                 if (autoDownloadEnabled) {
                     downloadState = DownloadState.Downloading
@@ -75,15 +79,22 @@ fun PhotoscanScreen(
         collectionViewModel.getDownloadResultsFlow().collectLatest { result ->
             if (result?.item?.id == scanId) {
                 if (result.success) {
-                    downloadState = DownloadState.Success
-
+                    val collection = collectionViewModel.getPhotocollection(scanId)
+                    if (collection != null) {
+                        val dir = File(getModelsDir(), "${collection.name}/scan")
+                        if (dir.exists()) {
+                            modelPath = dir.absolutePath
+                            downloadState = DownloadState.Success
+                        } else {
+                            downloadState = DownloadState.Failed
+                        }
+                    }
                 } else {
                     downloadState = DownloadState.Failed
                 }
             }
         }
     }
-
 
     Scaffold(
         topBar = {
@@ -112,11 +123,8 @@ fun PhotoscanScreen(
                 .fillMaxSize()
                 .padding(contentPadding)
         ) {
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
+            // Use key to force recomposition when state changes
+            key(downloadState, modelPath) {
                 when (downloadState) {
                     is DownloadState.Idle -> {
                         StateIdle(onAction = {
@@ -130,10 +138,22 @@ fun PhotoscanScreen(
                     }
 
                     is DownloadState.Success -> {
-                        AndroidView(
-                            factory = { context ->
-                                ModelSurfaceView(context, modelDir!!.absolutePath)
+                        modelPath?.let { path ->
+                            Box(modifier = Modifier.fillMaxSize()) {
+                                AndroidView(
+                                    modifier = Modifier.fillMaxSize(),
+                                    factory = { context ->
+                                        ModelSurfaceView(context, path)
+                                    }
+                                )
+                            }
+                        } ?: run {
+                            // Fallback if path is null
+                            StateIdle(onAction = {
+                                downloadState = DownloadState.Downloading
+                                collectionViewModel.downloadMesh(scanId)
                             })
+                        }
                     }
 
                     is DownloadState.Failed -> {
@@ -142,8 +162,6 @@ fun PhotoscanScreen(
                             collectionViewModel.downloadMesh(scanId)
                         })
                     }
-
-                    else -> {}
                 }
             }
         }

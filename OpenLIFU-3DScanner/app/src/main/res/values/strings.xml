@@ -12,7 +12,7 @@
     <string name="are_you_sure_you_want_to_cancel_processing_all_unsaved_progress_will_be_lost">Are you sure you want to cancel processing? All unsaved progress will be lost.</string>
     <string name="yes">Yes</string>
     <string name="navigate_back">Navigate Back</string>
-    <string name="_1_point_camera_at_head">1. Point camera at head</string>
+    <string name="_1_point_camera_at_face">1. Point camera at face</string>
     <string name="_2_tap_button">2. Tap ⏺️ button</string>
     <string name="_3_walk_in_a_circle_around_person">3. Walk in a circle around person</string>
     <string name="photos_capture_automatically">Photos capture automatically</string>
@@ -96,4 +96,6 @@
     <string name="usb_connected">USB Connected</string>
     <string name="usb_disconnected">USB Disconnected</string>
     <string name="failed_to_load_photo_scans">Failed to load photo scans</string>
+    <string name="you_need_to_capture_at_least_d_images_to_proceed">You need to capture at least %1$d images to proceed.</string>
+    <string name="dismiss">Dismiss</string>
 </resources>

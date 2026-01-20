@@ -104,7 +104,7 @@ fun ScanControls(
                 if (!viewModel.isScanning) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
-                            text = stringResource(R.string._1_point_camera_at_head),
+                            text = stringResource(R.string._1_point_camera_at_face),
                             color = Color.White,
                             fontSize = 18.sp,
                             textAlign = TextAlign.Center

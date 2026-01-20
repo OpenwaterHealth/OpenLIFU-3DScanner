@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import health.openwater.openlifu3dscanner.R
+import health.openwater.openlifu3dscanner.api.dto.PhotoscanStatus
 import health.openwater.openlifu3dscanner.extensions.getModelsDir
 import health.openwater.openlifu3dscanner.viewmodel.CollectionViewModel
 import kotlinx.coroutines.launch
@@ -59,13 +60,13 @@ fun ViewCollectionScreen(
         return dir.listFiles()?.filter { it.isDirectory }?.toTypedArray()
     }
 
-    suspend fun refresh() {
-        collectionViewModel.getPhotoscans()
+    suspend fun refresh(showLoading: Boolean) {
+        collectionViewModel.getPhotoscans(showLoading)
     }
 
     // Load initial data
     LaunchedEffect(Unit) {
-        refresh()
+        refresh(photoscans == null)
     }
 
     Scaffold(
@@ -95,7 +96,7 @@ fun ViewCollectionScreen(
         PullToRefreshBox(
             isRefreshing = isLoadingPhotoscans,
             onRefresh = {
-                coroutineScope.launch { refresh() }
+                coroutineScope.launch { refresh(true) }
             },
             modifier = Modifier
                 .fillMaxSize()
@@ -150,7 +151,11 @@ fun ViewCollectionScreen(
                             items(photoscans ?: emptyList()) { scan ->
                                 PhotoscanCard(
                                     photoscan = scan,
-                                    onClick = { onPhotoscanClick(scan.id) }
+                                    onClick = {
+                                        if (scan.status == PhotoscanStatus.FINISHED) {
+                                            onPhotoscanClick(scan.id)
+                                        }
+                                    }
                                 )
                             }
                         }

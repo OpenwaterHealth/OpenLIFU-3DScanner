@@ -95,7 +95,6 @@ class CloudRepository(
         }
     }
 
-    fun getDownloadingItems(): List<DownloadingItem> = downloadQueue.toList()
     fun getDownloadResultsFlow(): Flow<DownloadResult?> = downloadResultsFlow
 
     fun createPhotocollection(name: String, autoUpload: Boolean) {
@@ -251,11 +250,6 @@ class CloudRepository(
         referenceNumber
     )
 
-    fun isPhotoscanDownloaded(referenceNumber: String): Boolean {
-        val dir = File(getImagesDir(referenceNumber), SCAN_DIR)
-        return dir.exists() && (dir.list()?.count() ?: 0) > 0
-    }
-
     suspend fun getPhotoscans(): List<Photoscan>? {
         val uid = authService.getCurrentUser()?.uid ?: return null
         try {
@@ -266,62 +260,29 @@ class CloudRepository(
         }
     }
 
-    suspend fun getPhotocollections(): List<Photocollection>? {
-        val uid = authService.getCurrentUser()?.uid ?: return null
-        try {
-            return photocollectionService.getPhotocollections(uid).body()
-        } catch (e: Exception) {
-            Log.w(TAG, "Can't load photocollections: $e")
-            return null
-        }
-    }
-
-    suspend fun getReferenceNumbers(localOnly: Boolean): Set<String> {
-        val result = mutableSetOf<String>()
-        val localDir = getModelsDir()
-        if (localDir.exists()) {
-            localDir.list()?.let {
-                result.addAll(it)
-            }
-        }
-        val uid = authService.getCurrentUser()?.uid
-        if (!localOnly && uid != null) {
-            try {
-                val names = photocollectionService.getPhotocollections(uid, joinPhotos = false)
-                    .body()?.mapNotNull { it.name } ?: listOf()
-                result.addAll(names)
-            } catch (e: Exception) {
-                Log.w(TAG, "Can't load photocollections: $e")
-            }
-        }
-        return result
-    }
-
     private fun extractZip(body: ResponseBody, dir: File) {
-        body.byteStream().use { input ->
-            val zis = ZipInputStream(BufferedInputStream(input))
-            val buffer = ByteArray(1024)
-            var count = 0
+        val zis = ZipInputStream(BufferedInputStream(body.byteStream()))
+        val buffer = ByteArray(8192)
 
-            while (true) {
-                val ze = zis.getNextEntry() ?: break
-                val filename = ze.name
+        while (true) {
+            val ze = zis.nextEntry ?: break
+            val filename = ze.name
+            val file = File(dir, filename)
 
-                val file = File(dir, filename)
-
-                if (ze.isDirectory) {
-                    file.mkdirs()
-                    continue
+            if (ze.isDirectory) {
+                file.mkdirs()
+            } else {
+                file.parentFile?.mkdirs()
+                FileOutputStream(file).use { out ->
+                    var count: Int
+                    while (zis.read(buffer).also { count = it } != -1) {
+                        out.write(buffer, 0, count)
+                    }
                 }
-                val fout = FileOutputStream(file)
-                while (zis.read(buffer).also { count = it } != -1) {
-                    fout.write(buffer, 0, count)
-                }
-                fout.close()
-                zis.closeEntry()
             }
-            zis.close()
+            zis.closeEntry()
         }
+        zis.close()
     }
 
     private fun saveResponseBodyToDisk(body: ResponseBody, file: File) {

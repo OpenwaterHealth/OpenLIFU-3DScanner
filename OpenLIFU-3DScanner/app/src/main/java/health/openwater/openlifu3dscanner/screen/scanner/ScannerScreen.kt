@@ -1,7 +1,7 @@
 package health.openwater.openlifu3dscanner.screen.scanner
 
 import android.Manifest
-import android.util.Log
+import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -12,6 +12,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -23,11 +25,13 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -36,8 +40,13 @@ import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import health.openwater.openlifu3dscanner.R
 import health.openwater.openlifu3dscanner.viewmodel.CloudViewModel
+import health.openwater.openlifu3dscanner.viewmodel.ScannerViewModel
 import health.openwater.openlifu3dscanner.viewmodel.UserViewModel
+import kotlinx.coroutines.launch
 
+const val MIN_IMAGES_COUNT = 20
+
+@SuppressLint("LocalContextGetResourceValueCall")
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @Composable
 fun ScannerScreen(
@@ -46,12 +55,18 @@ fun ScannerScreen(
     onNavigateBack: () -> Unit,
     onNavigateToProcessing: (autoUploadEnabled: Boolean, isLoggedIn: Boolean) -> Unit,
     cloudViewModel: CloudViewModel = hiltViewModel(),
-    userViewModel: UserViewModel = hiltViewModel()
+    userViewModel: UserViewModel = hiltViewModel(),
+    scannerViewModel: ScannerViewModel = hiltViewModel()
 ) {
     var completed by remember { mutableStateOf(false) }
+    val capturedBucketsCount by scannerViewModel.capturedBucketsCount().collectAsState(initial = 0)
 
     val userInfo by userViewModel.getUserInfo().collectAsState(initial = null)
     val isLoggedIn = userInfo != null
+
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
 
     LaunchedEffect(Unit) {
         cloudViewModel.reset(false)
@@ -64,6 +79,7 @@ fun ScannerScreen(
     KeepScreenOn()
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text(text = stringResource(R.string.scanning)) },
@@ -80,7 +96,19 @@ fun ScannerScreen(
                         enabled = completed,
                         modifier = Modifier.alpha(if (completed) 1f else 0.5f),
                         onClick = {
-                            onNavigateToProcessing(autoUploadEnabled, isLoggedIn)
+                            if (capturedBucketsCount < MIN_IMAGES_COUNT) {
+                                scope.launch {
+                                    snackbarHostState.showSnackbar(
+                                        message = context.getString(
+                                            R.string.you_need_to_capture_at_least_d_images_to_proceed,
+                                            MIN_IMAGES_COUNT
+                                        ),
+                                        actionLabel = context.getString(R.string.dismiss)
+                                    )
+                                }
+                            } else {
+                                onNavigateToProcessing(autoUploadEnabled, isLoggedIn)
+                            }
                         }
                     ) {
                         Text(
@@ -127,7 +155,7 @@ fun ScannerScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        stringResource(R.string.camera_permission_required),
+                        text = stringResource(R.string.camera_permission_required),
                         color = Color.White,
                         fontSize = 18.sp
                     )
@@ -135,4 +163,5 @@ fun ScannerScreen(
             }
         }
     }
+
 }

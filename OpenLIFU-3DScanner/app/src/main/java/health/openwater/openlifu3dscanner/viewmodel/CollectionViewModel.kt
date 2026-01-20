@@ -26,8 +26,8 @@ class CollectionViewModel @Inject constructor(
     private val _isLoadingPhotoscans = MutableStateFlow(false)
     val isLoadingPhotoscans: StateFlow<Boolean> = _isLoadingPhotoscans.asStateFlow()
 
-    suspend fun getPhotoscans() {
-        _isLoadingPhotoscans.value = _photoscans.value == null
+    suspend fun getPhotoscans(showLoading: Boolean) {
+        _isLoadingPhotoscans.value = showLoading
         _photoscans.value = cloudRepository.getPhotoscans()?.reversed()
         _isLoadingPhotoscans.value = false
     }
