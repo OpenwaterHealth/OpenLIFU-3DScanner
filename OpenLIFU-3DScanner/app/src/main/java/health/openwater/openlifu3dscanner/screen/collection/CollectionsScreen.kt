@@ -52,7 +52,8 @@ fun ViewCollectionScreen(
     fun onDeviceScans(): List<CollectionItem> {
         return getModelsDir().listFiles()?.filter { it.isDirectory }?.map {
             CollectionItem(
-                id = 0,
+                photoscanId = 0,
+                photocollectionId = 0,
                 name = it.name,
                 creationDate = Date(it.lastModified()),
                 status = null,
@@ -81,9 +82,11 @@ fun ViewCollectionScreen(
         }
 
         collectionItems = (photoscans?.reversed()?.map { photoscan ->
+            val collection = photocollections?.find { it.id == photoscan.photocollectionId }
             CollectionItem(
-                id = photoscan.id,
-                name = photocollections?.find { it.id == photoscan.photocollectionId }?.name,
+                photoscanId = photoscan.id,
+                photocollectionId = photoscan.photocollectionId,
+                name = collection?.name ?: "",
                 creationDate = photoscan.creationDate,
                 status = photoscan.status
             )

@@ -25,8 +25,9 @@ import java.util.Date
 import java.util.Locale
 
 data class CollectionItem(
-    val id: Long,
-    val name: String?,
+    val photoscanId: Long,
+    val photocollectionId: Long,
+    val name: String,
     val creationDate: Date,
     val status: PhotoscanStatus?
 )
@@ -49,7 +50,7 @@ fun PhotoscanCard(item: CollectionItem, onClick: () -> Unit) {
         ) {
             Column {
                 Text(
-                    text = item.name ?: "",
+                    text = item.name,
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface,

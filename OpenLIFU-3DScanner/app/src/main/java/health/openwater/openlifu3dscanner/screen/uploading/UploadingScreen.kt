@@ -1,6 +1,5 @@
 package health.openwater.openlifu3dscanner.screen.uploading
 
-import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding

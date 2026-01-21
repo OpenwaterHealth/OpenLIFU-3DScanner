@@ -329,7 +329,7 @@ class CloudRepository(
     private suspend fun downloadPhotocollection(id: Long): Boolean {
         try {
             val response = photocollectionService.getPhotocollection(
-                id, joinPhotos = true, joinCoordinates = true
+                id, joinPhotos = true
             )
             if (response.isSuccessful) {
                 response.body()?.let { photocollection ->

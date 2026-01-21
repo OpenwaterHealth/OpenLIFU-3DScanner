@@ -74,13 +74,12 @@
     <string name="failed">Failed</string>
     <string name="stopped">Stopped</string>
     <string name="unknown">Unknown</string>
-    <string name="an_error_occurred_while_downloading_the_mesh">An error occurred while downloading the model</string>
+    <string name="an_error_occurred_while_downloading">An error occurred while downloading</string>
     <string name="download_failed">Download Failed</string>
     <string name="retry_download">Retry Download</string>
     <string name="view_model">View Model</string>
-    <string name="the_mesh_has_been_downloaded_successfully">The mesh has been downloaded successfully</string>
     <string name="download_complete">Download Complete!</string>
-    <string name="please_wait_while_the_mesh_is_being_downloaded">Please wait while the model is being downloaded</string>
+    <string name="please_wait_while_the_data_is_being_downloaded">Please wait while the data is being downloaded</string>
     <string name="downloading">Downloading…</string>
     <string name="download_mesh">Download Model</string>
     <string name="download_the_3d_mesh_for_this_scan">Download the 3D model for this scan</string>
@@ -98,4 +97,6 @@
     <string name="failed_to_load_photo_scans">Failed to load photo scans</string>
     <string name="you_need_to_capture_at_least_d_images_to_proceed">You need to capture at least %1$d images to proceed.</string>
     <string name="dismiss">Dismiss</string>
+    <string name="model">Model</string>
+    <string name="photos">Photos</string>
 </resources>

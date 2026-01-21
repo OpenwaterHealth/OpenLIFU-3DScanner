@@ -10,12 +10,9 @@ import health.openwater.openlifu3dscanner.api.dto.Photoscan
 import health.openwater.openlifu3dscanner.api.model.DownloadingItem
 import health.openwater.openlifu3dscanner.api.model.Type
 import health.openwater.openlifu3dscanner.api.repository.CloudRepository
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import retrofit2.Response
 import javax.inject.Inject
 
 
@@ -47,13 +44,22 @@ class CollectionViewModel @Inject constructor(
         }
     }
 
-    suspend fun getPhotocollection(photoscanId: Long): Photocollection? {
-        val photoscan = cloudRepository.getPhotoscan(photoscanId) ?: return null
-        return cloudRepository.getPhotocollection(photoscan.photocollectionId)
+    suspend fun getPhotocollection(
+        photocollectionId: Long,
+        joinPhotos: Boolean = false
+    ): Photocollection? {
+        return cloudRepository.getPhotocollection(
+            id = photocollectionId,
+            joinPhotos = joinPhotos
+        )
     }
 
     fun downloadMesh(scanId: Long) {
         cloudRepository.download(DownloadingItem(scanId, Type.PHOTOSCAN))
+    }
+
+    fun downloadPhotocollection(collectionId: Long) {
+        cloudRepository.download(DownloadingItem(collectionId, Type.PHOTOCOLLECTION))
     }
 
     fun getDownloadResultsFlow() = cloudRepository.getDownloadResultsFlow()
