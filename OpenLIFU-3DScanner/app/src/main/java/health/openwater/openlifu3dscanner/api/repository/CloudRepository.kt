@@ -3,6 +3,8 @@ package health.openwater.openlifu3dscanner.api.repository
 import android.content.Context
 import android.util.Log
 import health.openwater.openlifu3dscanner.api.AuthService
+import health.openwater.openlifu3dscanner.api.DomainError
+import health.openwater.openlifu3dscanner.api.DomainResult
 import health.openwater.openlifu3dscanner.api.PhotocollectionService
 import health.openwater.openlifu3dscanner.api.PhotoscanService
 import health.openwater.openlifu3dscanner.api.WebsocketService
@@ -15,7 +17,9 @@ import health.openwater.openlifu3dscanner.api.model.DownloadingItem
 import health.openwater.openlifu3dscanner.api.model.ImageUploadProgress
 import health.openwater.openlifu3dscanner.api.model.ReconstructionProgress
 import health.openwater.openlifu3dscanner.api.model.Type
+import health.openwater.openlifu3dscanner.extensions.callDomain
 import health.openwater.openlifu3dscanner.extensions.getModelsDir
+import health.openwater.openlifu3dscanner.extensions.toDomainResult
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -26,6 +30,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import okhttp3.ResponseBody
+import retrofit2.Response
 import java.io.BufferedInputStream
 import java.io.File
 import java.io.FileOutputStream
@@ -250,13 +255,21 @@ class CloudRepository(
         referenceNumber
     )
 
-    suspend fun getPhotoscans(): List<Photoscan>? {
-        val uid = authService.getCurrentUser()?.uid ?: return null
-        try {
-            return photoscanService.getPhotoscans(uid).body()
-        } catch (e: Exception) {
-            Log.w(TAG, "Can't load photocollections: $e")
-            return null
+    suspend fun getPhotocollections(): DomainResult<List<Photocollection>> {
+        val uid = authService.getCurrentUser()?.uid
+            ?: return DomainResult.Error(DomainError.Auth)
+
+        return callDomain {
+            photocollectionService.getPhotocollections(uid)
+        }
+    }
+
+    suspend fun getPhotoscans(): DomainResult<List<Photoscan>> {
+        val uid = authService.getCurrentUser()?.uid
+            ?: return DomainResult.Error(DomainError.Auth)
+
+        return callDomain {
+            photoscanService.getPhotoscans(uid)
         }
     }
 

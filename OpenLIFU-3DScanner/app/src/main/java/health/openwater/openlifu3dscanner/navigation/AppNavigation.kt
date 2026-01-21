@@ -1,11 +1,13 @@
 package health.openwater.openlifu3dscanner.navigation
 
+import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import health.openwater.openlifu3dscanner.api.dto.PhotoscanStatus
 import health.openwater.openlifu3dscanner.screen.collection.ViewCollectionScreen
 import health.openwater.openlifu3dscanner.screen.home.HomeScreen
 import health.openwater.openlifu3dscanner.screen.photoscan.PhotoscanScreen
@@ -51,7 +53,27 @@ fun AppNavigation() {
 
     NavHost(
         navController = navController,
-        startDestination = Screen.Home.route
+        startDestination = Screen.Home.route,
+        enterTransition = {
+            slideIntoContainer(
+                AnimatedContentTransitionScope.SlideDirection.Left
+            )
+        },
+        exitTransition = {
+            slideOutOfContainer(
+                AnimatedContentTransitionScope.SlideDirection.Left
+            )
+        },
+        popEnterTransition = {
+            slideIntoContainer(
+                AnimatedContentTransitionScope.SlideDirection.Right
+            )
+        },
+        popExitTransition = {
+            slideOutOfContainer(
+                AnimatedContentTransitionScope.SlideDirection.Right
+            )
+        }
     ) {
         composable(Screen.Home.route) {
             HomeScreen(
@@ -86,8 +108,12 @@ fun AppNavigation() {
         composable(Screen.ViewCollection.route) {
             ViewCollectionScreen(
                 onNavigateBack = { navController.popBackStack() },
-                onPhotoscanClick = { scanId ->
-                    navController.navigate(Screen.Photoscan.createRoute(scanId, false))
+                onPhotoscanClick = { item ->
+                    if (item.status == PhotoscanStatus.FINISHED) {
+                        navController.navigate(Screen.Photoscan.createRoute(item.id, false))
+                    } else if (item.name != null) {
+                        navController.navigate(Screen.Processing.createRoute(item.name))
+                    }
                 }
             )
         }

@@ -19,13 +19,20 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import health.openwater.openlifu3dscanner.R
-import health.openwater.openlifu3dscanner.api.dto.Photoscan
+import health.openwater.openlifu3dscanner.api.dto.PhotoscanStatus
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+data class CollectionItem(
+    val id: Long,
+    val name: String?,
+    val creationDate: Date,
+    val status: PhotoscanStatus?
+)
+
 @Composable
-fun PhotoscanCard(photoscan: Photoscan, onClick: () -> Unit) {
+fun PhotoscanCard(item: CollectionItem, onClick: () -> Unit) {
     Card(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
@@ -42,14 +49,14 @@ fun PhotoscanCard(photoscan: Photoscan, onClick: () -> Unit) {
         ) {
             Column {
                 Text(
-                    text = photoscan.id.toString(),
+                    text = item.name ?: "",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface,
                 )
 
                 Text(
-                    text = formatDate(photoscan.creationDate),
+                    text = formatDate(item.creationDate),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurface
                 )
@@ -57,7 +64,8 @@ fun PhotoscanCard(photoscan: Photoscan, onClick: () -> Unit) {
 
             Column(horizontalAlignment = Alignment.End) {
 
-                StatusChip(status = photoscan.status)
+                if (item.status == null) return@Column
+                StatusChip(status = item.status)
 
                 Icon(
                     imageVector = Icons.Filled.Cloud,

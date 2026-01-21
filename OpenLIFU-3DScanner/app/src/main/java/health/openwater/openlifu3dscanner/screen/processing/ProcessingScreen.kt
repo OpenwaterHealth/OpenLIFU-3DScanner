@@ -20,19 +20,31 @@ fun ProcessingScreen(
     onNavigateBack: () -> Unit,
     onNavigateToUploading: () -> Unit,
     onNavigateToTransfer: () -> Unit,
+    userViewModel: UserViewModel = hiltViewModel()
 ) {
     var showCancelDialog by remember { mutableStateOf(false) }
 
+    val userInfo by userViewModel.getUserInfo().collectAsState(initial = null)
+    val isLoggedIn = userInfo != null
+
+    fun onBack() {
+        if (isLoggedIn) {
+            showCancelDialog = true
+        } else {
+            onNavigateBack()
+        }
+    }
+
     BackHandler {
-        showCancelDialog = true
+        onBack()
     }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(text = stringResource(R.string.validation)) },
+                title = { Text(text = collectionName) },
                 navigationIcon = {
-                    IconButton(onClick = { showCancelDialog = true }) {
+                    IconButton(onClick = { onBack() }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(R.string.navigate_back)

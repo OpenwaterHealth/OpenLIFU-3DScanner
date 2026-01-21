@@ -53,7 +53,7 @@ fun PhotoscanScreen(
     onNavigateBack: () -> Unit,
     collectionViewModel: CollectionViewModel = hiltViewModel()
 ) {
-    var downloadState by remember { mutableStateOf<DownloadState>(DownloadState.Idle) }
+    var downloadState by remember { mutableStateOf<DownloadState>(DownloadState.Init) }
     var modelPath by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(scanId) {
@@ -66,7 +66,7 @@ fun PhotoscanScreen(
                 downloadState = DownloadState.Success
             } else {
                 modelPath = null
-                downloadState = DownloadState.Idle
+                downloadState = DownloadState.NotDownloaded
                 if (autoDownloadEnabled) {
                     downloadState = DownloadState.Downloading
                     collectionViewModel.downloadMesh(scanId)
@@ -126,7 +126,9 @@ fun PhotoscanScreen(
             // Use key to force recomposition when state changes
             key(downloadState, modelPath) {
                 when (downloadState) {
-                    is DownloadState.Idle -> {
+                    is DownloadState.Init -> Unit
+
+                    is DownloadState.NotDownloaded -> {
                         StateIdle(onAction = {
                             downloadState = DownloadState.Downloading
                             collectionViewModel.downloadMesh(scanId)
@@ -169,7 +171,8 @@ fun PhotoscanScreen(
 }
 
 sealed class DownloadState {
-    object Idle : DownloadState()
+    object Init : DownloadState()
+    object NotDownloaded : DownloadState()
     object Downloading : DownloadState()
     object Success : DownloadState()
     object Failed : DownloadState()

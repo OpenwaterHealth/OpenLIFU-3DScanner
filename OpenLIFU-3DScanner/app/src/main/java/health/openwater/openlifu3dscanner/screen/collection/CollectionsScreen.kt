@@ -26,7 +26,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -35,38 +34,70 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import health.openwater.openlifu3dscanner.R
-import health.openwater.openlifu3dscanner.api.dto.PhotoscanStatus
+import health.openwater.openlifu3dscanner.api.DomainResult
 import health.openwater.openlifu3dscanner.extensions.getModelsDir
 import health.openwater.openlifu3dscanner.viewmodel.CollectionViewModel
-import kotlinx.coroutines.launch
-import java.io.File
+import java.util.Date
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @Composable
 fun ViewCollectionScreen(
     onNavigateBack: () -> Unit,
-    onPhotoscanClick: (Long) -> Unit,
+    onPhotoscanClick: (CollectionItem) -> Unit,
     collectionViewModel: CollectionViewModel = hiltViewModel()
 ) {
-    val photoscans by collectionViewModel.photoscans.collectAsState()
-    val isLoadingPhotoscans by collectionViewModel.isLoadingPhotoscans.collectAsState()
+    val photocollectionsResponse by collectionViewModel.photocollectionsResponse.collectAsState()
+    val photoscansResponse by collectionViewModel.photoscansResponse.collectAsState()
 
-    var onDeviceScans by remember { mutableStateOf<Array<File>?>(null) }
-
-    val coroutineScope = rememberCoroutineScope()
-
-    fun loadOnDeviceScans(): Array<File>? {
-        val dir = getModelsDir()
-        return dir.listFiles()?.filter { it.isDirectory }?.toTypedArray()
+    fun onDeviceScans(): List<CollectionItem> {
+        return getModelsDir().listFiles()?.filter { it.isDirectory }?.map {
+            CollectionItem(
+                id = 0,
+                name = it.name,
+                creationDate = Date(it.lastModified()),
+                status = null,
+            )
+        } ?: emptyList()
     }
 
-    suspend fun refresh(showLoading: Boolean) {
+    var collectionItems by remember { mutableStateOf<List<CollectionItem>?>(null) }
+
+    LaunchedEffect(photocollectionsResponse, photoscansResponse) {
+        val onDeviceScans = onDeviceScans()
+        if (photocollectionsResponse == null
+            || photoscansResponse == null
+            || photocollectionsResponse is DomainResult.Loading
+            || photoscansResponse is DomainResult.Loading
+        ) {
+            return@LaunchedEffect
+        }
+
+        val photocollections = photocollectionsResponse?.let {
+            if (it is DomainResult.Success) it.data else null
+        }
+
+        val photoscans = photoscansResponse?.let {
+            if (it is DomainResult.Success) it.data else null
+        }
+
+        collectionItems = (photoscans?.reversed()?.map { photoscan ->
+            CollectionItem(
+                id = photoscan.id,
+                name = photocollections?.find { it.id == photoscan.photocollectionId }?.name,
+                creationDate = photoscan.creationDate,
+                status = photoscan.status
+            )
+        } ?: emptyList()).plus(onDeviceScans).distinctBy { it.name }
+    }
+
+    fun refresh(showLoading: Boolean) {
+        collectionViewModel.getPhotocollections(showLoading)
         collectionViewModel.getPhotoscans(showLoading)
     }
 
     // Load initial data
     LaunchedEffect(Unit) {
-        refresh(photoscans == null)
+        refresh(showLoading = photocollectionsResponse == null)
     }
 
     Scaffold(
@@ -94,9 +125,9 @@ fun ViewCollectionScreen(
         val scroll = rememberScrollState()
 
         PullToRefreshBox(
-            isRefreshing = isLoadingPhotoscans,
+            isRefreshing = photocollectionsResponse is DomainResult.Loading || photoscansResponse is DomainResult.Loading,
             onRefresh = {
-                coroutineScope.launch { refresh(true) }
+                refresh(showLoading = true)
             },
             modifier = Modifier
                 .fillMaxSize()
@@ -107,7 +138,7 @@ fun ViewCollectionScreen(
                     .fillMaxSize()
             ) {
                 when {
-                    photoscans?.isEmpty() == true -> {
+                    collectionItems?.isEmpty() == true -> {
                         // Empty state
                         Column(
                             modifier = Modifier
@@ -124,23 +155,6 @@ fun ViewCollectionScreen(
                         }
                     }
 
-                    photoscans == null && !isLoadingPhotoscans -> {
-                        // Empty state
-                        Column(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .verticalScroll(scroll),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
-                        ) {
-                            Text(
-                                text = stringResource(R.string.failed_to_load_photo_scans),
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.error
-                            )
-                        }
-                    }
-
                     else -> {
                         // List of photo scans
                         LazyColumn(
@@ -148,13 +162,11 @@ fun ViewCollectionScreen(
                             verticalArrangement = Arrangement.spacedBy(12.dp),
                             contentPadding = PaddingValues(16.dp)
                         ) {
-                            items(photoscans ?: emptyList()) { scan ->
+                            items(collectionItems ?: emptyList()) { scan ->
                                 PhotoscanCard(
-                                    photoscan = scan,
+                                    item = scan,
                                     onClick = {
-                                        if (scan.status == PhotoscanStatus.FINISHED) {
-                                            onPhotoscanClick(scan.id)
-                                        }
+                                        onPhotoscanClick(scan)
                                     }
                                 )
                             }

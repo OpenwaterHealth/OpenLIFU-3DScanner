@@ -2,13 +2,6 @@ package health.openwater.openlifu3dscanner.api.dto
 
 import java.util.Date
 
-enum class PhotoscanStatus {
-    STARTED,
-    RUNNING,
-    FINISHED,
-    FAILED,
-    STOPPED
-}
 
 data class Photoscan(
     val id: Long,
