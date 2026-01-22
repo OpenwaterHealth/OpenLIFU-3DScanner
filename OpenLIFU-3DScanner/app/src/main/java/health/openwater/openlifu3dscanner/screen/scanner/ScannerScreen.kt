@@ -2,6 +2,8 @@ package health.openwater.openlifu3dscanner.screen.scanner
 
 import android.Manifest
 import android.annotation.SuppressLint
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -56,10 +58,13 @@ fun ScannerScreen(
     onNavigateBack: () -> Unit,
     onNavigateToProcessing: (autoUploadEnabled: Boolean, isLoggedIn: Boolean) -> Unit,
     cloudViewModel: CloudViewModel = hiltViewModel(),
-    userViewModel: UserViewModel = hiltViewModel(),
     scannerViewModel: ScannerViewModel = hiltViewModel()
 ) {
     val capturedBucketsCount by scannerViewModel.capturedBucketsCount.collectAsState(initial = 0)
+
+    val userViewModel: UserViewModel = hiltViewModel(
+        viewModelStoreOwner = LocalActivity.current as ComponentActivity
+    )
     val uiState by userViewModel.uiState.collectAsStateWithLifecycle()
     val isLoggedIn = uiState.user != null
 

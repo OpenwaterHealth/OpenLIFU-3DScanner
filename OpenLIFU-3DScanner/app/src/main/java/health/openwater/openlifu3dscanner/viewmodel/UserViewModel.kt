@@ -17,7 +17,7 @@ import javax.inject.Inject
 data class UserInfoState(
     val user: FirebaseUser? = null,
     val credits: Int? = null,
-    val isLoading: Boolean = false,
+    val isLoading: Boolean = true,
     val error: String? = null
 )
 

@@ -1,5 +1,7 @@
 package health.openwater.openlifu3dscanner.screen.processing
 
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -49,8 +51,10 @@ fun ProcessingRoot(
     collectionName: String,
     onUpload: () -> Unit,
     onTransferToPc: () -> Unit,
-    userViewModel: UserViewModel = hiltViewModel()
 ) {
+    val userViewModel: UserViewModel = hiltViewModel(
+        viewModelStoreOwner = LocalActivity.current as ComponentActivity
+    )
     val uiState by userViewModel.uiState.collectAsStateWithLifecycle()
 
     val scanDir =

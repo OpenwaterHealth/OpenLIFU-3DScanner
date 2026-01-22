@@ -1,5 +1,7 @@
 package health.openwater.openlifu3dscanner.screen.home
 
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.AlertDialog
@@ -22,8 +24,10 @@ import health.openwater.openlifu3dscanner.viewmodel.UserViewModel
 fun UserProfileDialog(
     onDismiss: () -> Unit,
     onSignOut: () -> Unit,
-    userViewModel: UserViewModel = hiltViewModel(),
 ) {
+    val userViewModel: UserViewModel = hiltViewModel(
+        viewModelStoreOwner = LocalActivity.current as ComponentActivity
+    )
     val uiState by userViewModel.uiState.collectAsStateWithLifecycle()
     var showSignOutDialog by remember { mutableStateOf(false) }
 
