@@ -10,7 +10,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -23,6 +22,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import health.openwater.openlifu3dscanner.extensions.hasAllFilesAccess
 import health.openwater.openlifu3dscanner.extensions.requestAllFilesAccess
 import health.openwater.openlifu3dscanner.viewmodel.UserViewModel
@@ -38,13 +38,13 @@ fun HomeRoot(
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
-    val userInfo by userViewModel.getUserInfo().collectAsState()
-    val isLoading by userViewModel.isLoading.collectAsState()
+    val uiState by userViewModel.uiState.collectAsStateWithLifecycle()
 
     var hasStorageAccess by remember { mutableStateOf(hasAllFilesAccess()) }
 
     LaunchedEffect(Unit) {
-        userViewModel.refreshUserInfo()
+        userViewModel.initialize()
+        userViewModel.getCredits()
     }
 
     DisposableEffect(lifecycleOwner) {
@@ -62,11 +62,11 @@ fun HomeRoot(
 
     Box(modifier = Modifier.fillMaxSize()) {
         when {
-            isLoading -> {
+            uiState.isLoading -> {
                 LoadingScreen()
             }
 
-            !isLoading && !hasStorageAccess -> {
+            !uiState.isLoading && !hasStorageAccess -> {
                 StoragePermissionScreen(
                     onGrantPermission = {
                         context.requestAllFilesAccess()
@@ -76,7 +76,6 @@ fun HomeRoot(
 
             else -> {
                 WelcomeScreen(
-                    userInfo = userInfo,
                     onStartScan = onStartScan,
                     onViewCollection = onViewCollection
                 )
@@ -92,13 +91,11 @@ fun HomeRoot(
             Icon(imageVector = Icons.Default.Settings, contentDescription = null)
         }
 
-        if (!isLoading) {
-            UserProfileBadge(
-                onSignIn = onSignIn,
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .padding(16.dp)
-            )
-        }
+        UserProfileBadge(
+            onSignIn = onSignIn,
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(16.dp)
+        )
     }
 }

@@ -1,149 +1,138 @@
 package health.openwater.openlifu3dscanner.di
 
-import android.content.Context
 import android.util.Log
-import health.openwater.openlifu3dscanner.api.AuthService
-import health.openwater.openlifu3dscanner.api.PhotocollectionService
-import health.openwater.openlifu3dscanner.api.PhotoscanService
-import health.openwater.openlifu3dscanner.api.UserService
-import health.openwater.openlifu3dscanner.api.WebsocketService
-import health.openwater.openlifu3dscanner.api.repository.CloudRepository
-import health.openwater.openlifu3dscanner.api.repository.UserRepository
 import com.google.gson.FieldNamingPolicy
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
-import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
-import health.openwater.openlifu3dscanner.api.adapter.DateTypeAdapter
+import health.openwater.openlifu3dscanner.network.adapter.DateTypeAdapter
+import health.openwater.openlifu3dscanner.network.api.AuthService
+import health.openwater.openlifu3dscanner.network.api.PhotocollectionService
+import health.openwater.openlifu3dscanner.network.api.PhotoscanService
+import health.openwater.openlifu3dscanner.network.api.UserService
+import health.openwater.openlifu3dscanner.network.api.WebsocketService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.SupervisorJob
+import okhttp3.Authenticator
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.Date
 import java.util.concurrent.TimeUnit
+import javax.inject.Qualifier
 import javax.inject.Singleton
+
+
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class WebSocketScope
 
 @Module
 @InstallIn(SingletonComponent::class)
-class ApiModule {
+object ApiModule {
+
+    private const val CONNECT_TIMEOUT = 5L
+    private const val READ_TIMEOUT = 15L
+    private const val WRITE_TIMEOUT = 15L
+
+    const val API_URL = "https://api.nvpsoftware.com"
 
     @Provides
     @Singleton
-    fun provideUserRepository(
-        authService: AuthService,
-        userService: UserService,
-        photocollectionService: PhotocollectionService
-    ): UserRepository {
-        return UserRepository(authService, userService, photocollectionService)
-    }
+    fun provideGson(): Gson = GsonBuilder()
+        .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
+        .registerTypeAdapter(Date::class.java, DateTypeAdapter)
+        .create()
 
     @Provides
     @Singleton
-    fun provideReconstructionRepository(
-        @ApplicationContext application: Context,
-        authService: AuthService,
-        photocollectionService: PhotocollectionService,
-        photoscanService: PhotoscanService,
-        websocketService: WebsocketService,
-        userRepository: UserRepository
-    ): CloudRepository {
-        return CloudRepository(
-            application,
-            authService,
-            photocollectionService,
-            photoscanService,
-            websocketService,
-            userRepository
-        )
-    }
+    fun provideLoggingInterceptor(): HttpLoggingInterceptor =
+        HttpLoggingInterceptor { message -> Log.d("OkHttp", message) }
+            .apply { setLevel(HttpLoggingInterceptor.Level.BODY) }
 
     @Provides
-    fun provideOkHttpClient(authService: AuthService): OkHttpClient {
-        val httpClient = OkHttpClient.Builder()
-
-        val logging = HttpLoggingInterceptor { message: String? ->
-            Log.d("OkHttp", message ?: "")
-        }
-        logging.setLevel(HttpLoggingInterceptor.Level.BODY)
-
-        httpClient.connectTimeout(TIMEOUT, TimeUnit.SECONDS)
-        httpClient.readTimeout(TIMEOUT, TimeUnit.SECONDS)
-        httpClient.writeTimeout(TIMEOUT, TimeUnit.SECONDS)
-
-        httpClient.addInterceptor { chain ->
-            val original = chain.request()
-
-            var requestBuilder = original.newBuilder()
-
-            runBlocking {
-                authService.getToken()?.let {
-                    requestBuilder = requestBuilder.header("Authorization", "Bearer $it")
-                }
-            }
-            val response = chain.proceed(requestBuilder.build())
-
+    @Singleton
+    fun provideAuthenticator(authService: AuthService): Authenticator =
+        Authenticator { _, response ->
             if (response.code == 401) {
                 authService.signOut()
+                null
+            } else {
+                null
             }
-
-            response
         }
-            .addInterceptor(logging)
-
-        return httpClient.build()
-    }
-
-    @Provides
-    fun provideGson(): Gson {
-        return GsonBuilder()
-            .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
-            .registerTypeAdapter(Date::class.java, DateTypeAdapter)
-            .create()
-    }
-
-    @Provides
-    fun provideRetrofit(client: OkHttpClient, gson: Gson): Retrofit {
-        val builder = Retrofit.Builder()
-            .baseUrl(API_URL)
-            .addConverterFactory(GsonConverterFactory.create(gson))
-        return builder.client(client).build()
-    }
-
-    @Provides
-    fun providePhotocollectionService(retrofit: Retrofit): PhotocollectionService {
-        return retrofit.create(PhotocollectionService::class.java)
-    }
-
-    @Provides
-    fun providePhotoscanService(retrofit: Retrofit): PhotoscanService {
-        return retrofit.create(PhotoscanService::class.java)
-    }
-
-    @Provides
-    fun provideUsersService(retrofit: Retrofit): UserService {
-        return retrofit.create(UserService::class.java)
-    }
 
     @Provides
     @Singleton
-    fun provideAuthService(): AuthService {
-        return AuthService()
-    }
+    fun provideOkHttpClient(
+        authService: AuthService,
+        loggingInterceptor: HttpLoggingInterceptor,
+        authenticator: Authenticator
+    ): OkHttpClient = OkHttpClient.Builder()
+        .connectTimeout(CONNECT_TIMEOUT, TimeUnit.SECONDS)
+        .readTimeout(READ_TIMEOUT, TimeUnit.SECONDS)
+        .writeTimeout(WRITE_TIMEOUT, TimeUnit.SECONDS)
+        .authenticator(authenticator)
+        .addInterceptor { chain ->
+            val original = chain.request()
+            val token = authService.getTokenSync()
+            val request = if (token != null) {
+                original.newBuilder()
+                    .header("Authorization", "Bearer $token")
+                    .build()
+            } else {
+                original
+            }
+            chain.proceed(request)
+        }
+        .addInterceptor(loggingInterceptor)
+        .build()
 
     @Provides
-    fun provideWebsocketService(authService: AuthService): WebsocketService {
-        val scope = CoroutineScope(Dispatchers.Main)
-        return WebsocketService(authService, scope)
-    }
+    @Singleton
+    fun provideRetrofit(
+        client: OkHttpClient,
+        gson: Gson
+    ): Retrofit = Retrofit.Builder()
+        .baseUrl(API_URL)
+        .client(client)
+        .addConverterFactory(GsonConverterFactory.create(gson))
+        .build()
 
-    companion object {
-        private const val TIMEOUT = 30L
-        const val API_URL = "https://api.nvpsoftware.com"
-    }
+    @Provides
+    @Singleton
+    fun providePhotocollectionService(retrofit: Retrofit): PhotocollectionService =
+        retrofit.create(PhotocollectionService::class.java)
+
+    @Provides
+    @Singleton
+    fun providePhotoscanService(retrofit: Retrofit): PhotoscanService =
+        retrofit.create(PhotoscanService::class.java)
+
+    @Provides
+    @Singleton
+    fun provideUserService(retrofit: Retrofit): UserService =
+        retrofit.create(UserService::class.java)
+
+    @Provides
+    @Singleton
+    fun provideAuthService(): AuthService = AuthService()
+
+    @Provides
+    @Singleton
+    @WebSocketScope
+    fun provideWebSocketCoroutineScope(): CoroutineScope =
+        CoroutineScope(SupervisorJob() + Dispatchers.Main)
+
+    @Provides
+    @Singleton
+    fun provideWebsocketService(
+        authService: AuthService,
+        @WebSocketScope scope: CoroutineScope
+    ): WebsocketService = WebsocketService(authService, scope)
 }

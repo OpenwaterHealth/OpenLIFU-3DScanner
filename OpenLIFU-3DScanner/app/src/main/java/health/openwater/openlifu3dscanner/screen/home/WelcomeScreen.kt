@@ -13,21 +13,27 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import health.openwater.openlifu3dscanner.R
-import health.openwater.openlifu3dscanner.api.model.UserInfo
+import health.openwater.openlifu3dscanner.viewmodel.UserViewModel
 
 @Composable
 fun WelcomeScreen(
-    userInfo: UserInfo?,
     onStartScan: () -> Unit,
-    onViewCollection: () -> Unit
+    onViewCollection: () -> Unit,
+    userViewModel: UserViewModel = hiltViewModel(),
 ) {
+
+    val uiState by userViewModel.uiState.collectAsStateWithLifecycle()
+
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
@@ -44,7 +50,7 @@ fun WelcomeScreen(
             )
 
             Text(
-                text = stringResource(R.string.welcome_back, userInfo?.displayName ?: "Guest"),
+                text = stringResource(R.string.welcome_back, uiState.user?.displayName ?: "Guest"),
                 color = MaterialTheme.colorScheme.onBackground,
                 fontSize = 24.sp,
                 style = MaterialTheme.typography.headlineMedium

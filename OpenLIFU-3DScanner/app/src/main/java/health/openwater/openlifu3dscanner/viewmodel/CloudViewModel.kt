@@ -4,10 +4,10 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import health.openwater.openlifu3dscanner.api.dto.PhotoscanStatus
-import health.openwater.openlifu3dscanner.api.model.ImageUploadProgress
-import health.openwater.openlifu3dscanner.api.model.ReconstructionProgress
-import health.openwater.openlifu3dscanner.api.repository.CloudRepository
+import health.openwater.openlifu3dscanner.network.dto.PhotoscanStatus
+import health.openwater.openlifu3dscanner.network.model.ImageUploadProgress
+import health.openwater.openlifu3dscanner.network.model.ReconstructionProgress
+import health.openwater.openlifu3dscanner.network.repository.CloudRepository
 import health.openwater.openlifu3dscanner.core.UploadState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

@@ -1,4 +1,4 @@
-package health.openwater.openlifu3dscanner.api.adapter
+package health.openwater.openlifu3dscanner.network.adapter
 
 import com.google.gson.JsonDeserializationContext
 import com.google.gson.JsonDeserializer

@@ -1,8 +1,8 @@
-package health.openwater.openlifu3dscanner.api
+package health.openwater.openlifu3dscanner.network.api
 
 import android.util.Log
-import health.openwater.openlifu3dscanner.api.dto.PhotoscanStatus
-import health.openwater.openlifu3dscanner.api.model.ReconstructionProgress
+import health.openwater.openlifu3dscanner.network.dto.PhotoscanStatus
+import health.openwater.openlifu3dscanner.network.model.ReconstructionProgress
 import health.openwater.openlifu3dscanner.di.ApiModule
 import io.socket.client.IO
 import io.socket.client.Manager

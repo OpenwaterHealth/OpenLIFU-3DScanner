@@ -1,4 +1,4 @@
-package health.openwater.openlifu3dscanner.api.dto
+package health.openwater.openlifu3dscanner.network.dto
 
 data class UserCredit(
     val uid: String,

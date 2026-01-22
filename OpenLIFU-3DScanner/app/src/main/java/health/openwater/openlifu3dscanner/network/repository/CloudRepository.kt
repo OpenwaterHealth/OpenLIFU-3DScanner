@@ -1,23 +1,22 @@
-package health.openwater.openlifu3dscanner.api.repository
+package health.openwater.openlifu3dscanner.network.repository
 
 import android.content.Context
 import android.util.Log
-import health.openwater.openlifu3dscanner.api.AuthService
-import health.openwater.openlifu3dscanner.api.DomainError
-import health.openwater.openlifu3dscanner.api.DomainResult
-import health.openwater.openlifu3dscanner.api.PhotocollectionService
-import health.openwater.openlifu3dscanner.api.PhotoscanService
-import health.openwater.openlifu3dscanner.api.WebsocketService
-import health.openwater.openlifu3dscanner.api.dto.CreatePhotocollectionRequest
-import health.openwater.openlifu3dscanner.api.dto.Photocollection
-import health.openwater.openlifu3dscanner.api.dto.Photoscan
-import health.openwater.openlifu3dscanner.api.dto.StartPhotoscanRequest
-import health.openwater.openlifu3dscanner.api.model.DownloadResult
-import health.openwater.openlifu3dscanner.api.model.DownloadingItem
-import health.openwater.openlifu3dscanner.api.model.ImageUploadProgress
-import health.openwater.openlifu3dscanner.api.model.ReconstructionProgress
-import health.openwater.openlifu3dscanner.api.model.Type
-import health.openwater.openlifu3dscanner.extensions.callDomain
+import dagger.hilt.android.qualifiers.ApplicationContext
+import health.openwater.openlifu3dscanner.network.api.AuthService
+import health.openwater.openlifu3dscanner.network.ImageUploader
+import health.openwater.openlifu3dscanner.network.api.PhotocollectionService
+import health.openwater.openlifu3dscanner.network.api.PhotoscanService
+import health.openwater.openlifu3dscanner.network.api.WebsocketService
+import health.openwater.openlifu3dscanner.network.dto.CreatePhotocollectionRequest
+import health.openwater.openlifu3dscanner.network.dto.Photocollection
+import health.openwater.openlifu3dscanner.network.dto.Photoscan
+import health.openwater.openlifu3dscanner.network.dto.StartPhotoscanRequest
+import health.openwater.openlifu3dscanner.network.model.DownloadResult
+import health.openwater.openlifu3dscanner.network.model.DownloadingItem
+import health.openwater.openlifu3dscanner.network.model.ImageUploadProgress
+import health.openwater.openlifu3dscanner.network.model.ReconstructionProgress
+import health.openwater.openlifu3dscanner.network.model.Type
 import health.openwater.openlifu3dscanner.extensions.getModelsDir
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -33,9 +32,12 @@ import java.io.File
 import java.io.FileOutputStream
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.zip.ZipInputStream
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class CloudRepository(
-    private val context: Context,
+@Singleton
+class CloudRepository @Inject constructor(
+    @param:ApplicationContext private val context: Context,
     private val authService: AuthService,
     private val photocollectionService: PhotocollectionService,
     private val photoscanService: PhotoscanService,
@@ -259,24 +261,6 @@ class CloudRepository(
         getModelsDir(),
         referenceNumber
     )
-
-    suspend fun getPhotocollections(): DomainResult<List<Photocollection>> {
-        val uid = authService.getCurrentUser()?.uid
-            ?: return DomainResult.Error(DomainError.Auth)
-
-        return callDomain {
-            photocollectionService.getPhotocollections(uid)
-        }
-    }
-
-    suspend fun getPhotoscans(): DomainResult<List<Photoscan>> {
-        val uid = authService.getCurrentUser()?.uid
-            ?: return DomainResult.Error(DomainError.Auth)
-
-        return callDomain {
-            photoscanService.getPhotoscans(uid)
-        }
-    }
 
     private fun extractZip(body: ResponseBody, dir: File) {
         val zis = ZipInputStream(BufferedInputStream(body.byteStream()))

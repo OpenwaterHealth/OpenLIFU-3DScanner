@@ -1,9 +1,9 @@
-package health.openwater.openlifu3dscanner.api.repository
+package health.openwater.openlifu3dscanner.network
 
 import android.content.Context
 import android.util.Log
-import health.openwater.openlifu3dscanner.api.PhotocollectionService
-import health.openwater.openlifu3dscanner.api.model.ImageUploadProgress
+import health.openwater.openlifu3dscanner.network.api.PhotocollectionService
+import health.openwater.openlifu3dscanner.network.model.ImageUploadProgress
 import health.openwater.openlifu3dscanner.preferences.Prefs
 import health.openwater.openlifu3dscanner.utils.resizeJpegAsSquareByteArray
 import kotlinx.coroutines.CoroutineScope
@@ -27,7 +27,7 @@ class ImageUploader(
 ) {
     private val uploadedImages = mutableSetOf<String>()
     private var job: Job? = null
-    private val imageCapturedChannel = Channel<Unit>(Channel.RENDEZVOUS)
+    private val imageCapturedChannel = Channel<Unit>(Channel.Factory.RENDEZVOUS)
 
     fun start(autoUpload: Boolean) {
         stop()

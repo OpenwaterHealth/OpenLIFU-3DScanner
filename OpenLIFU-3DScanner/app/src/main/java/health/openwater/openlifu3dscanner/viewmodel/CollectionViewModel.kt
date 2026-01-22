@@ -4,43 +4,124 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import health.openwater.openlifu3dscanner.api.DomainResult
-import health.openwater.openlifu3dscanner.api.dto.Photocollection
-import health.openwater.openlifu3dscanner.api.dto.Photoscan
-import health.openwater.openlifu3dscanner.api.model.DownloadingItem
-import health.openwater.openlifu3dscanner.api.model.Type
-import health.openwater.openlifu3dscanner.api.repository.CloudRepository
+import health.openwater.openlifu3dscanner.network.Result
+import health.openwater.openlifu3dscanner.network.dto.Photocollection
+import health.openwater.openlifu3dscanner.network.dto.Photoscan
+import health.openwater.openlifu3dscanner.network.model.DownloadingItem
+import health.openwater.openlifu3dscanner.network.model.Type
+import health.openwater.openlifu3dscanner.network.repository.CloudRepository
+import health.openwater.openlifu3dscanner.network.repository.CollectionRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+data class CollectionUiState(
+    val loadingPhotocollections: Boolean = false,
+    val photocollections: List<Photocollection>? = null,
+    val photocollectionsError: String? = null,
+
+    val loadingPhotoscans: Boolean = false,
+    val photoscans: List<Photoscan>? = null,
+    val photoscansError: String? = null
+) {
+    val isLoading: Boolean
+        get() = loadingPhotocollections || loadingPhotoscans
+
+    val hasError: Boolean
+        get() = photocollectionsError != null || photoscansError != null
+}
 
 @HiltViewModel
 class CollectionViewModel @Inject constructor(
     application: Application,
-    private val cloudRepository: CloudRepository
+    private val cloudRepository: CloudRepository,
+    private val collectionRepository: CollectionRepository
 ) : AndroidViewModel(application) {
 
-    private val _photocollectionsResponse =
-        MutableStateFlow<DomainResult<List<Photocollection>>?>(null)
-    val photocollectionsResponse = _photocollectionsResponse.asStateFlow()
+    private val _uiState = MutableStateFlow(CollectionUiState())
+    val uiState = _uiState.asStateFlow()
 
-    private val _photoscansResponse =
-        MutableStateFlow<DomainResult<List<Photoscan>>?>(null)
-    val photoscansResponse = _photoscansResponse.asStateFlow()
+    fun loadPhotocollections() = viewModelScope.launch {
+        _uiState.update { it.copy(loadingPhotocollections = true, photocollectionsError = null) }
 
-    fun getPhotocollections(showLoading: Boolean) {
-        viewModelScope.launch {
-            if (showLoading) _photocollectionsResponse.value = DomainResult.Loading
-            _photocollectionsResponse.value = cloudRepository.getPhotocollections()
+        when (val result = collectionRepository.getPhotocollections()) {
+            is Result.Success -> _uiState.update {
+                it.copy(
+                    loadingPhotocollections = false,
+                    photocollections = result.body
+                )
+            }
+
+            is Result.NetworkError -> _uiState.update {
+                it.copy(
+                    loadingPhotocollections = false,
+                    photocollectionsError = result.message ?: "Network error"
+                )
+            }
+
+            is Result.AuthError -> _uiState.update {
+                it.copy(
+                    loadingPhotocollections = false,
+                    photocollectionsError = "Authentication required"
+                )
+            }
+
+            is Result.ServerError -> _uiState.update {
+                it.copy(
+                    loadingPhotocollections = false,
+                    photocollectionsError = "Server error: ${result.code}"
+                )
+            }
+
+            is Result.UnexpectedError -> _uiState.update {
+                it.copy(
+                    loadingPhotocollections = false,
+                    photocollectionsError = result.message ?: "Unexpected error"
+                )
+            }
         }
     }
 
-    fun getPhotoscans(showLoading: Boolean) {
-        viewModelScope.launch {
-            if (showLoading) _photoscansResponse.value = DomainResult.Loading
-            _photoscansResponse.value = cloudRepository.getPhotoscans()
+    fun loadPhotoscans() = viewModelScope.launch {
+        _uiState.update { it.copy(loadingPhotoscans = true, photoscansError = null) }
+
+        when (val result = collectionRepository.getPhotoscans()) {
+            is Result.Success -> _uiState.update {
+                it.copy(
+                    loadingPhotoscans = false,
+                    photoscans = result.body
+                )
+            }
+
+            is Result.NetworkError -> _uiState.update {
+                it.copy(
+                    loadingPhotoscans = false,
+                    photoscansError = result.message ?: "Network error"
+                )
+            }
+
+            is Result.AuthError -> _uiState.update {
+                it.copy(
+                    loadingPhotoscans = false,
+                    photoscansError = "Authentication required"
+                )
+            }
+
+            is Result.ServerError -> _uiState.update {
+                it.copy(
+                    loadingPhotoscans = false,
+                    photoscansError = "Server error: ${result.code}"
+                )
+            }
+
+            is Result.UnexpectedError -> _uiState.update {
+                it.copy(
+                    loadingPhotoscans = false,
+                    photoscansError = result.message ?: "Unexpected error"
+                )
+            }
         }
     }
 

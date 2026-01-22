@@ -22,19 +22,16 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import health.openwater.openlifu3dscanner.R
-import health.openwater.openlifu3dscanner.api.DomainResult
 import health.openwater.openlifu3dscanner.extensions.getModelsDir
 import health.openwater.openlifu3dscanner.viewmodel.CollectionViewModel
 import java.util.Date
@@ -46,42 +43,29 @@ fun ViewCollectionScreen(
     onPhotoscanClick: (CollectionItem) -> Unit,
     collectionViewModel: CollectionViewModel = hiltViewModel()
 ) {
-    val photocollectionsResponse by collectionViewModel.photocollectionsResponse.collectAsState()
-    val photoscansResponse by collectionViewModel.photoscansResponse.collectAsState()
+    val uiState by collectionViewModel.uiState.collectAsStateWithLifecycle()
 
+    // Helper to convert on-device scans
     fun onDeviceScans(): List<CollectionItem> {
-        return getModelsDir().listFiles()?.filter { it.isDirectory }?.map {
-            CollectionItem(
-                photoscanId = 0,
-                photocollectionId = 0,
-                name = it.name,
-                creationDate = Date(it.lastModified()),
-                status = null,
-            )
-        } ?: emptyList()
+        return getModelsDir().listFiles()
+            ?.filter { it.isDirectory }
+            ?.map {
+                CollectionItem(
+                    photoscanId = 0,
+                    photocollectionId = 0,
+                    name = it.name,
+                    creationDate = Date(it.lastModified()),
+                    status = null
+                )
+            } ?: emptyList()
     }
 
-    var collectionItems by remember { mutableStateOf<List<CollectionItem>?>(null) }
+    // Compute combined collectionItems
+    val collectionItems = remember(uiState.photocollections, uiState.photoscans) {
+        val photocollections = uiState.photocollections
+        val photoscans = uiState.photoscans
 
-    LaunchedEffect(photocollectionsResponse, photoscansResponse) {
-        val onDeviceScans = onDeviceScans()
-        if (photocollectionsResponse == null
-            || photoscansResponse == null
-            || photocollectionsResponse is DomainResult.Loading
-            || photoscansResponse is DomainResult.Loading
-        ) {
-            return@LaunchedEffect
-        }
-
-        val photocollections = photocollectionsResponse?.let {
-            if (it is DomainResult.Success) it.data else null
-        }
-
-        val photoscans = photoscansResponse?.let {
-            if (it is DomainResult.Success) it.data else null
-        }
-
-        collectionItems = (photoscans?.reversed()?.map { photoscan ->
+        (photoscans?.reversed()?.map { photoscan ->
             val collection = photocollections?.find { it.id == photoscan.photocollectionId }
             CollectionItem(
                 photoscanId = photoscan.id,
@@ -90,17 +74,17 @@ fun ViewCollectionScreen(
                 creationDate = photoscan.creationDate,
                 status = photoscan.status
             )
-        } ?: emptyList()).plus(onDeviceScans).distinctBy { it.name }
+        } ?: emptyList()).plus(onDeviceScans())
+            .distinctBy { it.name }
     }
 
-    fun refresh(showLoading: Boolean) {
-        collectionViewModel.getPhotocollections(showLoading)
-        collectionViewModel.getPhotoscans(showLoading)
+    fun refresh() {
+        collectionViewModel.loadPhotocollections()
+        collectionViewModel.loadPhotoscans()
     }
 
-    // Load initial data
     LaunchedEffect(Unit) {
-        refresh(showLoading = photocollectionsResponse == null)
+        refresh()
     }
 
     Scaffold(
@@ -119,7 +103,7 @@ fun ViewCollectionScreen(
                     containerColor = MaterialTheme.colorScheme.primary,
                     titleContentColor = MaterialTheme.colorScheme.onPrimary,
                     navigationIconContentColor = MaterialTheme.colorScheme.onPrimary,
-                    actionIconContentColor = MaterialTheme.colorScheme.onPrimary,
+                    actionIconContentColor = MaterialTheme.colorScheme.onPrimary
                 )
             )
         }
@@ -128,20 +112,15 @@ fun ViewCollectionScreen(
         val scroll = rememberScrollState()
 
         PullToRefreshBox(
-            isRefreshing = photocollectionsResponse is DomainResult.Loading || photoscansResponse is DomainResult.Loading,
-            onRefresh = {
-                refresh(showLoading = true)
-            },
+            isRefreshing = uiState.isLoading,
+            onRefresh = { refresh() },
             modifier = Modifier
                 .fillMaxSize()
                 .padding(contentPadding)
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-            ) {
+            Column(modifier = Modifier.fillMaxSize()) {
                 when {
-                    collectionItems?.isEmpty() == true -> {
+                    collectionItems.isEmpty() -> {
                         // Empty state
                         Column(
                             modifier = Modifier
@@ -165,16 +144,30 @@ fun ViewCollectionScreen(
                             verticalArrangement = Arrangement.spacedBy(12.dp),
                             contentPadding = PaddingValues(16.dp)
                         ) {
-                            items(collectionItems ?: emptyList()) { scan ->
+                            items(collectionItems) { scan ->
                                 PhotoscanCard(
                                     item = scan,
-                                    onClick = {
-                                        onPhotoscanClick(scan)
-                                    }
+                                    onClick = { onPhotoscanClick(scan) }
                                 )
                             }
                         }
                     }
+                }
+
+                // Show error messages if present
+                uiState.photocollectionsError?.let {
+                    Text(
+                        text = "Collections error: $it",
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
+                uiState.photoscansError?.let {
+                    Text(
+                        text = "Photoscans error: $it",
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.padding(16.dp)
+                    )
                 }
             }
         }

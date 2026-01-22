@@ -1,4 +1,4 @@
-package health.openwater.openlifu3dscanner.api.model
+package health.openwater.openlifu3dscanner.network.model
 
 data class ImageUploadProgress(
     val progress: Int,

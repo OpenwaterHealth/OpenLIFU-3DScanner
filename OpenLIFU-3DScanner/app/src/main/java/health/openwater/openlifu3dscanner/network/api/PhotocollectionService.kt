@@ -1,9 +1,9 @@
-package health.openwater.openlifu3dscanner.api
+package health.openwater.openlifu3dscanner.network.api
 
-import health.openwater.openlifu3dscanner.api.dto.CreatePhotocollectionRequest
-import health.openwater.openlifu3dscanner.api.dto.Photocollection
-import health.openwater.openlifu3dscanner.api.dto.StartPhotoscanRequest
-import health.openwater.openlifu3dscanner.api.dto.StartPhotoscanResponse
+import health.openwater.openlifu3dscanner.network.dto.CreatePhotocollectionRequest
+import health.openwater.openlifu3dscanner.network.dto.Photocollection
+import health.openwater.openlifu3dscanner.network.dto.StartPhotoscanRequest
+import health.openwater.openlifu3dscanner.network.dto.StartPhotoscanResponse
 import okhttp3.RequestBody
 import okhttp3.ResponseBody
 import retrofit2.Response
@@ -33,7 +33,7 @@ interface PhotocollectionService {
     suspend fun getPhotocollections(
         @Path("uid") uid: String,
         @Query("join_photos") joinPhotos: Boolean = false
-    ): Response<List<Photocollection>>
+    ): List<Photocollection>
 
     @DELETE("photocollection/{id}")
     suspend fun deletePhotocollection(

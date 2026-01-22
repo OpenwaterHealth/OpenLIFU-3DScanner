@@ -7,9 +7,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import health.openwater.openlifu3dscanner.R
 import health.openwater.openlifu3dscanner.viewmodel.UserViewModel
 
@@ -23,12 +25,10 @@ fun ProcessingScreen(
     userViewModel: UserViewModel = hiltViewModel()
 ) {
     var showCancelDialog by remember { mutableStateOf(false) }
-
-    val userInfo by userViewModel.getUserInfo().collectAsState(initial = null)
-    val isLoggedIn = userInfo != null
+    val uiState by userViewModel.uiState.collectAsStateWithLifecycle()
 
     fun onBack() {
-        if (isLoggedIn) {
+        if (uiState.user != null) {
             showCancelDialog = true
         } else {
             onNavigateBack()

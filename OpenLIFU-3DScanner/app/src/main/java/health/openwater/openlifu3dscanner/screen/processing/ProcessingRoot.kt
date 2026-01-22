@@ -36,6 +36,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.rememberAsyncImagePainter
 import health.openwater.openlifu3dscanner.R
 import health.openwater.openlifu3dscanner.extensions.getModelsDir
@@ -50,8 +51,7 @@ fun ProcessingRoot(
     onTransferToPc: () -> Unit,
     userViewModel: UserViewModel = hiltViewModel()
 ) {
-    val userInfo by userViewModel.getUserInfo().collectAsState(initial = null)
-    val isLoggedIn = userInfo != null
+    val uiState by userViewModel.uiState.collectAsStateWithLifecycle()
 
     val scanDir =
         remember(collectionName) { File(getModelsDir(), collectionName) }
@@ -152,7 +152,7 @@ fun ProcessingRoot(
         Surface(shadowElevation = 8.dp) {
             Button(
                 onClick = {
-                    if (!isLoggedIn) {
+                    if (uiState.user == null) {
                         onTransferToPc()
                     } else {
                         onUpload()
@@ -164,7 +164,7 @@ fun ProcessingRoot(
                 enabled = imageFiles.isNotEmpty()
             ) {
                 Text(
-                    text = stringResource(if (isLoggedIn) R.string.upload else R.string.transfer_to_pc),
+                    text = stringResource(if (uiState.user == null) R.string.upload else R.string.transfer_to_pc),
                     fontSize = 16.sp,
                     modifier = Modifier.padding(vertical = 8.dp)
                 )

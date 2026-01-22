@@ -7,12 +7,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -24,6 +22,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import health.openwater.openlifu3dscanner.R
 import health.openwater.openlifu3dscanner.viewmodel.UserViewModel
 import java.util.Locale
@@ -35,12 +34,12 @@ fun UserProfileBadge(
     userViewModel: UserViewModel = hiltViewModel(),
     size: Int = 32,
 ) {
-    val userInfo by userViewModel.getUserInfo().collectAsState(initial = null)
-    val isLoggedIn = userInfo != null
-
+    val uiState by userViewModel.uiState.collectAsStateWithLifecycle()
     var showProfileDialog by remember { mutableStateOf(false) }
 
-    val initial = userInfo
+    if (uiState.isLoading) return
+
+    val initial = uiState.user
         ?.displayName
         ?.trim()
         ?.takeIf { it.isNotEmpty() }
@@ -48,7 +47,7 @@ fun UserProfileBadge(
         ?.uppercase(Locale.getDefault())
         ?: "?"
 
-    if (isLoggedIn) {
+    if (uiState.user != null) {
         Surface(
             modifier = modifier.clickable { showProfileDialog = true },
             shape = MaterialTheme.shapes.extraLarge,
@@ -73,18 +72,15 @@ fun UserProfileBadge(
                     )
                 }
 
-                // Credits badge
-                userInfo?.let {
-                    Text(
-                        text = "\uD83C\uDFE6 ${it.credits} ",
-                        fontSize = 10.sp,
-                        modifier = Modifier
-                            .padding(horizontal = 8.dp)
-                            .align(Alignment.CenterVertically),
-                        color = MaterialTheme.colorScheme.onSecondaryContainer,
-                        maxLines = 1
-                    )
-                }
+                Text(
+                    text = "\uD83C\uDFE6 ${uiState.credits ?: "N/A"} ",
+                    fontSize = 10.sp,
+                    modifier = Modifier
+                        .padding(horizontal = 8.dp)
+                        .align(Alignment.CenterVertically),
+                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                    maxLines = 1
+                )
             }
         }
     } else {
@@ -102,9 +98,8 @@ fun UserProfileBadge(
         }
     }
 
-    if (showProfileDialog && userInfo != null) {
+    if (showProfileDialog && uiState.user != null) {
         UserProfileDialog(
-            userInfo = userInfo!!,
             onDismiss = { showProfileDialog = false },
             onSignOut = { userViewModel.signOut() }
         )

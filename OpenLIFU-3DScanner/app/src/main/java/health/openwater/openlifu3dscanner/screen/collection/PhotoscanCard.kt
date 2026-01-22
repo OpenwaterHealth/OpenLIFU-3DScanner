@@ -19,7 +19,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import health.openwater.openlifu3dscanner.R
-import health.openwater.openlifu3dscanner.api.dto.PhotoscanStatus
+import health.openwater.openlifu3dscanner.network.dto.PhotoscanStatus
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale

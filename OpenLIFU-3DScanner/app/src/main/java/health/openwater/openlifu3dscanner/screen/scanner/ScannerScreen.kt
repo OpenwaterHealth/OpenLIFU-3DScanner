@@ -35,6 +35,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
@@ -59,9 +60,8 @@ fun ScannerScreen(
     scannerViewModel: ScannerViewModel = hiltViewModel()
 ) {
     val capturedBucketsCount by scannerViewModel.capturedBucketsCount.collectAsState(initial = 0)
-
-    val userInfo by userViewModel.getUserInfo().collectAsState(initial = null)
-    val isLoggedIn = userInfo != null
+    val uiState by userViewModel.uiState.collectAsStateWithLifecycle()
+    val isLoggedIn = uiState.user != null
 
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()

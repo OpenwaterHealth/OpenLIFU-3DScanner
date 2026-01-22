@@ -3,13 +3,23 @@ package health.openwater.openlifu3dscanner.viewmodel
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.auth.FirebaseUser
 import dagger.hilt.android.lifecycle.HiltViewModel
-import health.openwater.openlifu3dscanner.api.AuthService
-import health.openwater.openlifu3dscanner.api.repository.UserRepository
+import health.openwater.openlifu3dscanner.network.Result
+import health.openwater.openlifu3dscanner.network.api.AuthService
+import health.openwater.openlifu3dscanner.network.repository.UserRepository
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+
+data class UserInfoState(
+    val user: FirebaseUser? = null,
+    val credits: Int? = null,
+    val isLoading: Boolean = false,
+    val error: String? = null
+)
 
 @HiltViewModel
 class UserViewModel @Inject constructor(
@@ -17,25 +27,61 @@ class UserViewModel @Inject constructor(
     private val userRepository: UserRepository
 ) : AndroidViewModel(application) {
 
-    private val _isLoading = MutableStateFlow(true)
-    val isLoading: StateFlow<Boolean> = _isLoading
+    private val _uiState = MutableStateFlow(UserInfoState())
+    val uiState = _uiState.asStateFlow()
 
-    fun refreshUserInfo() {
-        viewModelScope.launch {
-            if (userRepository.isSignedIn()) {
-                userRepository.refreshUserInfo()
+    fun getCredits() = viewModelScope.launch {
+        _uiState.update { it.copy(isLoading = true) }
+        val currentUser = userRepository.getCurrentUser()
+
+        when (val result = userRepository.getCredits()) {
+            is Result.Success -> _uiState.update {
+                it.copy(
+                    isLoading = false,
+                    credits = result.body.data?.user?.credit,
+                    user = currentUser
+                )
             }
-            userRepository.checkCloudAvailability()
-            _isLoading.value = false
+
+            is Result.NetworkError -> _uiState.update {
+                it.copy(
+                    isLoading = false,
+                    error = result.message ?: "Network error",
+                    user = currentUser
+                )
+            }
+
+            is Result.AuthError -> _uiState.update {
+                it.copy(
+                    isLoading = false,
+                    error = "Authentication required",
+                    user = currentUser
+                )
+            }
+
+            is Result.ServerError -> _uiState.update {
+                it.copy(
+                    isLoading = false,
+                    error = "Server error: ${result.code}",
+                    user = currentUser
+                )
+            }
+
+            is Result.UnexpectedError -> _uiState.update {
+                it.copy(
+                    isLoading = false,
+                    error = result.message ?: "Unexpected error",
+                    user = currentUser
+                )
+            }
         }
     }
 
-    fun getCloudAvailability() = userRepository.getCloudAvailability()
-
-    fun getUserInfo() = userRepository.getUserInfo()
+    suspend fun initialize() = userRepository.initialize()
 
     fun signOut() {
         userRepository.signOut()
+        _uiState.update { it.copy(user = null) }
     }
 
     suspend fun signIn(
@@ -44,7 +90,7 @@ class UserViewModel @Inject constructor(
     ): AuthService.AuthResponse {
         val response = userRepository.signIn(email, password)
         if (response == AuthService.AuthResponse.SUCCESS) {
-            userRepository.refreshUserInfo()
+            userRepository.getCredits()
         }
         return response
     }

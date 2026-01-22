@@ -1,6 +1,6 @@
-package health.openwater.openlifu3dscanner.api
+package health.openwater.openlifu3dscanner.network.api
 
-import health.openwater.openlifu3dscanner.api.dto.Photoscan
+import health.openwater.openlifu3dscanner.network.dto.Photoscan
 import okhttp3.ResponseBody
 import retrofit2.Response
 import retrofit2.http.GET
@@ -19,7 +19,7 @@ interface PhotoscanService {
         @Query("page") page: Int = 0,
         @Query("limit") perPage: Int = 5,
         @Query("join_progress_history") joinProgressHistory: Boolean = false
-    ): Response<List<Photoscan>>
+    ): List<Photoscan>
 
     @GET("photoscan/{id}/mesh")
     @Streaming

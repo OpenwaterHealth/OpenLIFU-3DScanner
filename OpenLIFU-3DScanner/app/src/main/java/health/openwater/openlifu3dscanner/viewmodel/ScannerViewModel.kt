@@ -15,7 +15,7 @@ import androidx.compose.runtime.mutableStateSetOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
-import health.openwater.openlifu3dscanner.api.repository.CloudRepository
+import health.openwater.openlifu3dscanner.network.repository.CloudRepository
 import health.openwater.openlifu3dscanner.extensions.getModelsDir
 import health.openwater.openlifu3dscanner.preferences.Prefs
 import kotlinx.coroutines.flow.MutableStateFlow

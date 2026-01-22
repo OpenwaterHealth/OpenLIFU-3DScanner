@@ -53,7 +53,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import health.openwater.openlifu3dscanner.R
-import health.openwater.openlifu3dscanner.api.AuthService
+import health.openwater.openlifu3dscanner.network.api.AuthService
 import health.openwater.openlifu3dscanner.screen.home.ResetPasswordDialog
 import health.openwater.openlifu3dscanner.viewmodel.UserViewModel
 import kotlinx.coroutines.launch
