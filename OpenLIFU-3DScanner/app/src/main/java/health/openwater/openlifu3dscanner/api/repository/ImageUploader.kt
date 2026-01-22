@@ -1,7 +1,6 @@
 package health.openwater.openlifu3dscanner.api.repository
 
 import android.content.Context
-import android.preference.PreferenceManager
 import android.util.Log
 import health.openwater.openlifu3dscanner.api.PhotocollectionService
 import health.openwater.openlifu3dscanner.api.model.ImageUploadProgress
@@ -35,16 +34,23 @@ class ImageUploader(
         Log.d(TAG, "started, waiting mode: $autoUpload")
         Log.d(TAG, "Directory: $imagesDir")
         Log.d(TAG, "Files: ${getFiles()}")
-        job = scope.launch {
-            while (isActive) {
-                uploadNextImage(this)
-                if (autoUpload) imageCapturedChannel.receive()
+        job = createUploadingJob(autoUpload)
+    }
+
+    private fun createUploadingJob(autoUpload: Boolean) = scope.launch {
+        while (isActive) {
+            while (uploadNextImage(this)) {
+                Log.d(TAG, "Checking is there any more images to upload")
+            }
+            if (autoUpload) {
+                imageCapturedChannel.receive()
+            } else {
+                break
             }
         }
     }
 
     fun stop() {
-        Log.d(TAG, "stopped")
         job?.cancel()
         job = null
     }
@@ -53,25 +59,24 @@ class ImageUploader(
         imageCapturedChannel.trySend(Unit)
     }
 
-    fun isUploadComplete(): Boolean {
-        return uploadedImages.isNotEmpty() && uploadedImages == getFiles().toSet()
-    }
-
     private suspend fun uploadNextImage(scope: CoroutineScope): Boolean {
         val files = getFiles()
-        val filename = files.filter { !uploadedImages.contains(it) }.minOrNull() ?: return false
+        val filename = files.filter { !uploadedImages.contains(it) }.minOrNull() ?: run {
+            Log.d(TAG, "No more images to upload")
+            return false
+        }
         val imageSize = Prefs.getImageSize(context)
 
         var retries = 3
         while (scope.isActive && retries > 0) {
             try {
                 val file = File(imagesDir, filename)
-                val resizedBytes = file.resizeJpegAsSquareByteArray(imageSize.toInt(), JPEG_QUALITY)
+                val resizedBytes = file.resizeJpegAsSquareByteArray(imageSize, JPEG_QUALITY)
 
                 photocollectionService.uploadPhoto(
-                    photocollectionId,
-                    filename,
-                    resizedBytes.toRequestBody("application/octet-stream".toMediaType())
+                    photocollectionId = photocollectionId,
+                    fileName = filename,
+                    body = resizedBytes.toRequestBody("application/octet-stream".toMediaType())
                 )
 
                 break

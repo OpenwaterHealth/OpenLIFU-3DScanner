@@ -93,10 +93,12 @@ class CloudViewModel @Inject constructor(
         }
     }
 
-    fun start(collectionName: String, autoUpload: Boolean) {
+    fun getCurrentPhotocollection() = cloudRepository.getCurrentPhotocollection()
+
+    fun createPhotocollection(collectionName: String, autoUpload: Boolean) {
         viewModelScope.launch {
             try {
-                _uploadState.value = UploadState.Uploading
+                _uploadState.value = UploadState.Idle
                 cloudRepository.createPhotocollection(
                     name = collectionName,
                     autoUpload = autoUpload

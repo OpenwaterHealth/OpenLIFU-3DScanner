@@ -43,8 +43,9 @@ sealed class Screen(val route: String) {
         fun createRoute(collectionName: String) = "processing/$collectionName"
     }
 
-    object Uploading : Screen("uploading/{collectionName}") {
-        fun createRoute(collectionName: String) = "uploading/$collectionName"
+    object Uploading : Screen("uploading/{collectionName}/{autoUploadEnabled}") {
+        fun createRoute(collectionName: String, autoUploadEnabled: Boolean) =
+            "uploading/$collectionName/$autoUploadEnabled"
     }
 
     object Transfer : Screen("transfer/{collectionName}") {
@@ -157,7 +158,7 @@ fun AppNavigation() {
 
                     if (autoUploadEnabled && isLoggedIn) {
                         navController.navigate(
-                            Screen.Uploading.createRoute(collectionName)
+                            Screen.Uploading.createRoute(collectionName, true)
                         ) {
                             popUpTo(Screen.Scanner.route) { inclusive = true }
                         }
@@ -181,7 +182,7 @@ fun AppNavigation() {
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToUploading = {
                     navController.navigate(
-                        Screen.Uploading.createRoute(collectionName)
+                        Screen.Uploading.createRoute(collectionName, false)
                     ) {
                         popUpTo(Screen.Processing.route) { inclusive = true }
                     }
@@ -208,15 +209,21 @@ fun AppNavigation() {
 
         composable(
             route = Screen.Uploading.route, arguments = listOf(
-                navArgument("collectionName") { type = NavType.StringType })
+                navArgument("collectionName") { type = NavType.StringType },
+                navArgument("autoUploadEnabled") { type = NavType.BoolType })
+
         ) { backStackEntry ->
             val collectionName = backStackEntry.arguments?.getString("collectionName") ?: ""
+            val autoUploadEnabled =
+                backStackEntry.arguments?.getBoolean("autoUploadEnabled") ?: false
+
             UploadingScreen(
+                autoUploadEnabled = autoUploadEnabled,
                 collectionName = collectionName,
                 onNavigateBack = { navController.popBackStack() },
-                onViewModel = { scanId ->
+                onViewModel = { scanId, photocollectionId, ->
                     navController.navigate(
-                        Screen.Photoscan.createRoute(collectionName, scanId, 0, true) //TODO!
+                        Screen.Photoscan.createRoute(collectionName, scanId, photocollectionId, true)
                     ) {
                         popUpTo(Screen.Home.route) { inclusive = false }
                     }

@@ -99,4 +99,6 @@
     <string name="dismiss">Dismiss</string>
     <string name="model">Model</string>
     <string name="photos">Photos</string>
+    <string name="photos_d_d">Photos: %1$d / %2$d</string>
+    <string name="face_s">Face: %1$s</string>
 </resources>

@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -22,12 +24,14 @@ import health.openwater.openlifu3dscanner.viewmodel.ScannerViewModel
 
 @Composable
 fun ScannerComponent(
-    onComplete: () -> Unit,
+    onProceed: () -> Unit,
     collectionName: String,
     viewModel: ScannerViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
+
+    val isScanning by viewModel.isScanning.collectAsState()
 
     val previewView = remember { PreviewView(context) }
 
@@ -82,11 +86,12 @@ fun ScannerComponent(
         )
 
         ScanControls(
+            onProceed = onProceed,
             onStartStop = {
-                if (!viewModel.isScanning) {
+                if (!isScanning) {
                     viewModel.startScanning(collectionName)
                 } else {
-                    viewModel.stopScanning(onComplete)
+                    viewModel.stopScanning()
                 }
             }
         )

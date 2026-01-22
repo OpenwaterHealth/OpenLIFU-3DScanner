@@ -19,18 +19,15 @@ import health.openwater.openlifu3dscanner.api.model.ReconstructionProgress
 import health.openwater.openlifu3dscanner.api.model.Type
 import health.openwater.openlifu3dscanner.extensions.callDomain
 import health.openwater.openlifu3dscanner.extensions.getModelsDir
-import health.openwater.openlifu3dscanner.extensions.toDomainResult
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import okhttp3.ResponseBody
-import retrofit2.Response
 import java.io.BufferedInputStream
 import java.io.File
 import java.io.FileOutputStream
@@ -90,8 +87,9 @@ class CloudRepository(
         Log.d(TAG, "reset")
     }
 
-    fun getImageUploadProgress(): StateFlow<ImageUploadProgress?> = imageUploadProgressFlow
-    fun getReconstructionProgress(): StateFlow<ReconstructionProgress?> = reconstructionProgressFlow
+    fun getImageUploadProgress() = imageUploadProgressFlow.asStateFlow()
+    fun getReconstructionProgress() = reconstructionProgressFlow.asStateFlow()
+    fun getDownloadResultsFlow() = downloadResultsFlow.asStateFlow()
 
     fun download(item: DownloadingItem) {
         if (!downloadQueue.contains(item)) {
@@ -100,7 +98,7 @@ class CloudRepository(
         }
     }
 
-    fun getDownloadResultsFlow(): Flow<DownloadResult?> = downloadResultsFlow
+    fun getCurrentPhotocollection(): Photocollection? = currentPhotocollection
 
     fun createPhotocollection(name: String, autoUpload: Boolean) {
         this.currentReferenceNumber = name
@@ -117,6 +115,8 @@ class CloudRepository(
                 )
                 if (response.isSuccessful) {
                     currentPhotocollection = response.body()
+                    imageUploadProgressFlow.value = null
+
                     currentPhotocollection?.id?.let { id ->
                         Log.d(TAG, "Photocollection created: $id")
                         imageUploader = ImageUploader(
@@ -164,6 +164,11 @@ class CloudRepository(
 
     fun uploadRemainingPhotos() {
         imageUploader?.start(autoUpload = false)
+    }
+
+    fun stopImageUploader() {
+        imageUploader?.stop()
+        imageUploader = null
     }
 
     suspend fun startReconstruction(): Long? {

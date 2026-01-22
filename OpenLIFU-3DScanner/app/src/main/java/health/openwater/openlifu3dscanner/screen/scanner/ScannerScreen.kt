@@ -58,8 +58,7 @@ fun ScannerScreen(
     userViewModel: UserViewModel = hiltViewModel(),
     scannerViewModel: ScannerViewModel = hiltViewModel()
 ) {
-    var completed by remember { mutableStateOf(false) }
-    val capturedBucketsCount by scannerViewModel.capturedBucketsCount().collectAsState(initial = 0)
+    val capturedBucketsCount by scannerViewModel.capturedBucketsCount.collectAsState(initial = 0)
 
     val userInfo by userViewModel.getUserInfo().collectAsState(initial = null)
     val isLoggedIn = userInfo != null
@@ -68,11 +67,13 @@ fun ScannerScreen(
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
+    val isScanning by scannerViewModel.isScanning.collectAsState()
+
     LaunchedEffect(Unit) {
         cloudViewModel.reset(false)
 
         if (cloudViewModel.isLoggedInAndOnline()) {
-            cloudViewModel.start(collectionName, autoUploadEnabled)
+            cloudViewModel.createPhotocollection(collectionName, autoUploadEnabled)
         }
     }
 
@@ -93,8 +94,8 @@ fun ScannerScreen(
                 },
                 actions = {
                     TextButton(
-                        enabled = completed,
-                        modifier = Modifier.alpha(if (completed) 1f else 0.5f),
+                        enabled = !isScanning,
+                        modifier = Modifier.alpha(if (!isScanning) 1f else 0.5f),
                         onClick = {
                             if (capturedBucketsCount < MIN_IMAGES_COUNT) {
                                 scope.launch {
@@ -144,8 +145,8 @@ fun ScannerScreen(
             if (cameraPermissionState.status.isGranted) {
                 ScannerComponent(
                     collectionName = collectionName,
-                    onComplete = {
-                        completed = true
+                    onProceed = {
+                        onNavigateToProcessing(autoUploadEnabled, isLoggedIn)
                     }
                 )
             } else {

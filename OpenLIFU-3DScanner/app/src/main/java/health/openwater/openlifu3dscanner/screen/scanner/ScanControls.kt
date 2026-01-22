@@ -16,8 +16,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -38,8 +40,13 @@ import health.openwater.openlifu3dscanner.viewmodel.ScannerViewModel
 @Composable
 fun ScanControls(
     onStartStop: () -> Unit,
+    onProceed: () -> Unit,
     viewModel: ScannerViewModel = hiltViewModel()
 ) {
+
+    val isScanning by viewModel.isScanning.collectAsState()
+    val isCompleted by viewModel.isCompleted.collectAsState()
+
     Box(modifier = Modifier.fillMaxSize()) {
         // Semi-transparent black overlay with oval cutout
         Canvas(modifier = Modifier.fillMaxSize()) {
@@ -62,7 +69,10 @@ fun ScanControls(
         }
 
         // UI Elements on top
-        Column(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
             // Top status bar
             Row(
                 modifier = Modifier
@@ -73,17 +83,24 @@ fun ScanControls(
             ) {
                 Column {
                     Text(
-                        text = "Photos: ${viewModel.capturedBuckets.size} / ${viewModel.totalBuckets}",
+                        text = stringResource(
+                            R.string.photos_d_d,
+                            viewModel.capturedBuckets.size,
+                            viewModel.totalBuckets
+                        ),
                         color = Color.White,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold
                     )
                 }
 
-                if (!viewModel.isScanning) {
+                if (!isScanning) {
                     Column(horizontalAlignment = Alignment.End) {
                         Text(
-                            text = "Face: ${if (viewModel.faceDetected) "☑" else "☐"}",
+                            text = stringResource(
+                                R.string.face_s,
+                                if (viewModel.faceDetected) "☑" else "☐"
+                            ),
                             color = Color.White,
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold
@@ -94,96 +111,64 @@ fun ScanControls(
 
             Spacer(modifier = Modifier.weight(1f))
 
-            // Instructions
-            Box(
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(24.dp),
-                contentAlignment = Alignment.Center
             ) {
-                if (!viewModel.isScanning) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            text = stringResource(R.string._1_point_camera_at_face),
-                            color = Color.White,
-                            fontSize = 18.sp,
-                            textAlign = TextAlign.Center
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = stringResource(R.string._2_tap_button),
-                            color = Color.White,
-                            fontSize = 18.sp,
-                            textAlign = TextAlign.Center
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = stringResource(R.string._3_walk_in_a_circle_around_person),
-                            color = Color.White,
-                            fontSize = 18.sp,
-                            textAlign = TextAlign.Center
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = stringResource(R.string.photos_capture_automatically),
-                            color = Color.Yellow,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold,
-                            textAlign = TextAlign.Center
-                        )
-                    }
-                } else {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        if (viewModel.capturedBuckets.size < viewModel.totalBuckets) {
+                if (!isScanning) {
+                    if (!isCompleted) {
+                        Instructions()
+                    } else {
+                        Button(
+                            onClick = onProceed,
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
                             Text(
-                                text = stringResource(R.string.walk_to_next_capture_point),
-                                color = Color.White,
-                                fontSize = 18.sp,
-                                textAlign = TextAlign.Center
-                            )
-                        } else {
-                            Text(
-                                text = stringResource(R.string.check_complete),
-                                color = Color.Green,
-                                fontSize = 28.sp,
-                                fontWeight = FontWeight.Bold,
-                                textAlign = TextAlign.Center
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = stringResource(R.string.all_photos_captured),
-                                color = Color.White,
-                                fontSize = 18.sp,
-                                textAlign = TextAlign.Center
+                                text = stringResource(R.string.proceed),
+                                fontSize = 16.sp,
+                                modifier = Modifier.padding(vertical = 8.dp)
                             )
                         }
+                    }
 
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        // Progress percentage based on captures
-                        val progress =
-                            (viewModel.capturedBuckets.size.toFloat() / viewModel.totalBuckets.toFloat() * 100).toInt()
+                } else {
+                    if (!isCompleted) {
                         Text(
-                            text = stringResource(R.string.complete, progress),
-                            color = Color.Cyan,
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold,
+                            text = stringResource(R.string.walk_to_next_capture_point),
+                            color = Color.White,
+                            fontSize = 18.sp,
                             textAlign = TextAlign.Center
                         )
                     }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Progress percentage based on captures
+                    val progress =
+                        (viewModel.capturedBuckets.size.toFloat() / viewModel.totalBuckets.toFloat() * 100).toInt()
+                    Text(
+                        text = stringResource(R.string.complete, progress),
+                        color = Color.Cyan,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center
+                    )
+                }
+
+                if (viewModel.capturedBuckets.size < viewModel.totalBuckets) {
+
+                    Spacer(modifier = Modifier.height(24.dp))
+                    RecordButton(
+                        enabled = viewModel.faceDetected || isScanning,
+                        isRecording = isScanning,
+                        onClick = onStartStop,
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                    )
+                    Spacer(modifier = Modifier.height(24.dp))
                 }
             }
-
-            Spacer(modifier = Modifier.height(15.dp))
-
-            RecordButton(
-                enabled = viewModel.faceDetected || viewModel.isScanning,
-                isRecording = viewModel.isScanning,
-                onClick = onStartStop,
-                modifier = Modifier.align(Alignment.CenterHorizontally)
-            )
-
-            Spacer(modifier = Modifier.height(25.dp))
         }
 
         val infiniteTransition = rememberInfiniteTransition(label = "blink")
@@ -198,7 +183,7 @@ fun ScanControls(
         )
 
         Canvas(modifier = Modifier.fillMaxSize()) {
-            if (!viewModel.isScanning) return@Canvas
+            if (!isScanning) return@Canvas
 
             val centerX = size.width / 2f
             val centerY = size.height / 2f - size.height * 0.2f

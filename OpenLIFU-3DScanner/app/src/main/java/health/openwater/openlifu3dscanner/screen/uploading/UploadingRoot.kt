@@ -49,10 +49,11 @@ import java.io.File
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UploadingRoot(
+    autoUploadEnabled: Boolean,
     collectionName: String,
     onNavigateBack: () -> Unit,
     onReconstructionStarted: () -> Unit,
-    onViewModel: (scanId: Long) -> Unit,
+    onViewModel: (scanId: Long, photocollectionId: Long) -> Unit,
     cloudViewModel: CloudViewModel = hiltViewModel()
 ) {
     val scanDir =
@@ -78,6 +79,10 @@ fun UploadingRoot(
     LaunchedEffect(uploadState) {
         if (uploadState is UploadState.Reconstructing) {
             onReconstructionStarted()
+        } else if (uploadState is UploadState.UploadComplete) {
+            if (autoUploadEnabled) {
+                cloudViewModel.startReconstruction()
+            }
         }
     }
 
@@ -110,7 +115,14 @@ fun UploadingRoot(
 
             is UploadState.ReconstructionComplete -> {
                 ReconstructionCompleteView(
-                    onViewModel = { cloudViewModel.currentPhotoscanId?.let { onViewModel(it) } }
+                    onViewModel = {
+                        cloudViewModel.currentPhotoscanId?.let { photoscanId ->
+
+                            cloudViewModel.getCurrentPhotocollection()?.id?.let { photocollectionId ->
+                                onViewModel(photoscanId, photocollectionId)
+                            }
+                        }
+                    }
                 )
             }
 

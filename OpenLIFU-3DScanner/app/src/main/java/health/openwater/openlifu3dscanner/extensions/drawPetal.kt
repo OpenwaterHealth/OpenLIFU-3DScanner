@@ -21,7 +21,6 @@ fun DrawScope.drawPetal(
     petalWidth: Float,
     blinkAlpha: Float
 ) {
-    val petalLength = if (isCurrent) petalWidth * 2 else petalWidth
     val filled = isCaptured || isCurrent
 
     val rad = Math.toRadians(angle.toDouble() - 90)
@@ -48,8 +47,8 @@ fun DrawScope.drawPetal(
     val baseY = ovalY
 
     // Tip of petal (extending outward along the normal)
-    val tipX = baseX + normX * petalLength
-    val tipY = baseY + normY * petalLength
+    val tipX = baseX + normX * petalWidth
+    val tipY = baseY + normY * petalWidth
 
     val path = Path().apply {
         moveTo(

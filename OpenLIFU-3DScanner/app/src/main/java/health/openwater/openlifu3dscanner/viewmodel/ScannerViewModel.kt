@@ -31,9 +31,12 @@ class ScannerViewModel @Inject constructor(
     private val cloudRepository: CloudRepository
 ) : AndroidViewModel(application) {
 
-    // ---- Scanner state ----
-    var isScanning by mutableStateOf(false)
-        private set
+    val _isScanning = MutableStateFlow(false)
+    val isScanning = _isScanning.asStateFlow()
+
+    val _isCompleted = MutableStateFlow(false)
+    val isCompleted = _isCompleted.asStateFlow()
+
     var currentAngle by mutableFloatStateOf(0f)
         private set
 
@@ -42,7 +45,8 @@ class ScannerViewModel @Inject constructor(
     val capturedBuckets = mutableStateSetOf<Int>()
 
     val _capturedBucketsCount = MutableStateFlow(0)
-    fun capturedBucketsCount() = _capturedBucketsCount.asStateFlow()
+    val capturedBucketsCount = _capturedBucketsCount.asStateFlow()
+
 
     var faceDetected by mutableStateOf(false)
         private set
@@ -109,14 +113,14 @@ class ScannerViewModel @Inject constructor(
         val file = File(getModelsDir(), collectionName).apply { mkdirs() }
         currentScanPath = file
 
-        isScanning = true
+        _isScanning.value = true
         capturedBuckets.clear()
         _capturedBucketsCount.value = 0
+        _isCompleted.value = false
     }
 
-    fun stopScanning(onComplete: () -> Unit) {
-        isScanning = false
-        onComplete()
+    fun stopScanning() {
+        _isScanning.value = false
     }
 
     // ---- Angle bucket logic ----
@@ -125,7 +129,7 @@ class ScannerViewModel @Inject constructor(
     }
 
     fun shouldCapture(): Boolean {
-        if (!isScanning || isCapturing) return false
+        if (!_isScanning.value || isCapturing) return false
         val bucket = angleToBucket(currentAngle)
         return bucket !in capturedBuckets
     }
@@ -153,6 +157,11 @@ class ScannerViewModel @Inject constructor(
                 override fun onImageSaved(output: ImageCapture.OutputFileResults) {
                     capturedBuckets.add(bucket)
                     _capturedBucketsCount.value = capturedBuckets.size
+
+                    if (capturedBuckets.size == totalBuckets) {
+                        _isScanning.value = false
+                        _isCompleted.value = true
+                    }
 
                     cloudRepository.onImageCaptured()
                     isCapturing = false

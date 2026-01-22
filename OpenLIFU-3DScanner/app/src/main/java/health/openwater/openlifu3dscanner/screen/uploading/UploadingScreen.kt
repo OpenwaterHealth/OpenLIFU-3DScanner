@@ -31,8 +31,9 @@ import health.openwater.openlifu3dscanner.viewmodel.CloudViewModel
 @Composable
 fun UploadingScreen(
     collectionName: String,
+    autoUploadEnabled: Boolean,
     onNavigateBack: () -> Unit,
-    onViewModel: (scanId: Long) -> Unit,
+    onViewModel: (scanId: Long, photocollectionId: Long) -> Unit,
     cloudViewModel: CloudViewModel = hiltViewModel()
 ) {
     var showCancelDialog by remember { mutableStateOf(false) }
@@ -77,6 +78,7 @@ fun UploadingScreen(
                 .padding(contentPadding)
         ) {
             UploadingRoot(
+                autoUploadEnabled = autoUploadEnabled,
                 collectionName = collectionName,
                 onReconstructionStarted = {
                     isReconstructionStarted = true
