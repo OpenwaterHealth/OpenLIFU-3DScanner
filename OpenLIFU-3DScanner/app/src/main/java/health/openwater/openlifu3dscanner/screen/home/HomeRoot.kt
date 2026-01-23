@@ -1,7 +1,5 @@
 package health.openwater.openlifu3dscanner.screen.home
 
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -39,9 +37,7 @@ fun HomeRoot(
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
-    val userViewModel: UserViewModel = hiltViewModel(
-        viewModelStoreOwner = LocalActivity.current as ComponentActivity
-    )
+    val userViewModel: UserViewModel = hiltViewModel()
     val uiState by userViewModel.uiState.collectAsStateWithLifecycle()
 
     var hasStorageAccess by remember { mutableStateOf(hasAllFilesAccess()) }

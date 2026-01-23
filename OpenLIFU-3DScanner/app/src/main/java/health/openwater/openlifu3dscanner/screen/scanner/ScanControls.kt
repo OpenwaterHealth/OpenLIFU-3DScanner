@@ -39,11 +39,9 @@ import health.openwater.openlifu3dscanner.viewmodel.ScannerViewModel
 
 @Composable
 fun ScanControls(
-    onStartStop: () -> Unit,
-    onProceed: () -> Unit,
+    collectionName: String,
     viewModel: ScannerViewModel = hiltViewModel()
 ) {
-
     val isScanning by viewModel.isScanning.collectAsState()
     val isCompleted by viewModel.isCompleted.collectAsState()
 
@@ -120,17 +118,6 @@ fun ScanControls(
                 if (!isScanning) {
                     if (!isCompleted) {
                         Instructions()
-                    } else {
-                        Button(
-                            onClick = onProceed,
-                            modifier = Modifier.fillMaxWidth(),
-                        ) {
-                            Text(
-                                text = stringResource(R.string.proceed),
-                                fontSize = 16.sp,
-                                modifier = Modifier.padding(vertical = 8.dp)
-                            )
-                        }
                     }
 
                 } else {
@@ -163,7 +150,13 @@ fun ScanControls(
                     RecordButton(
                         enabled = viewModel.faceDetected || isScanning,
                         isRecording = isScanning,
-                        onClick = onStartStop,
+                        onClick = {
+                                if (!isScanning) {
+                                    viewModel.startScanning(collectionName)
+                                } else {
+                                    viewModel.stopScanning()
+                                }
+                        },
                         modifier = Modifier.align(Alignment.CenterHorizontally)
                     )
                     Spacer(modifier = Modifier.height(24.dp))

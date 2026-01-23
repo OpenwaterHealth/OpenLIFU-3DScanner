@@ -1,7 +1,5 @@
 package health.openwater.openlifu3dscanner.screen.home
 
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -49,9 +47,7 @@ fun HomeScreen(
     var collectionName by remember { mutableStateOf("") }
     var autoUploadEnabled by remember { mutableStateOf(true) }
 
-    val userViewModel: UserViewModel = hiltViewModel(
-        viewModelStoreOwner = LocalActivity.current as ComponentActivity
-    )
+    val userViewModel: UserViewModel = hiltViewModel()
     val uiState by userViewModel.uiState.collectAsStateWithLifecycle()
 
     Scaffold(

@@ -17,6 +17,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -25,22 +26,22 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import health.openwater.openlifu3dscanner.R
+import health.openwater.openlifu3dscanner.core.UploadState
 import health.openwater.openlifu3dscanner.viewmodel.CloudViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UploadingScreen(
     collectionName: String,
-    autoUploadEnabled: Boolean,
     onNavigateBack: () -> Unit,
     onViewModel: (scanId: Long, photocollectionId: Long) -> Unit,
     cloudViewModel: CloudViewModel = hiltViewModel()
 ) {
     var showCancelDialog by remember { mutableStateOf(false) }
-    var isReconstructionStarted by remember { mutableStateOf(false) }
+    val uploadState by cloudViewModel.uploadState.collectAsState()
 
     fun onBack() {
-        if (isReconstructionStarted) {
+        if (uploadState == UploadState.Reconstructing) {
             onNavigateBack()
         } else {
             showCancelDialog = true
@@ -78,11 +79,7 @@ fun UploadingScreen(
                 .padding(contentPadding)
         ) {
             UploadingRoot(
-                autoUploadEnabled = autoUploadEnabled,
                 collectionName = collectionName,
-                onReconstructionStarted = {
-                    isReconstructionStarted = true
-                },
                 onViewModel = onViewModel,
                 onNavigateBack = onNavigateBack
             )

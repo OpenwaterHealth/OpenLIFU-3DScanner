@@ -1,7 +1,5 @@
 package health.openwater.openlifu3dscanner.screen.processing
 
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -52,10 +50,9 @@ fun ProcessingRoot(
     onUpload: () -> Unit,
     onTransferToPc: () -> Unit,
 ) {
-    val userViewModel: UserViewModel = hiltViewModel(
-        viewModelStoreOwner = LocalActivity.current as ComponentActivity
-    )
+    val userViewModel: UserViewModel = hiltViewModel()
     val uiState by userViewModel.uiState.collectAsStateWithLifecycle()
+    val isLoggedIn = uiState.user != null
 
     val scanDir =
         remember(collectionName) { File(getModelsDir(), collectionName) }
@@ -156,10 +153,10 @@ fun ProcessingRoot(
         Surface(shadowElevation = 8.dp) {
             Button(
                 onClick = {
-                    if (uiState.user == null) {
-                        onTransferToPc()
-                    } else {
+                    if (isLoggedIn) {
                         onUpload()
+                    } else {
+                        onTransferToPc()
                     }
                 },
                 modifier = Modifier
@@ -168,7 +165,7 @@ fun ProcessingRoot(
                 enabled = imageFiles.isNotEmpty()
             ) {
                 Text(
-                    text = stringResource(if (uiState.user == null) R.string.upload else R.string.transfer_to_pc),
+                    text = stringResource(if (isLoggedIn) R.string.upload else R.string.transfer_to_pc),
                     fontSize = 16.sp,
                     modifier = Modifier.padding(vertical = 8.dp)
                 )

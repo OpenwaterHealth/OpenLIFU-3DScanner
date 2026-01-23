@@ -18,11 +18,11 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class CollectionUiState(
-    val loadingPhotocollections: Boolean = false,
+    val loadingPhotocollections: Boolean = true,
     val photocollections: List<Photocollection>? = null,
     val photocollectionsError: String? = null,
 
-    val loadingPhotoscans: Boolean = false,
+    val loadingPhotoscans: Boolean = true,
     val photoscans: List<Photoscan>? = null,
     val photoscansError: String? = null
 ) {

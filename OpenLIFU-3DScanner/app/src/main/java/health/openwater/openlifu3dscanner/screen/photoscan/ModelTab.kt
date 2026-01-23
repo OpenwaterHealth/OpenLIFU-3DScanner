@@ -42,7 +42,7 @@ fun ModelTab(
         if (collection != null) {
             val dir = File(getModelsDir(), "${collectionName}/scan")
 
-            if (dir.exists() && dir.listFiles()?.isNotEmpty() == true) {
+            if (dir.exists() && dir.listFiles()?.find { it.name == "texturedMesh.obj" } != null) {
                 downloadState = DownloadState.Success
             } else {
                 downloadState = DownloadState.NotDownloaded
@@ -63,7 +63,9 @@ fun ModelTab(
                     val collection = collectionViewModel.getPhotocollection(photocollectionId)
                     if (collection != null) {
                         val dir = File(getModelsDir(), "${collection.name}/scan")
-                        if (dir.exists() && dir.listFiles()?.isNotEmpty() == true) {
+                        if (dir.exists() && dir.listFiles()
+                                ?.find { it.name == "texturedMesh.obj" } != null
+                        ) {
                             downloadState = DownloadState.Success
                         } else {
                             downloadState = DownloadState.Failed
@@ -113,6 +115,10 @@ fun ModelTab(
                         downloadState = DownloadState.Downloading
                         collectionViewModel.downloadMesh(photoscanId)
                     })
+                }
+
+                is DownloadState.Processing -> {
+
                 }
             }
         }

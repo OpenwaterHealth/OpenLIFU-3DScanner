@@ -108,6 +108,8 @@ fun PhotosTab(
                         collectionViewModel.downloadPhotocollection(photocollectionId)
                     })
                 }
+
+                is DownloadState.Processing -> {}
             }
         }
     }

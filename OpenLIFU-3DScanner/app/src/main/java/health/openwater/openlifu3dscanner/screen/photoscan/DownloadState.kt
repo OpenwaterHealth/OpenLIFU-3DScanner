@@ -1,11 +1,12 @@
 package health.openwater.openlifu3dscanner.screen.photoscan
 
 sealed class DownloadState {
-    object Init : DownloadState()
-    object NotDownloaded : DownloadState()
-    object Downloading : DownloadState()
-    object Success : DownloadState()
-    object Failed : DownloadState()
-    object Offline : DownloadState()
+    data object Init : DownloadState()
+    data class Processing(val message: String?) : DownloadState()
+    data object NotDownloaded : DownloadState()
+    data object Downloading : DownloadState()
+    data object Success : DownloadState()
+    data object Failed : DownloadState()
+    data object Offline : DownloadState()
 }
 

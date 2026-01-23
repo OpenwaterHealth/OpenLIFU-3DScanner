@@ -3,6 +3,7 @@ package health.openwater.openlifu3dscanner.network.repository
 import android.content.Context
 import android.util.Log
 import dagger.hilt.android.qualifiers.ApplicationContext
+import health.openwater.openlifu3dscanner.core.UploadState
 import health.openwater.openlifu3dscanner.network.api.AuthService
 import health.openwater.openlifu3dscanner.network.ImageUploader
 import health.openwater.openlifu3dscanner.network.api.PhotocollectionService
@@ -11,6 +12,7 @@ import health.openwater.openlifu3dscanner.network.api.WebsocketService
 import health.openwater.openlifu3dscanner.network.dto.CreatePhotocollectionRequest
 import health.openwater.openlifu3dscanner.network.dto.Photocollection
 import health.openwater.openlifu3dscanner.network.dto.Photoscan
+import health.openwater.openlifu3dscanner.network.dto.PhotoscanStatus
 import health.openwater.openlifu3dscanner.network.dto.StartPhotoscanRequest
 import health.openwater.openlifu3dscanner.network.model.DownloadResult
 import health.openwater.openlifu3dscanner.network.model.DownloadingItem
@@ -18,10 +20,13 @@ import health.openwater.openlifu3dscanner.network.model.ImageUploadProgress
 import health.openwater.openlifu3dscanner.network.model.ReconstructionProgress
 import health.openwater.openlifu3dscanner.network.model.Type
 import health.openwater.openlifu3dscanner.extensions.getModelsDir
+import health.openwater.openlifu3dscanner.network.Result
+import health.openwater.openlifu3dscanner.network.safeCall
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -51,6 +56,12 @@ class CloudRepository @Inject constructor(
     private val reconstructionProgressFlow = MutableStateFlow<ReconstructionProgress?>(null)
     private val downloadResultsFlow = MutableStateFlow<DownloadResult?>(null)
 
+    private val _uploadState = MutableStateFlow<UploadState>(UploadState.Idle)
+    val uploadState: StateFlow<UploadState> = _uploadState.asStateFlow()
+
+    private var _currentPhotoscanId: Long? = null
+    val currentPhotoscanId: Long? get() = _currentPhotoscanId
+
     private var imageUploader: ImageUploader? = null
     private var autoUpload: Boolean = false
 
@@ -61,6 +72,49 @@ class CloudRepository @Inject constructor(
         private set
 
     var totalImageCount: String? = null
+
+    init {
+        observeProgress()
+    }
+
+    private fun observeProgress() {
+        scope.launch {
+            imageUploadProgressFlow.collect { progress ->
+                if (progress != null) {
+                    if (_uploadState.value == UploadState.Idle) {
+                        _uploadState.value = UploadState.Uploading
+                    }
+                    if (progress.uploadedImages == progress.totalImages && progress.totalImages > 0) {
+                        _uploadState.value = UploadState.UploadComplete
+                    }
+                }
+            }
+        }
+
+        scope.launch {
+            reconstructionProgressFlow.collect { progress ->
+                if (progress != null) {
+                    when (progress.status) {
+                        PhotoscanStatus.STARTED, PhotoscanStatus.RUNNING -> {
+                            if (_uploadState.value != UploadState.Reconstructing) {
+                                _uploadState.value = UploadState.Reconstructing
+                            }
+                        }
+                        PhotoscanStatus.FINISHED -> {
+                            _currentPhotoscanId?.let { stopReconstructionProgressListener(it) }
+                        }
+                        PhotoscanStatus.FAILED -> {
+                            _uploadState.value = UploadState.Error(
+                                progress.message ?: "Reconstruction failed"
+                            )
+                            _currentPhotoscanId?.let { stopReconstructionProgressListener(it) }
+                        }
+                        PhotoscanStatus.STOPPED, null -> {}
+                    }
+                }
+            }
+        }
+    }
 
     fun isLoggedInAndOnline(): Boolean {
         return runBlocking {
@@ -105,18 +159,23 @@ class CloudRepository @Inject constructor(
     fun createPhotocollection(name: String, autoUpload: Boolean) {
         this.currentReferenceNumber = name
         this.autoUpload = autoUpload
+        _uploadState.value = UploadState.Idle
+
         val uid = authService.getCurrentUser()?.uid ?: return
 
         scope.launch {
-            try {
-                val response = photocollectionService.createPhotocollection(
+            val result = safeCall {
+                photocollectionService.createPhotocollection(
                     CreatePhotocollectionRequest(
                         accountId = uid,
                         name = name
                     )
                 )
-                if (response.isSuccessful) {
-                    currentPhotocollection = response.body()
+            }
+
+            when (result) {
+                is Result.Success -> {
+                    currentPhotocollection = result.body
                     imageUploadProgressFlow.value = null
 
                     currentPhotocollection?.id?.let { id ->
@@ -134,8 +193,7 @@ class CloudRepository @Inject constructor(
                         }
                     }
                 }
-            } catch (e: Exception) {
-                Log.e(TAG, e.message ?: "Can't create photo collection")
+                else -> Log.e(TAG, "Can't create photo collection: $result")
             }
         }
     }
@@ -150,13 +208,10 @@ class CloudRepository @Inject constructor(
 
     suspend fun deletePhotocollection(id: Long) {
         Log.d(TAG, "Deleting photocollection: $id")
-        try {
-            val response = photocollectionService.deletePhotocollection(id)
-            if (response.isSuccessful) {
-                Log.d(TAG, "Photocollection deleted: $id")
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
+        val result = safeCall { photocollectionService.deletePhotocollection(id) }
+        when (result) {
+            is Result.Success -> Log.d(TAG, "Photocollection deleted: $id")
+            else -> Log.e(TAG, "Failed to delete photocollection: $result")
         }
     }
 
@@ -173,22 +228,45 @@ class CloudRepository @Inject constructor(
         imageUploader = null
     }
 
-    suspend fun startReconstruction(): Long? {
+    suspend fun startReconstructionFlow(): Long? {
+        _uploadState.value = UploadState.StartingReconstruction
+        val photoscanId = startReconstruction()
+        if (photoscanId != null) {
+            _currentPhotoscanId = photoscanId
+            startReconstructionProgressListener(photoscanId)
+            _uploadState.value = UploadState.Reconstructing
+        } else {
+            _uploadState.value = UploadState.Error("Failed to start reconstruction")
+        }
+        return photoscanId
+    }
+
+    fun reset(removeLocalCollection: Boolean) {
+        _currentPhotoscanId?.let { stopReconstructionProgressListener(it) }
+        _currentPhotoscanId = null
+        if (removeLocalCollection) {
+            resetCurrentPhotocollection()
+        }
+        _uploadState.value = UploadState.Idle
+        imageUploadProgressFlow.value = null
+        reconstructionProgressFlow.value = null
+    }
+
+    private suspend fun startReconstruction(): Long? {
         val id = currentPhotocollection?.id ?: return null
         return startReconstruction(id)
     }
 
-    suspend fun startReconstruction(collectionId: Long): Long? {
-        return try {
-            val response =
-                photocollectionService.startPhotoscan(collectionId, StartPhotoscanRequest())
-            if (response.isSuccessful)
-                response.body()?.photoscanId
-            else
+    private suspend fun startReconstruction(collectionId: Long): Long? {
+        val result = safeCall {
+            photocollectionService.startPhotoscan(collectionId, StartPhotoscanRequest())
+        }
+        return when (result) {
+            is Result.Success -> result.body.photoscanId
+            else -> {
+                Log.e(TAG, "Failed to start reconstruction: $result")
                 null
-        } catch (e: Exception) {
-            e.printStackTrace()
-            null
+            }
         }
     }
 
@@ -212,28 +290,27 @@ class CloudRepository @Inject constructor(
         joinPhotos: Boolean = false,
         joinCoordinates: Boolean = false
     ): Photocollection? {
-        try {
-            val response =
-                photocollectionService.getPhotocollection(id, joinPhotos, joinCoordinates)
-            if (response.isSuccessful) {
-                return response.body()
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
+        val result = safeCall {
+            photocollectionService.getPhotocollection(id, joinPhotos, joinCoordinates)
         }
-        return null
+        return when (result) {
+            is Result.Success -> result.body
+            else -> {
+                Log.e(TAG, "Failed to get photocollection: $result")
+                null
+            }
+        }
     }
 
     suspend fun getPhotoscan(id: Long): Photoscan? {
-        try {
-            val response = photoscanService.getPhotoscan(id)
-            if (response.isSuccessful) {
-                return response.body()
+        val result = safeCall { photoscanService.getPhotoscan(id) }
+        return when (result) {
+            is Result.Success -> result.body
+            else -> {
+                Log.e(TAG, "Failed to get photoscan: $result")
+                null
             }
-        } catch (e: Exception) {
-            e.printStackTrace()
         }
-        return null
     }
 
     suspend fun downloadPhotoscan(id: Long, outputDir: File): Boolean {
@@ -316,37 +393,30 @@ class CloudRepository @Inject constructor(
     }
 
     private suspend fun downloadPhotocollection(id: Long): Boolean {
-        try {
-            val response = photocollectionService.getPhotocollection(
-                id, joinPhotos = true
-            )
-            if (response.isSuccessful) {
-                response.body()?.let { photocollection ->
-                    val photos = photocollection.photos ?: listOf()
-                    val outputDir = getImagesDir(photocollection.name ?: return false)
-                    if (!outputDir.exists()) outputDir.mkdirs()
+        val photocollection = getPhotocollection(id, joinPhotos = true) ?: return false
 
-                    for (photo in photos) {
-                        Log.d(TAG, "Loading photo ${photo.fileName}")
-                        val photoResponse =
-                            photocollectionService.downloadPhoto(photocollection.id, photo.fileName)
-                        if (!photoResponse.isSuccessful) return false
+        val photos = photocollection.photos ?: listOf()
+        val outputDir = getImagesDir(photocollection.name ?: return false)
+        if (!outputDir.exists()) outputDir.mkdirs()
 
-                        photoResponse.body()?.let {
-                            val file = File(outputDir, photo.fileName)
-                            saveResponseBodyToDisk(it, file)
-                            Log.d(TAG, "Photo saved to ${file.absolutePath}")
-                        }
-                    }
-                    return true
+        for (photo in photos) {
+            Log.d(TAG, "Loading photo ${photo.fileName}")
+            try {
+                val photoResponse =
+                    photocollectionService.downloadPhoto(photocollection.id, photo.fileName)
+                if (!photoResponse.isSuccessful) return false
+
+                photoResponse.body()?.let {
+                    val file = File(outputDir, photo.fileName)
+                    saveResponseBodyToDisk(it, file)
+                    Log.d(TAG, "Photo saved to ${file.absolutePath}")
                 }
-            } else {
-                Log.e(TAG, "Error: ${response.code()} ${response.message()}")
+            } catch (e: Exception) {
+                Log.e(TAG, "Download failed for ${photo.fileName}", e)
+                return false
             }
-        } catch (e: Exception) {
-            Log.e(TAG, "Download failed", e)
         }
-        return false
+        return true
     }
 
     private suspend fun downloadPhotoscan(id: Long): Boolean {

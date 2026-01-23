@@ -43,9 +43,8 @@ sealed class Screen(val route: String) {
         fun createRoute(collectionName: String) = "processing/$collectionName"
     }
 
-    object Uploading : Screen("uploading/{collectionName}/{autoUploadEnabled}") {
-        fun createRoute(collectionName: String, autoUploadEnabled: Boolean) =
-            "uploading/$collectionName/$autoUploadEnabled"
+    object Uploading : Screen("uploading/{collectionName}") {
+        fun createRoute(collectionName: String) = "uploading/$collectionName"
     }
 
     object Transfer : Screen("transfer/{collectionName}") {
@@ -158,7 +157,7 @@ fun AppNavigation() {
 
                     if (autoUploadEnabled && isLoggedIn) {
                         navController.navigate(
-                            Screen.Uploading.createRoute(collectionName, true)
+                            Screen.Uploading.createRoute(collectionName)
                         ) {
                             popUpTo(Screen.Scanner.route) { inclusive = true }
                         }
@@ -182,7 +181,7 @@ fun AppNavigation() {
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToUploading = {
                     navController.navigate(
-                        Screen.Uploading.createRoute(collectionName, false)
+                        Screen.Uploading.createRoute(collectionName)
                     ) {
                         popUpTo(Screen.Processing.route) { inclusive = true }
                     }
@@ -208,17 +207,12 @@ fun AppNavigation() {
         }
 
         composable(
-            route = Screen.Uploading.route, arguments = listOf(
-                navArgument("collectionName") { type = NavType.StringType },
-                navArgument("autoUploadEnabled") { type = NavType.BoolType })
-
+            route = Screen.Uploading.route,
+            arguments = listOf(navArgument("collectionName") { type = NavType.StringType })
         ) { backStackEntry ->
             val collectionName = backStackEntry.arguments?.getString("collectionName") ?: ""
-            val autoUploadEnabled =
-                backStackEntry.arguments?.getBoolean("autoUploadEnabled") ?: false
 
             UploadingScreen(
-                autoUploadEnabled = autoUploadEnabled,
                 collectionName = collectionName,
                 onNavigateBack = { navController.popBackStack() },
                 onViewModel = { scanId, photocollectionId, ->

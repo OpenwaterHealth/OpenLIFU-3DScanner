@@ -20,14 +20,14 @@ interface PhotocollectionService {
     suspend fun healthCheck(): Response<Void>
 
     @POST("photocollection")
-    suspend fun createPhotocollection(@Body request: CreatePhotocollectionRequest): Response<Photocollection>
+    suspend fun createPhotocollection(@Body request: CreatePhotocollectionRequest): Photocollection
 
     @GET("photocollection/{id}")
     suspend fun getPhotocollection(
         @Path("id") photocollectionId: Long,
         @Query("join_photos") joinPhotos: Boolean = false,
         @Query("join_coordinates") joinCoordinates: Boolean = false
-    ): Response<Photocollection>
+    ): Photocollection
 
     @GET("photocollection/account/{uid}")
     suspend fun getPhotocollections(
@@ -38,14 +38,14 @@ interface PhotocollectionService {
     @DELETE("photocollection/{id}")
     suspend fun deletePhotocollection(
         @Path("id") photocollectionId: Long
-    ): Response<Void>
+    )
 
     @POST("photocollection/{id}/photo/{name}")
     suspend fun uploadPhoto(
         @Path("id") photocollectionId: Long,
         @Path("name") fileName: String,
         @Body body: RequestBody
-    ): Response<Void>
+    )
 
     @GET("photocollection/{id}/photo/{name}")
     suspend fun downloadPhoto(
@@ -57,6 +57,6 @@ interface PhotocollectionService {
     suspend fun startPhotoscan(
         @Path("id") photocollectionId: Long,
         @Body request: StartPhotoscanRequest
-    ): Response<StartPhotoscanResponse>
+    ): StartPhotoscanResponse
 
 }

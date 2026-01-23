@@ -65,6 +65,8 @@ fun ViewCollectionScreen(
         val photocollections = uiState.photocollections
         val photoscans = uiState.photoscans
 
+        if (uiState.isLoading && photoscans == null) return@remember emptyList()
+
         (photoscans?.reversed()?.map { photoscan ->
             val collection = photocollections?.find { it.id == photoscan.photocollectionId }
             CollectionItem(
@@ -120,7 +122,7 @@ fun ViewCollectionScreen(
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
                 when {
-                    collectionItems.isEmpty() -> {
+                    !uiState.isLoading && collectionItems.isEmpty() -> {
                         // Empty state
                         Column(
                             modifier = Modifier
@@ -135,6 +137,15 @@ fun ViewCollectionScreen(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
+                    }
+
+
+                    uiState.hasError -> {
+                        Text(
+                            text = stringResource(R.string.failed_to_load_photo_scans),
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.padding(16.dp)
+                        )
                     }
 
                     else -> {
@@ -152,22 +163,6 @@ fun ViewCollectionScreen(
                             }
                         }
                     }
-                }
-
-                // Show error messages if present
-                uiState.photocollectionsError?.let {
-                    Text(
-                        text = "Collections error: $it",
-                        color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.padding(16.dp)
-                    )
-                }
-                uiState.photoscansError?.let {
-                    Text(
-                        text = "Photoscans error: $it",
-                        color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.padding(16.dp)
-                    )
                 }
             }
         }

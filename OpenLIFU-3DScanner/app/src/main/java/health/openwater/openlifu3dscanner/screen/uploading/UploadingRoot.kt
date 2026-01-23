@@ -11,15 +11,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.CropRotate
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -35,23 +31,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import health.openwater.openlifu3dscanner.R
 import health.openwater.openlifu3dscanner.network.model.ImageUploadProgress
 import health.openwater.openlifu3dscanner.network.model.ReconstructionProgress
 import health.openwater.openlifu3dscanner.core.UploadState
+import health.openwater.openlifu3dscanner.network.dto.PhotoscanStatus
 import health.openwater.openlifu3dscanner.extensions.getModelsDir
 import health.openwater.openlifu3dscanner.viewmodel.CloudViewModel
 import java.io.File
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UploadingRoot(
-    autoUploadEnabled: Boolean,
     collectionName: String,
     onNavigateBack: () -> Unit,
-    onReconstructionStarted: () -> Unit,
     onViewModel: (scanId: Long, photocollectionId: Long) -> Unit,
     cloudViewModel: CloudViewModel = hiltViewModel()
 ) {
@@ -76,62 +69,43 @@ fun UploadingRoot(
     }
 
     LaunchedEffect(uploadState) {
-        if (uploadState is UploadState.Reconstructing) {
-            onReconstructionStarted()
-        } else if (uploadState is UploadState.UploadComplete) {
-            if (autoUploadEnabled) {
-                cloudViewModel.startReconstruction()
+        when (uploadState) {
+            is UploadState.UploadComplete -> cloudViewModel.startReconstruction()
+            else -> {}
+        }
+    }
+
+    LaunchedEffect(reconstructionProgress?.status) {
+        if (reconstructionProgress?.status == PhotoscanStatus.FINISHED) {
+            cloudViewModel.currentPhotoscanId?.let { photoscanId ->
+                cloudViewModel.getCurrentPhotocollection()?.id?.let { photocollectionId ->
+                    onViewModel(photoscanId, photocollectionId)
+                }
             }
         }
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
         when (uploadState) {
-            is UploadState.Idle -> {
-                IdleView(imageCount = imageFiles.size)
-            }
-
-            is UploadState.Uploading -> {
+            is UploadState.Idle,
+            is UploadState.Uploading,
+            is UploadState.UploadComplete,
+            is UploadState.StartingReconstruction -> {
                 UploadingView(
                     progress = imageUploadProgress,
                     totalImages = imageFiles.size
                 )
             }
 
-            is UploadState.UploadComplete -> {
-                UploadCompleteView(
-                    onStartReconstruction = { cloudViewModel.startReconstruction() }
-                )
-            }
-
-            is UploadState.StartingReconstruction -> {
-                StartingReconstructionView()
-            }
-
             is UploadState.Reconstructing -> {
                 ReconstructingView(progress = reconstructionProgress)
-            }
-
-            is UploadState.ReconstructionComplete -> {
-                ReconstructionCompleteView(
-                    onViewModel = {
-                        cloudViewModel.currentPhotoscanId?.let { photoscanId ->
-
-                            cloudViewModel.getCurrentPhotocollection()?.id?.let { photocollectionId ->
-                                onViewModel(photoscanId, photocollectionId)
-                            }
-                        }
-                    }
-                )
             }
 
             is UploadState.Error -> {
                 ErrorView(
                     message = (uploadState as UploadState.Error).message,
                     onRetry = { cloudViewModel.uploadRemainingPhotos() },
-                    onCancel = {
-                        onNavigateBack()
-                    }
+                    onCancel = onNavigateBack
                 )
             }
         }
@@ -139,23 +113,7 @@ fun UploadingRoot(
 }
 
 @Composable
-fun IdleView(imageCount: Int) {
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        CircularProgressIndicator()
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = stringResource(R.string.preparing_d_images_for_upload, imageCount),
-            style = MaterialTheme.typography.bodyLarge
-        )
-    }
-}
-
-@Composable
-fun UploadingView(
+private fun UploadingView(
     progress: ImageUploadProgress?,
     totalImages: Int
 ) {
@@ -217,72 +175,7 @@ fun UploadingView(
 }
 
 @Composable
-fun UploadCompleteView(onStartReconstruction: () -> Unit) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Icon(
-            imageVector = Icons.Default.CheckCircle,
-            contentDescription = null,
-            modifier = Modifier.size(64.dp),
-            tint = MaterialTheme.colorScheme.primary
-        )
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        Text(
-            text = stringResource(R.string.upload_complete),
-            style = MaterialTheme.typography.headlineMedium
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Text(
-            text = stringResource(R.string.all_images_have_been_uploaded_successfully),
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center
-        )
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        Button(
-            onClick = onStartReconstruction,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Icon(Icons.Default.CropRotate, contentDescription = null)
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = stringResource(R.string.start_3d_reconstruction),
-                fontSize = 16.sp,
-                modifier = Modifier.padding(vertical = 8.dp)
-            )
-        }
-    }
-}
-
-@Composable
-fun StartingReconstructionView() {
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        CircularProgressIndicator()
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = stringResource(R.string.starting_reconstruction),
-            style = MaterialTheme.typography.bodyLarge
-        )
-    }
-}
-
-@Composable
-fun ReconstructingView(
+private fun ReconstructingView(
     progress: ReconstructionProgress?
 ) {
     Column(
@@ -353,55 +246,7 @@ fun ReconstructingView(
 }
 
 @Composable
-fun ReconstructionCompleteView(onViewModel: () -> Unit) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Icon(
-            imageVector = Icons.Default.CheckCircle,
-            contentDescription = null,
-            modifier = Modifier.size(64.dp),
-            tint = MaterialTheme.colorScheme.primary
-        )
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        Text(
-            text = stringResource(R.string.reconstruction_complete),
-            style = MaterialTheme.typography.headlineMedium,
-            textAlign = TextAlign.Center
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Text(
-            text = stringResource(R.string.your_3d_model_has_been_successfully_created),
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center
-        )
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        Button(
-            onClick = { onViewModel() },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(
-                text = stringResource(R.string.view_model),
-                fontSize = 16.sp,
-                modifier = Modifier.padding(vertical = 8.dp)
-            )
-        }
-    }
-}
-
-@Composable
-fun ErrorView(
+private fun ErrorView(
     message: String,
     onRetry: () -> Unit,
     onCancel: () -> Unit

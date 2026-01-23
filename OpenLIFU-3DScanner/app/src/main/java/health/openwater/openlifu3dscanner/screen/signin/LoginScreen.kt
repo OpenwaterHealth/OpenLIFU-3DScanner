@@ -1,8 +1,6 @@
 package health.openwater.openlifu3dscanner.screen.signin
 
 import android.annotation.SuppressLint
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -66,9 +64,7 @@ import kotlinx.coroutines.launch
 fun LoginScreen(
     onNavigateBack: () -> Unit,
 ) {
-    val userViewModel: UserViewModel = hiltViewModel(
-        viewModelStoreOwner = LocalActivity.current as ComponentActivity
-    )
+    val userViewModel: UserViewModel = hiltViewModel()
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }

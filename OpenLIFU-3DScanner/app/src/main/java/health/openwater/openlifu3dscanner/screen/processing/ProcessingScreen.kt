@@ -1,8 +1,6 @@
 package health.openwater.openlifu3dscanner.screen.processing
 
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
-import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -25,9 +23,7 @@ fun ProcessingScreen(
     onNavigateToUploading: () -> Unit,
     onNavigateToTransfer: () -> Unit,
 ) {
-    val userViewModel: UserViewModel = hiltViewModel(
-        viewModelStoreOwner = LocalActivity.current as ComponentActivity
-    )
+    val userViewModel: UserViewModel = hiltViewModel()
     val uiState by userViewModel.uiState.collectAsStateWithLifecycle()
 
     var showCancelDialog by remember { mutableStateOf(false) }

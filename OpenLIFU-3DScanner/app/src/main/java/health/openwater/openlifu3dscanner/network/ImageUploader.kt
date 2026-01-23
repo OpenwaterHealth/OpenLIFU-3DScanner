@@ -104,12 +104,8 @@ class ImageUploader(
         )
     }
 
-    private fun getFiles(): List<String> {
-        return imagesDir.list()
-            ?.filter {
-                it.lowercase().endsWith(".jpeg") || it.lowercase().endsWith(".jpg")
-            } ?: listOf()
-    }
+    private fun getFiles() = imagesDir.list()
+        ?.filter { it.lowercase().endsWith(".jpg") } ?: listOf()
 
     companion object {
         private val TAG = ImageUploader::class.simpleName

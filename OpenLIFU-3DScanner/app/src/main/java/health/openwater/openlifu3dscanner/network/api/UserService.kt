@@ -15,5 +15,5 @@ interface UserService {
     suspend fun getCredits(@Path("uid") uid: String): UserCreditsResponse
 
     @POST("users/reset-password")
-    suspend fun resetPassword(@Body request: ResetPasswordRequest): Response<StatusResponse>
+    suspend fun resetPassword(@Body request: ResetPasswordRequest): StatusResponse
 }

@@ -11,7 +11,7 @@ import retrofit2.http.Streaming
 interface PhotoscanService {
 
     @GET("photoscan/{id}")
-    suspend fun getPhotoscan(@Path("id") id: Long): Response<Photoscan>
+    suspend fun getPhotoscan(@Path("id") id: Long): Photoscan
 
     @GET("photoscan/account/{uid}")
     suspend fun getPhotoscans(

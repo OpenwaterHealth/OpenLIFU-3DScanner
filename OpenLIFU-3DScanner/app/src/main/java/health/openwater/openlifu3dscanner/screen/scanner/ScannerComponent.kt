@@ -31,7 +31,13 @@ fun ScannerComponent(
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
-    val isScanning by viewModel.isScanning.collectAsState()
+    val isCompleted by viewModel.isCompleted.collectAsState()
+
+    LaunchedEffect(isCompleted) {
+        if (isCompleted) {
+            onProceed()
+        }
+    }
 
     val previewView = remember { PreviewView(context) }
 
@@ -85,15 +91,6 @@ fun ScannerComponent(
             modifier = Modifier.fillMaxSize()
         )
 
-        ScanControls(
-            onProceed = onProceed,
-            onStartStop = {
-                if (!isScanning) {
-                    viewModel.startScanning(collectionName)
-                } else {
-                    viewModel.stopScanning()
-                }
-            }
-        )
+        ScanControls(collectionName = collectionName)
     }
 }
