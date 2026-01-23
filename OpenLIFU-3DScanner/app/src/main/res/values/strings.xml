@@ -95,6 +95,7 @@
     <string name="usb_connected">USB Connected</string>
     <string name="usb_disconnected">USB Disconnected</string>
     <string name="failed_to_load_photo_scans">Failed to load photo scans</string>
+    <string name="showing_offline_scans">Showing on-device scans only</string>
     <string name="you_need_to_capture_at_least_d_images_to_proceed">You need to capture at least %1$d images to proceed.</string>
     <string name="dismiss">Dismiss</string>
     <string name="model">Model</string>

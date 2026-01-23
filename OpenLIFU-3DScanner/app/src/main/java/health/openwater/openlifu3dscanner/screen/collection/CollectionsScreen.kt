@@ -60,10 +60,11 @@ fun ViewCollectionScreen(
             } ?: emptyList()
     }
 
-    // Compute combined collectionItems
-    val collectionItems = remember(uiState.photocollections, uiState.photoscans) {
+    // Compute combined collectionItems (cloud scans + on-device scans)
+    val collectionItems = remember(uiState.photocollections, uiState.photoscans, uiState.hasError) {
         val photocollections = uiState.photocollections
         val photoscans = uiState.photoscans
+        val localScans = onDeviceScans()
 
         if (uiState.isLoading && photoscans == null) return@remember emptyList()
 
@@ -76,7 +77,7 @@ fun ViewCollectionScreen(
                 creationDate = photoscan.creationDate,
                 status = photoscan.status
             )
-        } ?: emptyList()).plus(onDeviceScans())
+        } ?: emptyList()).plus(localScans)
             .distinctBy { it.name }
     }
 
@@ -120,7 +121,20 @@ fun ViewCollectionScreen(
                 .fillMaxSize()
                 .padding(contentPadding)
         ) {
-            Column(modifier = Modifier.fillMaxSize()) {
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // Show offline banner when there's an error but we have local scans
+                if (uiState.hasError && collectionItems.isNotEmpty()) {
+                    Text(
+                        text = stringResource(R.string.showing_offline_scans),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
+                    )
+                }
+
                 when {
                     !uiState.isLoading && collectionItems.isEmpty() -> {
                         // Empty state
@@ -132,24 +146,23 @@ fun ViewCollectionScreen(
                             verticalArrangement = Arrangement.Center
                         ) {
                             Text(
-                                text = stringResource(R.string.no_photo_scans_available),
+                                text = if (uiState.hasError) {
+                                    stringResource(R.string.failed_to_load_photo_scans)
+                                } else {
+                                    stringResource(R.string.no_photo_scans_available)
+                                },
                                 style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = if (uiState.hasError) {
+                                    MaterialTheme.colorScheme.error
+                                } else {
+                                    MaterialTheme.colorScheme.onSurfaceVariant
+                                }
                             )
                         }
                     }
 
-
-                    uiState.hasError -> {
-                        Text(
-                            text = stringResource(R.string.failed_to_load_photo_scans),
-                            color = MaterialTheme.colorScheme.error,
-                            modifier = Modifier.padding(16.dp)
-                        )
-                    }
-
                     else -> {
-                        // List of photo scans
+                        // List of photo scans (cloud + on-device)
                         LazyColumn(
                             modifier = Modifier.fillMaxSize(),
                             verticalArrangement = Arrangement.spacedBy(12.dp),
