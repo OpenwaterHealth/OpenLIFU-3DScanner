@@ -101,4 +101,8 @@
     <string name="photos">Photos</string>
     <string name="photos_d_d">Photos: %1$d / %2$d</string>
     <string name="face_s">Face: %1$s</string>
+    <string name="actions">Actions</string>
+    <string name="delete_scan">Delete Scan</string>
+    <string name="delete_scan_confirmation">Are you sure you want to delete this scan? This will permanently delete the 3D model and all photos from the server and your device.</string>
+    <string name="deleting">Deleting…</string>
 </resources>

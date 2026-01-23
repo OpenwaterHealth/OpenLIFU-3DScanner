@@ -144,4 +144,21 @@ class CollectionViewModel @Inject constructor(
     }
 
     fun getDownloadResultsFlow() = cloudRepository.getDownloadResultsFlow()
+
+    suspend fun deleteScan(
+        photoscanId: Long,
+        photocollectionId: Long,
+        collectionName: String
+    ): Boolean {
+        // Delete photoscan from server
+        val photoscanDeleted = cloudRepository.deletePhotoscan(photoscanId)
+
+        // Delete photocollection from server
+        val photocollectionDeleted = cloudRepository.deletePhotocollection(photocollectionId)
+
+        // Delete local directory
+        val localDeleted = cloudRepository.deleteLocalScanDirectory(collectionName)
+
+        return photoscanDeleted && photocollectionDeleted && localDeleted
+    }
 }

@@ -84,7 +84,9 @@ class CloudRepository @Inject constructor(
                     if (_uploadState.value == UploadState.Idle) {
                         _uploadState.value = UploadState.Uploading
                     }
-                    if (progress.uploadedImages == progress.totalImages && progress.totalImages > 0) {
+                    if (progress.uploadedImages == progress.totalImages && progress.totalImages > 0
+                        && _uploadState.value == UploadState.Uploading
+                    ) {
                         _uploadState.value = UploadState.UploadComplete
                     }
                 }
@@ -206,12 +208,44 @@ class CloudRepository @Inject constructor(
         }
     }
 
-    suspend fun deletePhotocollection(id: Long) {
+    suspend fun deletePhotocollection(id: Long): Boolean {
         Log.d(TAG, "Deleting photocollection: $id")
         val result = safeCall { photocollectionService.deletePhotocollection(id) }
-        when (result) {
-            is Result.Success -> Log.d(TAG, "Photocollection deleted: $id")
-            else -> Log.e(TAG, "Failed to delete photocollection: $result")
+        return when (result) {
+            is Result.Success -> {
+                Log.d(TAG, "Photocollection deleted: $id")
+                true
+            }
+            else -> {
+                Log.e(TAG, "Failed to delete photocollection: $result")
+                false
+            }
+        }
+    }
+
+    suspend fun deletePhotoscan(id: Long): Boolean {
+        Log.d(TAG, "Deleting photoscan: $id")
+        val result = safeCall { photoscanService.deletePhotoscan(id) }
+        return when (result) {
+            is Result.Success -> {
+                Log.d(TAG, "Photoscan deleted: $id")
+                true
+            }
+            else -> {
+                Log.e(TAG, "Failed to delete photoscan: $result")
+                false
+            }
+        }
+    }
+
+    fun deleteLocalScanDirectory(collectionName: String): Boolean {
+        val dir = getImagesDir(collectionName)
+        return if (dir.exists()) {
+            Log.d(TAG, "Deleting local directory: $dir")
+            dir.deleteRecursively()
+        } else {
+            Log.d(TAG, "Local directory does not exist: $dir")
+            true
         }
     }
 
@@ -228,8 +262,11 @@ class CloudRepository @Inject constructor(
         imageUploader = null
     }
 
-    suspend fun startReconstructionFlow(): Long? {
+    fun setStartingReconstruction() {
         _uploadState.value = UploadState.StartingReconstruction
+    }
+
+    suspend fun startReconstructionFlow(): Long? {
         val photoscanId = startReconstruction()
         if (photoscanId != null) {
             _currentPhotoscanId = photoscanId

@@ -28,6 +28,7 @@ class CloudViewModel @Inject constructor(
     }
 
     fun startReconstruction() {
+        cloudRepository.setStartingReconstruction()
         viewModelScope.launch {
             cloudRepository.startReconstructionFlow()
         }
