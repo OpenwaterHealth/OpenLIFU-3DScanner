@@ -3,16 +3,22 @@ package health.openwater.openlifu3dscanner.screen.photoscan
 import android.annotation.SuppressLint
 import android.content.Context
 import android.opengl.GLSurfaceView
+import android.os.Handler
+import android.os.Looper
 import android.view.MotionEvent
 import android.view.ScaleGestureDetector
 
 @SuppressLint("ViewConstructor")
 class ModelSurfaceView(
     context: Context,
-    modelDir: String
+    modelDir: String,
+    onReady: (() -> Unit)? = null
 ) : GLSurfaceView(context) {
 
-    private val renderer = ModelRenderer(modelDir)
+    private val mainHandler = Handler(Looper.getMainLooper())
+    private val renderer = ModelRenderer(modelDir) {
+        mainHandler.post { onReady?.invoke() }
+    }
     private val scaleDetector = ScaleGestureDetector(context, ScaleListener())
 
     private var prevX = 0f

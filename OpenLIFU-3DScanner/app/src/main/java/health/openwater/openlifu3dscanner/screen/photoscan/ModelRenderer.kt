@@ -5,6 +5,7 @@ import android.opengl.GLES20
 import android.opengl.GLSurfaceView
 import android.opengl.GLUtils
 import android.opengl.Matrix
+import health.openwater.openlifu3dscanner.extensions.MODEL_FILENAME
 import java.io.File
 import java.io.FileNotFoundException
 import java.nio.ByteBuffer
@@ -15,7 +16,8 @@ import javax.microedition.khronos.opengles.GL10
 import kotlin.math.max
 
 class ModelRenderer(
-    private val modelDir: String
+    private val modelDir: String,
+    private val onReady: (() -> Unit)? = null
 ) : GLSurfaceView.Renderer {
 
     data class Bounds(
@@ -63,7 +65,7 @@ class ModelRenderer(
         GLES20.glClearColor(0.2f, 0.2f, 0.2f, 1f)
 
         val result = try {
-            parseObj(File(modelDir, "texturedMesh.obj"))
+            parseObj(File(modelDir, MODEL_FILENAME))
         } catch (_: FileNotFoundException) {
             return
         }
@@ -96,6 +98,8 @@ class ModelRenderer(
         )
 
         program = createProgram()
+
+        onReady?.invoke()
     }
 
     override fun onSurfaceChanged(gl: GL10?, width: Int, height: Int) {

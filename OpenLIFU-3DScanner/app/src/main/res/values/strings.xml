@@ -113,4 +113,20 @@
     <string name="upload_to_create_3d_model">Upload photos to create a 3D model</string>
     <string name="sign_in_to_process_scan">Sign in to upload and process this scan</string>
     <string name="start_processing">Start Processing</string>
+    <string name="photos_captured">Photos Captured</string>
+    <string name="photo_count">%1$d photos</string>
+    <string name="no_image_selected">No image selected</string>
+    <string name="scan_settings">Scan Settings</string>
+    <string name="image_size">Image Size</string>
+    <string name="photo_count_setting">Photo Count</string>
+    <string name="support_and_legal">Support &amp; Legal</string>
+    <string name="video_tutorial">Video Tutorial</string>
+    <string name="video_tutorial_summary">Watch how to use the app</string>
+    <string name="submit_feedback">Submit Feedback</string>
+    <string name="submit_feedback_summary">Send us your feedback via email</string>
+    <string name="acknowledge_notice">Research Notice</string>
+    <string name="acknowledge_notice_summary">View important legal notice</string>
+    <string name="notice_title">Research Device Notice</string>
+    <string name="notice">Research device. Limited by Federal (or United States) law to research use. The system described here has not been evaluated by the FDA and is not designed for the treatment or diagnosis of any disease. It is provided AS-IS, with no warranties. User assumes all liability and responsibility for identifying and mitigating risks associated with using this software.</string>
+    <string name="model_available">3D model available</string>
 </resources>

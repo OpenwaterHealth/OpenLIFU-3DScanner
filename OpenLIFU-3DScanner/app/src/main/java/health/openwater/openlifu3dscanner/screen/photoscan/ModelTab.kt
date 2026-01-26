@@ -2,7 +2,10 @@ package health.openwater.openlifu3dscanner.screen.photoscan
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -10,11 +13,15 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import health.openwater.openlifu3dscanner.extensions.SCAN_SUBDIR
 import health.openwater.openlifu3dscanner.extensions.getModelsDir
+import health.openwater.openlifu3dscanner.extensions.hasLocalModel
 import health.openwater.openlifu3dscanner.viewmodel.CollectionViewModel
 import kotlinx.coroutines.flow.collectLatest
 import java.io.File
@@ -31,14 +38,13 @@ fun ModelTab(
 ) {
     var downloadState by remember { mutableStateOf<DownloadState>(DownloadState.Init) }
     val scanDir =
-        remember(collectionName) { File(getModelsDir(), "${collectionName}/scan") }
+        remember(collectionName) { File(getModelsDir(), "$collectionName/$SCAN_SUBDIR") }
     val isLocalOnly = photoscanId == 0L
 
     LaunchedEffect(photocollectionId, isLocalOnly) {
         if (isLocalOnly) {
             // Local-only scan - check if we have a model file
-            val dir = File(getModelsDir(), "${collectionName}/scan")
-            if (dir.exists() && dir.listFiles()?.find { it.name == "texturedMesh.obj" } != null) {
+            if (hasLocalModel(collectionName)) {
                 downloadState = DownloadState.Offline // Has local model, show it
             } else {
                 downloadState = DownloadState.NotProcessed // No model, needs processing
@@ -51,9 +57,7 @@ fun ModelTab(
                 )
 
             if (collection != null) {
-                val dir = File(getModelsDir(), "${collectionName}/scan")
-
-                if (dir.exists() && dir.listFiles()?.find { it.name == "texturedMesh.obj" } != null) {
+                if (hasLocalModel(collectionName)) {
                     downloadState = DownloadState.Success
                 } else {
                     // Auto-download the mesh
@@ -71,15 +75,11 @@ fun ModelTab(
             if (result?.item?.id == photoscanId) {
                 if (result.success) {
                     val collection = collectionViewModel.getPhotocollection(photocollectionId)
-                    if (collection != null) {
-                        val dir = File(getModelsDir(), "${collection.name}/scan")
-                        if (dir.exists() && dir.listFiles()
-                                ?.find { it.name == "texturedMesh.obj" } != null
-                        ) {
-                            downloadState = DownloadState.Success
-                        } else {
-                            downloadState = DownloadState.Failed
-                        }
+                    val name = collection?.name
+                    downloadState = if (name != null && hasLocalModel(name)) {
+                        DownloadState.Success
+                    } else {
+                        DownloadState.Failed
                     }
                 } else {
                     downloadState = DownloadState.Failed
@@ -103,13 +103,29 @@ fun ModelTab(
 
                 is DownloadState.Offline,
                 is DownloadState.Success -> {
+                    var rendererReady by remember { mutableStateOf(false) }
+
                     Box(modifier = Modifier.fillMaxSize()) {
                         AndroidView(
                             modifier = Modifier.fillMaxSize(),
                             factory = { context ->
-                                ModelSurfaceView(context, scanDir.absolutePath)
+                                ModelSurfaceView(context, scanDir.absolutePath) {
+                                    rendererReady = true
+                                }
                             }
                         )
+
+                        if (!rendererReady) {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(48.dp),
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
                     }
                 }
 

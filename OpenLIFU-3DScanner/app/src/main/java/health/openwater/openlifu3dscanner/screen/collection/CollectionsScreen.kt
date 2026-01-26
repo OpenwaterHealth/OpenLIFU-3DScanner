@@ -49,6 +49,7 @@ fun ViewCollectionScreen(
     fun onDeviceScans(): List<CollectionItem> {
         return getModelsDir().listFiles()
             ?.filter { it.isDirectory }
+            ?.sortedByDescending { it.lastModified() }
             ?.map {
                 CollectionItem(
                     photoscanId = 0,
@@ -68,7 +69,7 @@ fun ViewCollectionScreen(
 
         if (uiState.isLoading && photoscans == null) return@remember emptyList()
 
-        (photoscans?.reversed()?.map { photoscan ->
+        (photoscans?.map { photoscan ->
             val collection = photocollections?.find { it.id == photoscan.photocollectionId }
             CollectionItem(
                 photoscanId = photoscan.id,
@@ -79,6 +80,7 @@ fun ViewCollectionScreen(
             )
         } ?: emptyList()).plus(localScans)
             .distinctBy { it.name }
+            .sortedByDescending { it.creationDate }
     }
 
     fun refresh() {

@@ -9,8 +9,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Cloud
+import androidx.compose.material.icons.filled.ViewInAr
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -29,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import health.openwater.openlifu3dscanner.R
 import health.openwater.openlifu3dscanner.extensions.getModelsDir
+import health.openwater.openlifu3dscanner.extensions.hasLocalModel
 import health.openwater.openlifu3dscanner.network.dto.PhotoscanStatus
 import java.io.File
 import java.text.SimpleDateFormat
@@ -45,13 +48,16 @@ data class CollectionItem(
 
 @Composable
 fun PhotoscanCard(item: CollectionItem, onClick: () -> Unit) {
+    val collectionDir = remember(item.name) { File(getModelsDir(), item.name) }
+
     val firstImage = remember(item.name) {
-        val collectionDir = File(getModelsDir(), item.name)
         collectionDir.listFiles { file ->
             file.extension.equals("jpg", ignoreCase = true) ||
                     file.extension.equals("jpeg", ignoreCase = true)
         }?.minByOrNull { it.name }
     }
+
+    val hasModel = remember(item.name) { hasLocalModel(item.name) }
 
     Card(
         onClick = onClick,
@@ -85,16 +91,29 @@ fun PhotoscanCard(item: CollectionItem, onClick: () -> Unit) {
                     )
             )
 
-            // Cloud icon top left
-            if (item.status != null) {
-                Icon(
-                    imageVector = Icons.Filled.Cloud,
-                    contentDescription = stringResource(R.string.cloud_available),
-                    tint = Color.White,
-                    modifier = Modifier
-                        .align(Alignment.TopStart)
-                        .padding(12.dp)
-                )
+            // Status icons top left
+            Row(
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                if (item.status != null) {
+                    Icon(
+                        imageVector = Icons.Filled.Cloud,
+                        contentDescription = stringResource(R.string.cloud_available),
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+                if (hasModel) {
+                    Icon(
+                        imageVector = Icons.Filled.ViewInAr,
+                        contentDescription = stringResource(R.string.model_available),
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
             }
 
             // Content
