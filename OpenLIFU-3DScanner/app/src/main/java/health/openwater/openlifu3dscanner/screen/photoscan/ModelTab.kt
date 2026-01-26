@@ -25,34 +25,44 @@ fun ModelTab(
     collectionName: String,
     photoscanId: Long,
     photocollectionId: Long,
-    autoDownloadEnabled: Boolean,
+    isLoggedIn: Boolean = false,
+    onStartProcessing: (() -> Unit)? = null,
     collectionViewModel: CollectionViewModel = hiltViewModel()
 ) {
     var downloadState by remember { mutableStateOf<DownloadState>(DownloadState.Init) }
     val scanDir =
         remember(collectionName) { File(getModelsDir(), "${collectionName}/scan") }
+    val isLocalOnly = photoscanId == 0L
 
-    LaunchedEffect(photocollectionId) {
-        val collection =
-            collectionViewModel.getPhotocollection(
-                photocollectionId = photocollectionId,
-                joinPhotos = true
-            )
-
-        if (collection != null) {
+    LaunchedEffect(photocollectionId, isLocalOnly) {
+        if (isLocalOnly) {
+            // Local-only scan - check if we have a model file
             val dir = File(getModelsDir(), "${collectionName}/scan")
-
             if (dir.exists() && dir.listFiles()?.find { it.name == "texturedMesh.obj" } != null) {
-                downloadState = DownloadState.Success
+                downloadState = DownloadState.Offline // Has local model, show it
             } else {
-                downloadState = DownloadState.NotDownloaded
-                if (autoDownloadEnabled) {
+                downloadState = DownloadState.NotProcessed // No model, needs processing
+            }
+        } else {
+            val collection =
+                collectionViewModel.getPhotocollection(
+                    photocollectionId = photocollectionId,
+                    joinPhotos = true
+                )
+
+            if (collection != null) {
+                val dir = File(getModelsDir(), "${collectionName}/scan")
+
+                if (dir.exists() && dir.listFiles()?.find { it.name == "texturedMesh.obj" } != null) {
+                    downloadState = DownloadState.Success
+                } else {
+                    // Auto-download the mesh
                     downloadState = DownloadState.Downloading
                     collectionViewModel.downloadMesh(photoscanId)
                 }
+            } else {
+                downloadState = DownloadState.Offline
             }
-        } else {
-            downloadState = DownloadState.Offline
         }
     }
 
@@ -87,15 +97,8 @@ fun ModelTab(
             when (downloadState) {
                 is DownloadState.Init -> Unit
 
-                is DownloadState.NotDownloaded -> {
-                    StateIdle(onAction = {
-                        downloadState = DownloadState.Downloading
-                        collectionViewModel.downloadMesh(photoscanId)
-                    })
-                }
-
                 is DownloadState.Downloading -> {
-                    StateDownloading()
+                    StateDownloadingModel()
                 }
 
                 is DownloadState.Offline,
@@ -119,6 +122,13 @@ fun ModelTab(
 
                 is DownloadState.Processing -> {
 
+                }
+
+                is DownloadState.NotProcessed -> {
+                    StateNotProcessed(
+                        isLoggedIn = isLoggedIn,
+                        onStartProcessing = onStartProcessing
+                    )
                 }
             }
         }

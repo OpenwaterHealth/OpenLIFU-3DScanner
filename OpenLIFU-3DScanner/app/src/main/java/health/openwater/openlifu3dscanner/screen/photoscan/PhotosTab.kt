@@ -12,6 +12,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import health.openwater.openlifu3dscanner.extensions.getModelsDir
 import health.openwater.openlifu3dscanner.viewmodel.CollectionViewModel
@@ -24,12 +25,12 @@ fun PhotosTab(
     collectionName: String,
     photoscanId: Long,
     photocollectionId: Long,
-    autoDownloadEnabled: Boolean,
     collectionViewModel: CollectionViewModel = hiltViewModel()
 ) {
     var downloadState by remember { mutableStateOf<DownloadState>(DownloadState.Init) }
     val scanDir =
         remember(collectionName) { File(getModelsDir(), collectionName) }
+    val downloadProgress by collectionViewModel.getPhotoDownloadProgress().collectAsStateWithLifecycle()
 
     LaunchedEffect(photoscanId) {
         val collection =
@@ -41,14 +42,12 @@ fun PhotosTab(
         if (collection != null) {
             val dir = File(getModelsDir(), collectionName)
 
-            if (dir.exists() && (dir.listFiles()?.size ?: 0) > (collection.photos?.size ?: 0)) {
+            if (dir.exists() && (dir.listFiles()?.size ?: 0) >= (collection.photos?.size ?: 0)) {
                 downloadState = DownloadState.Success
             } else {
-                downloadState = DownloadState.NotDownloaded
-                if (autoDownloadEnabled) {
-                    downloadState = DownloadState.Downloading
-                    collectionViewModel.downloadPhotocollection(photocollectionId)
-                }
+                // Auto-download the photos
+                downloadState = DownloadState.Downloading
+                collectionViewModel.downloadPhotocollection(photocollectionId)
             }
         } else {
             downloadState = DownloadState.Offline
@@ -82,22 +81,16 @@ fun PhotosTab(
             .fillMaxSize()
     ) {
         // Use key to force recomposition when state changes
-        key(downloadState) {
+        key(downloadState, downloadProgress) {
             when (downloadState) {
-                is DownloadState.NotDownloaded -> {
-                    StateIdle(onAction = {
-                        downloadState = DownloadState.Downloading
-                        collectionViewModel.downloadPhotocollection(photocollectionId)
-                    })
-                }
-
-                is DownloadState.Downloading -> {
-                    StateDownloading()
-                }
-
                 is DownloadState.Init -> Unit
 
+                is DownloadState.Downloading -> {
+                    StateDownloadingPhotos(progress = downloadProgress)
+                }
+
                 is DownloadState.Offline,
+                is DownloadState.NotProcessed,
                 is DownloadState.Success -> {
                     PhotosView(scanDir.absolutePath)
                 }

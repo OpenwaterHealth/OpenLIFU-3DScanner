@@ -37,7 +37,8 @@ fun UserProfileBadge(
     val uiState by userViewModel.uiState.collectAsStateWithLifecycle()
     var showProfileDialog by remember { mutableStateOf(false) }
 
-    if (uiState.isLoading) return
+    // Hide badge while loading or while credits are being fetched for logged-in user
+    if (uiState.isLoading || (uiState.user != null && uiState.credits == null)) return
 
     val initial = uiState.user
         ?.displayName

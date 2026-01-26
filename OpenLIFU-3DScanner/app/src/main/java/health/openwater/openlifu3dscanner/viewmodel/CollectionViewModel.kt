@@ -145,6 +145,8 @@ class CollectionViewModel @Inject constructor(
 
     fun getDownloadResultsFlow() = cloudRepository.getDownloadResultsFlow()
 
+    fun getPhotoDownloadProgress() = cloudRepository.photoDownloadProgress
+
     suspend fun deleteScan(
         photoscanId: Long,
         photocollectionId: Long,

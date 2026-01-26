@@ -16,6 +16,7 @@ class CloudViewModel @Inject constructor(
     val uploadState = cloudRepository.uploadState
     val imageUploadProgress = cloudRepository.getImageUploadProgress()
     val reconstructionProgress = cloudRepository.getReconstructionProgress()
+    val photocollectionReady = cloudRepository.photocollectionReady
     val currentPhotoscanId: Long? get() = cloudRepository.currentPhotoscanId
 
     fun getCurrentPhotocollection() = cloudRepository.getCurrentPhotocollection()

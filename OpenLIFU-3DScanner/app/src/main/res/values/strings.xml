@@ -81,6 +81,9 @@
     <string name="download_complete">Download Complete!</string>
     <string name="please_wait_while_the_data_is_being_downloaded">Please wait while the data is being downloaded</string>
     <string name="downloading">Downloading…</string>
+    <string name="downloading_photos_progress">%1$d of %2$d photos downloaded</string>
+    <string name="downloading_photos">Downloading photos…</string>
+    <string name="downloading_model">Downloading 3D model…</string>
     <string name="download_mesh">Download Model</string>
     <string name="download_the_3d_mesh_for_this_scan">Download the 3D model for this scan</string>
     <string name="mesh_ready_to_download">Model Ready to Download</string>
@@ -106,4 +109,8 @@
     <string name="delete_scan">Delete Scan</string>
     <string name="delete_scan_confirmation">Are you sure you want to delete this scan? This will permanently delete the 3D model and all photos from the server and your device.</string>
     <string name="deleting">Deleting…</string>
+    <string name="scan_not_processed">Scan Not Processed</string>
+    <string name="upload_to_create_3d_model">Upload photos to create a 3D model</string>
+    <string name="sign_in_to_process_scan">Sign in to upload and process this scan</string>
+    <string name="start_processing">Start Processing</string>
 </resources>

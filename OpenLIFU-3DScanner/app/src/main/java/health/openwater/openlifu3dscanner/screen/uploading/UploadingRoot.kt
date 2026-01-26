@@ -61,9 +61,26 @@ fun UploadingRoot(
     val uploadState by cloudViewModel.uploadState.collectAsState()
     val imageUploadProgress by cloudViewModel.imageUploadProgress.collectAsState()
     val reconstructionProgress by cloudViewModel.reconstructionProgress.collectAsState()
+    val photocollectionReady by cloudViewModel.photocollectionReady.collectAsState()
 
-    LaunchedEffect(imageFiles) {
+    // Reset and initialize for this collection
+    LaunchedEffect(collectionName) {
         if (imageFiles.isNotEmpty()) {
+            val currentCollection = cloudViewModel.getCurrentPhotocollection()
+            // If no photocollection exists, or it's for a different collection, reset and create new
+            if (currentCollection == null || currentCollection.name != collectionName) {
+                cloudViewModel.reset(false)
+                cloudViewModel.createPhotocollection(collectionName, autoUpload = false)
+            } else {
+                // Same collection, just upload remaining photos
+                cloudViewModel.uploadRemainingPhotos()
+            }
+        }
+    }
+
+    // Start uploading once the photocollection is created
+    LaunchedEffect(photocollectionReady) {
+        if (photocollectionReady && imageFiles.isNotEmpty()) {
             cloudViewModel.uploadRemainingPhotos()
         }
     }

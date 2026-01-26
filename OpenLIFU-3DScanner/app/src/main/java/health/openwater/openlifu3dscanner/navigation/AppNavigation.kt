@@ -24,14 +24,13 @@ sealed class Screen(val route: String) {
     object ViewCollection : Screen("photoscan")
 
     object Photoscan :
-        Screen("photoscan/{collectionName}/{photoscanId}/{photocollectionId}/{autoDownloadEnabled}") {
+        Screen("photoscan/{collectionName}/{photoscanId}/{photocollectionId}") {
         fun createRoute(
             collectionName: String,
             photoscanId: Long,
-            photocollectionId: Long,
-            autoDownloadEnabled: Boolean
+            photocollectionId: Long
         ) =
-            "photoscan/$collectionName/$photoscanId/$photocollectionId/$autoDownloadEnabled"
+            "photoscan/$collectionName/$photoscanId/$photocollectionId"
     }
 
     object Scanner : Screen("scanner/{collectionName}/{autoUploadEnabled}") {
@@ -109,8 +108,7 @@ fun AppNavigation() {
                         Screen.Photoscan.createRoute(
                             collectionName = item.name,
                             photoscanId = item.photoscanId,
-                            photocollectionId = item.photocollectionId,
-                            autoDownloadEnabled = true
+                            photocollectionId = item.photocollectionId
                         )
                     )
                 })
@@ -121,21 +119,25 @@ fun AppNavigation() {
             arguments = listOf(
                 navArgument("collectionName") { type = NavType.StringType },
                 navArgument("photoscanId") { type = NavType.LongType },
-                navArgument("photocollectionId") { type = NavType.LongType },
-                navArgument("autoDownloadEnabled") { type = NavType.BoolType })
+                navArgument("photocollectionId") { type = NavType.LongType })
         ) { backStackEntry ->
             val collectionName = backStackEntry.arguments?.getString("collectionName") ?: ""
             val photoscanId = backStackEntry.arguments?.getLong("photoscanId") ?: 0L
             val photocollectionId = backStackEntry.arguments?.getLong("photocollectionId") ?: 0L
-            val autoDownloadEnabled =
-                backStackEntry.arguments?.getBoolean("autoDownloadEnabled") ?: false
+            val isLocalOnly = photoscanId == 0L
 
             PhotoscanScreen(
                 collectionName = collectionName,
                 photoscanId = photoscanId,
                 photocollectionId = photocollectionId,
-                autoDownloadEnabled = autoDownloadEnabled,
                 onNavigateBack = { navController.popBackStack() },
+                onStartProcessing = if (isLocalOnly) {
+                    {
+                        navController.navigate(Screen.Uploading.createRoute(collectionName)) {
+                            popUpTo(Screen.Photoscan.route) { inclusive = true }
+                        }
+                    }
+                } else null
             )
         }
 
@@ -215,9 +217,9 @@ fun AppNavigation() {
             UploadingScreen(
                 collectionName = collectionName,
                 onNavigateBack = { navController.popBackStack() },
-                onViewModel = { scanId, photocollectionId, ->
+                onViewModel = { scanId, photocollectionId ->
                     navController.navigate(
-                        Screen.Photoscan.createRoute(collectionName, scanId, photocollectionId, true)
+                        Screen.Photoscan.createRoute(collectionName, scanId, photocollectionId)
                     ) {
                         popUpTo(Screen.Home.route) { inclusive = false }
                     }

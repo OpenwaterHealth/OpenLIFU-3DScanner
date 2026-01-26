@@ -42,9 +42,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import health.openwater.openlifu3dscanner.R
 import health.openwater.openlifu3dscanner.viewmodel.CollectionViewModel
+import health.openwater.openlifu3dscanner.viewmodel.UserViewModel
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
@@ -53,9 +55,10 @@ fun PhotoscanScreen(
     collectionName: String,
     photoscanId: Long,
     photocollectionId: Long,
-    autoDownloadEnabled: Boolean,
     onNavigateBack: () -> Unit,
-    collectionViewModel: CollectionViewModel = hiltViewModel()
+    onStartProcessing: (() -> Unit)? = null,
+    collectionViewModel: CollectionViewModel = hiltViewModel(),
+    userViewModel: UserViewModel = hiltViewModel()
 ) {
     val items = listOf(stringResource(R.string.model), stringResource(R.string.photos))
     var selectedItem by remember { mutableIntStateOf(0) }
@@ -63,6 +66,9 @@ fun PhotoscanScreen(
     var showDeleteConfirmation by remember { mutableStateOf(false) }
     var isDeleting by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
+
+    val userState by userViewModel.uiState.collectAsStateWithLifecycle()
+    val isLoggedIn = userState.user != null
 
     // Loading dialog while deleting
     if (isDeleting) {
@@ -188,8 +194,14 @@ fun PhotoscanScreen(
 
         Box(modifier = Modifier.padding(contentPadding)) {
             when (selectedItem) {
-                0 -> ModelTab(collectionName, photoscanId, photocollectionId, autoDownloadEnabled)
-                1 -> PhotosTab(collectionName, photoscanId, photocollectionId, autoDownloadEnabled)
+                0 -> ModelTab(
+                    collectionName = collectionName,
+                    photoscanId = photoscanId,
+                    photocollectionId = photocollectionId,
+                    isLoggedIn = isLoggedIn,
+                    onStartProcessing = onStartProcessing
+                )
+                1 -> PhotosTab(collectionName, photoscanId, photocollectionId)
             }
         }
     }

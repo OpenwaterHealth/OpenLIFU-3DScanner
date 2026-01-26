@@ -52,7 +52,13 @@ class CloudRepository @Inject constructor(
     private val scope = CoroutineScope(Dispatchers.IO)
 
     private var currentPhotocollection: Photocollection? = null
+    private val _photocollectionReady = MutableStateFlow(false)
+    val photocollectionReady: StateFlow<Boolean> = _photocollectionReady.asStateFlow()
     private val imageUploadProgressFlow = MutableStateFlow<ImageUploadProgress?>(null)
+
+    // Photo download progress: Pair(downloaded, total)
+    private val _photoDownloadProgress = MutableStateFlow<Pair<Int, Int>?>(null)
+    val photoDownloadProgress: StateFlow<Pair<Int, Int>?> = _photoDownloadProgress.asStateFlow()
     private val reconstructionProgressFlow = MutableStateFlow<ReconstructionProgress?>(null)
     private val downloadResultsFlow = MutableStateFlow<DownloadResult?>(null)
 
@@ -142,6 +148,7 @@ class CloudRepository @Inject constructor(
         totalImageCount = null
         imageUploadProgressFlow.value = null
         reconstructionProgressFlow.value = null
+        _photocollectionReady.value = false
         Log.d(TAG, "reset")
     }
 
@@ -162,6 +169,7 @@ class CloudRepository @Inject constructor(
         this.currentReferenceNumber = name
         this.autoUpload = autoUpload
         _uploadState.value = UploadState.Idle
+        _photocollectionReady.value = false
 
         val uid = authService.getCurrentUser()?.uid ?: return
 
@@ -190,6 +198,7 @@ class CloudRepository @Inject constructor(
                             photocollectionService = photocollectionService,
                             scope = scope
                         )
+                        _photocollectionReady.value = true
                         if (autoUpload) {
                             imageUploader?.start(autoUpload = true)
                         }
@@ -283,6 +292,12 @@ class CloudRepository @Inject constructor(
         _currentPhotoscanId = null
         if (removeLocalCollection) {
             resetCurrentPhotocollection()
+        } else {
+            // Reset photocollection state without deleting local files
+            imageUploader?.stop()
+            imageUploader = null
+            currentPhotocollection = null
+            _photocollectionReady.value = false
         }
         _uploadState.value = UploadState.Idle
         imageUploadProgressFlow.value = null
@@ -436,23 +451,32 @@ class CloudRepository @Inject constructor(
         val outputDir = getImagesDir(photocollection.name ?: return false)
         if (!outputDir.exists()) outputDir.mkdirs()
 
-        for (photo in photos) {
+        val totalPhotos = photos.size
+        _photoDownloadProgress.value = Pair(0, totalPhotos)
+
+        for ((index, photo) in photos.withIndex()) {
             Log.d(TAG, "Loading photo ${photo.fileName}")
             try {
                 val photoResponse =
                     photocollectionService.downloadPhoto(photocollection.id, photo.fileName)
-                if (!photoResponse.isSuccessful) return false
+                if (!photoResponse.isSuccessful) {
+                    _photoDownloadProgress.value = null
+                    return false
+                }
 
                 photoResponse.body()?.let {
                     val file = File(outputDir, photo.fileName)
                     saveResponseBodyToDisk(it, file)
                     Log.d(TAG, "Photo saved to ${file.absolutePath}")
+                    _photoDownloadProgress.value = Pair(index + 1, totalPhotos)
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Download failed for ${photo.fileName}", e)
+                _photoDownloadProgress.value = null
                 return false
             }
         }
+        _photoDownloadProgress.value = null
         return true
     }
 
