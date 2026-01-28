@@ -68,7 +68,9 @@ fun PhotoscanScreen(
     val coroutineScope = rememberCoroutineScope()
 
     val userState by userViewModel.uiState.collectAsStateWithLifecycle()
+    val hasCredits = (userState.credits ?: 0) > 0
     val isLoggedIn = userState.user != null
+    var showNoCreditsWarning by remember { mutableStateOf(false) }
 
     // Loading dialog while deleting
     if (isDeleting) {
@@ -119,6 +121,20 @@ fun PhotoscanScreen(
             dismissButton = {
                 TextButton(onClick = { showDeleteConfirmation = false }) {
                     Text(stringResource(R.string.cancel))
+                }
+            }
+        )
+    }
+
+    // No credits warning dialog
+    if (showNoCreditsWarning) {
+        AlertDialog(
+            onDismissRequest = { showNoCreditsWarning = false },
+            title = { Text(stringResource(R.string.no_credits_title)) },
+            text = { Text(stringResource(R.string.no_credits_contact_support)) },
+            confirmButton = {
+                TextButton(onClick = { showNoCreditsWarning = false }) {
+                    Text(stringResource(R.string.ok))
                 }
             }
         )
@@ -199,7 +215,15 @@ fun PhotoscanScreen(
                     photoscanId = photoscanId,
                     photocollectionId = photocollectionId,
                     isLoggedIn = isLoggedIn,
-                    onStartProcessing = onStartProcessing
+                    onStartProcessing = if (onStartProcessing != null) {
+                        {
+                            if (hasCredits) {
+                                onStartProcessing()
+                            } else {
+                                showNoCreditsWarning = true
+                            }
+                        }
+                    } else null
                 )
                 1 -> PhotosTab(collectionName, photoscanId, photocollectionId)
             }

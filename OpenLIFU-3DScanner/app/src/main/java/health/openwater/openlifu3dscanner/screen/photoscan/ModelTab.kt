@@ -22,6 +22,7 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import health.openwater.openlifu3dscanner.extensions.SCAN_SUBDIR
 import health.openwater.openlifu3dscanner.extensions.getModelsDir
 import health.openwater.openlifu3dscanner.extensions.hasLocalModel
+import health.openwater.openlifu3dscanner.network.dto.PhotoscanStatus
 import health.openwater.openlifu3dscanner.viewmodel.CollectionViewModel
 import kotlinx.coroutines.flow.collectLatest
 import java.io.File
@@ -41,7 +42,7 @@ fun ModelTab(
         remember(collectionName) { File(getModelsDir(), "$collectionName/$SCAN_SUBDIR") }
     val isLocalOnly = photoscanId == 0L
 
-    LaunchedEffect(photocollectionId, isLocalOnly) {
+    LaunchedEffect(photocollectionId, isLocalOnly, photoscanId) {
         if (isLocalOnly) {
             // Local-only scan - check if we have a model file
             if (hasLocalModel(collectionName)) {
@@ -50,22 +51,36 @@ fun ModelTab(
                 downloadState = DownloadState.NotProcessed // No model, needs processing
             }
         } else {
-            val collection =
-                collectionViewModel.getPhotocollection(
-                    photocollectionId = photocollectionId,
-                    joinPhotos = true
-                )
+            // First check if we have a local model
+            if (hasLocalModel(collectionName)) {
+                downloadState = DownloadState.Success
+                return@LaunchedEffect
+            }
 
-            if (collection != null) {
-                if (hasLocalModel(collectionName)) {
-                    downloadState = DownloadState.Success
-                } else {
-                    // Auto-download the mesh
+            // Fetch photoscan to check its status
+            val photoscan = collectionViewModel.getPhotoscan(photoscanId)
+
+            when (photoscan?.status) {
+                PhotoscanStatus.FINISHED -> {
+                    // Model is ready, download it
                     downloadState = DownloadState.Downloading
                     collectionViewModel.downloadMesh(photoscanId)
                 }
-            } else {
-                downloadState = DownloadState.Offline
+
+                PhotoscanStatus.STARTED, PhotoscanStatus.RUNNING -> {
+                    // Still processing
+                    downloadState = DownloadState.Processing
+                }
+
+                PhotoscanStatus.FAILED -> {
+                    // Processing failed
+                    downloadState = DownloadState.Failed
+                }
+
+                PhotoscanStatus.STOPPED, null -> {
+                    // Not processed or stopped
+                    downloadState = DownloadState.NotProcessed
+                }
             }
         }
     }
@@ -137,7 +152,7 @@ fun ModelTab(
                 }
 
                 is DownloadState.Processing -> {
-
+                    StateProcessing()
                 }
 
                 is DownloadState.NotProcessed -> {

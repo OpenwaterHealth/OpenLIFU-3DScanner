@@ -62,7 +62,8 @@ fun ScannerScreen(
 
     val userViewModel: UserViewModel = hiltViewModel()
     val uiState by userViewModel.uiState.collectAsStateWithLifecycle()
-    val isLoggedIn = uiState.user != null
+    val hasCredits = (uiState.credits ?: 0) > 0
+    val isLoggedIn = uiState.user != null && hasCredits
 
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -73,7 +74,7 @@ fun ScannerScreen(
     LaunchedEffect(Unit) {
         cloudViewModel.reset(false)
 
-        if (cloudViewModel.isLoggedInAndOnline()) {
+        if (cloudViewModel.isLoggedInAndOnline() && hasCredits) {
             cloudViewModel.createPhotocollection(collectionName, autoUploadEnabled)
         }
     }

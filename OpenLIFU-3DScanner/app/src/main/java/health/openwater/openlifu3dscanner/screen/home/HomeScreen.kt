@@ -45,11 +45,13 @@ fun HomeScreen(
     onSignIn: () -> Unit,
 ) {
     var showCollectionDialog by remember { mutableStateOf(false) }
+    var showNoCreditsWarning by remember { mutableStateOf(false) }
     var collectionName by remember { mutableStateOf("") }
     var autoUploadEnabled by remember { mutableStateOf(true) }
 
     val userViewModel: UserViewModel = hiltViewModel()
     val uiState by userViewModel.uiState.collectAsStateWithLifecycle()
+    val hasCredits = (uiState.credits ?: 0) > 0
 
     Scaffold(
         bottomBar = {
@@ -85,8 +87,13 @@ fun HomeScreen(
         ) {
             HomeRoot(
                 onStartScan = {
-                    showCollectionDialog = true
-                    collectionName = CollectionIdGenerator.generate()
+                    if (uiState.user != null && !hasCredits) {
+                        // User is logged in but has no credits - show warning first
+                        showNoCreditsWarning = true
+                    } else {
+                        showCollectionDialog = true
+                        collectionName = CollectionIdGenerator.generate()
+                    }
                 },
                 onSettings = onSettings,
                 onViewCollection = onViewCollection,
@@ -115,7 +122,7 @@ fun HomeScreen(
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    if (uiState.user != null) {
+                    if (uiState.user != null && hasCredits) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
@@ -163,6 +170,40 @@ fun HomeScreen(
                 }
             }
         )
+    }
 
+    if (showNoCreditsWarning) {
+        AlertDialog(
+            onDismissRequest = {
+                showNoCreditsWarning = false
+            },
+            title = {
+                Text(text = stringResource(R.string.no_credits_title))
+            },
+            text = {
+                Text(text = stringResource(R.string.no_credits_message))
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showNoCreditsWarning = false
+                        showCollectionDialog = true
+                        collectionName = CollectionIdGenerator.generate()
+                        autoUploadEnabled = false // Force offline mode
+                    }
+                ) {
+                    Text(stringResource(R.string.continue_offline))
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        showNoCreditsWarning = false
+                    }
+                ) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        )
     }
 }

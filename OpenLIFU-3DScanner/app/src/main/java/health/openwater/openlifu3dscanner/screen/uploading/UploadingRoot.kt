@@ -121,7 +121,7 @@ fun UploadingRoot(
             is UploadState.Error -> {
                 ErrorView(
                     message = (uploadState as UploadState.Error).message,
-                    onRetry = { cloudViewModel.uploadRemainingPhotos() },
+                    onRetry = { cloudViewModel.startReconstruction() },
                     onCancel = onNavigateBack
                 )
             }

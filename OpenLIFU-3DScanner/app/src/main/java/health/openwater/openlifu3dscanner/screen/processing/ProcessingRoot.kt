@@ -59,7 +59,8 @@ fun ProcessingRoot(
 ) {
     val userViewModel: UserViewModel = hiltViewModel()
     val uiState by userViewModel.uiState.collectAsStateWithLifecycle()
-    val isLoggedIn = uiState.user != null
+    val hasCredits = (uiState.credits ?: 0) > 0
+    val isLoggedIn = uiState.user != null && hasCredits
 
     val scanDir =
         remember(collectionName) { File(getModelsDir(), collectionName) }

@@ -129,4 +129,10 @@
     <string name="notice_title">Research Device Notice</string>
     <string name="notice">Research device. Limited by Federal (or United States) law to research use. The system described here has not been evaluated by the FDA and is not designed for the treatment or diagnosis of any disease. It is provided AS-IS, with no warranties. User assumes all liability and responsibility for identifying and mitigating risks associated with using this software.</string>
     <string name="model_available">3D model available</string>
+    <string name="processing_in_progress">Processing in Progress</string>
+    <string name="processing_in_progress_message">Your scan is being processed in the cloud. Please check back later.</string>
+    <string name="no_credits_title">No Credits Available</string>
+    <string name="no_credits_message">You have no credits available. The scan will be saved locally only and won\'t be uploaded to the cloud for 3D reconstruction.</string>
+    <string name="no_credits_contact_support">You have no credits available. Please contact support to recharge your credits.</string>
+    <string name="continue_offline">Continue Offline</string>
 </resources>

@@ -135,6 +135,10 @@ class CollectionViewModel @Inject constructor(
         )
     }
 
+    suspend fun getPhotoscan(photoscanId: Long): Photoscan? {
+        return cloudRepository.getPhotoscan(photoscanId)
+    }
+
     fun downloadMesh(scanId: Long) {
         cloudRepository.download(DownloadingItem(scanId, Type.PHOTOSCAN))
     }
