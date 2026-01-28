@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -34,7 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import health.openwater.openlifu3dscanner.R
-import health.openwater.openlifu3dscanner.extensions.drawPetal
+import health.openwater.openlifu3dscanner.extensions.drawSegmentedArc
 import health.openwater.openlifu3dscanner.viewmodel.ScannerViewModel
 
 @Composable
@@ -181,33 +180,39 @@ fun ScanControls(
             val centerX = size.width / 2f
             val centerY = size.height / 2f - size.height * 0.2f
 
-            val ovalRadiusX = size.width * 0.65f / 2f  // Horizontal radius
-            val ovalRadiusY = size.height * 0.45f / 2f // Vertical radius
+            val ovalRadiusX = size.width * 0.65f / 2f + 8f  // Slightly outside the cutout
+            val ovalRadiusY = size.height * 0.45f / 2f + 8f
             val ovalCenter = Offset(centerX, centerY)
 
-            val totalPetals = (360f / viewModel.captureInterval).toInt()
+            val totalSegments = (360f / viewModel.captureInterval).toInt()
+            val segmentSweep = viewModel.captureInterval - 2f  // Gap between segments
+            val strokeWidth = 8f
 
-            // ---- Draw petals around oval ----
-            for (i in 0 until totalPetals) {
-                val angle = i * viewModel.captureInterval
+            // Get relative angle from starting position
+            val relativeAngle = viewModel.getRelativeAngle()
+
+            // Draw segmented arc border
+            for (i in 0 until totalSegments) {
+                val startAngle = i * viewModel.captureInterval - 90f  // Start from top
                 val isCaptured = viewModel.capturedBuckets.contains(i)
-                val isCurrent = (viewModel.currentAngle / viewModel.captureInterval).toInt() == i
+                val isCurrent = (relativeAngle / viewModel.captureInterval).toInt() == i
 
-                val petalColor = when {
-                    isCurrent -> Color.Yellow
-                    isCaptured -> Color.Green
-                    else -> Color.White.copy(alpha = 0.3f)
+                val segmentColor = when {
+                    isCurrent -> Color.Cyan
+                    isCaptured -> Color(0xFF00E676)  // Bright green
+                    else -> Color.White.copy(alpha = 0.25f)
                 }
 
-                drawPetal(
+                drawSegmentedArc(
                     center = ovalCenter,
-                    angle = angle,
                     radiusX = ovalRadiusX,
                     radiusY = ovalRadiusY,
-                    color = petalColor,
+                    startAngle = startAngle,
+                    sweepAngle = segmentSweep,
+                    color = segmentColor,
+                    strokeWidth = strokeWidth,
                     isCaptured = isCaptured,
                     isCurrent = isCurrent,
-                    petalWidth = 360 / totalPetals.toFloat() * 6,
                     blinkAlpha = if (isCurrent) blinkAlpha else 1f
                 )
             }

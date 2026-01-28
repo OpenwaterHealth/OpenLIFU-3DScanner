@@ -40,6 +40,9 @@ class ScannerViewModel @Inject constructor(
     var currentAngle by mutableFloatStateOf(0f)
         private set
 
+    var startingAngle by mutableFloatStateOf(0f)
+        private set
+
     val totalBuckets = Prefs.getPhotoCount(application)
     val captureInterval = 360 / totalBuckets.toFloat()
     val capturedBuckets = mutableStateSetOf<Int>()
@@ -113,6 +116,7 @@ class ScannerViewModel @Inject constructor(
         val file = File(getModelsDir(), collectionName).apply { mkdirs() }
         currentScanPath = file
 
+        startingAngle = currentAngle  // Store the starting orientation
         _isScanning.value = true
         capturedBuckets.clear()
         _capturedBucketsCount.value = 0
@@ -125,7 +129,17 @@ class ScannerViewModel @Inject constructor(
 
     // ---- Angle bucket logic ----
     fun angleToBucket(angle: Float): Int {
-        return ((angle % 360f) / captureInterval).toInt().coerceIn(0, totalBuckets - 1)
+        // Calculate relative angle from starting position
+        var relativeAngle = angle - startingAngle
+        if (relativeAngle < 0) relativeAngle += 360f
+        return ((relativeAngle % 360f) / captureInterval).toInt().coerceIn(0, totalBuckets - 1)
+    }
+
+    // Get the current angle relative to starting position (for UI display)
+    fun getRelativeAngle(): Float {
+        var relativeAngle = currentAngle - startingAngle
+        if (relativeAngle < 0) relativeAngle += 360f
+        return relativeAngle
     }
 
     fun shouldCapture(): Boolean {
