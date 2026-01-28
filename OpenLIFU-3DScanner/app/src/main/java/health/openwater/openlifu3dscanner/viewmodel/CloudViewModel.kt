@@ -40,4 +40,9 @@ class CloudViewModel @Inject constructor(
     fun isLoggedInAndOnline() = cloudRepository.isLoggedInAndOnline()
 
     fun reset(removeLocalCollection: Boolean) = cloudRepository.reset(removeLocalCollection)
+
+    fun resetPhotocollection(collectionName: String, autoUpload: Boolean) {
+        cloudRepository.resetCurrentPhotocollection()
+        createPhotocollection(collectionName, autoUpload)
+    }
 }

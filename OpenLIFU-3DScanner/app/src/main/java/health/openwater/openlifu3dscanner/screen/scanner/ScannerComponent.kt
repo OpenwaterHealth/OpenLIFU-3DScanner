@@ -7,6 +7,7 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -24,8 +25,10 @@ import health.openwater.openlifu3dscanner.viewmodel.ScannerViewModel
 
 @Composable
 fun ScannerComponent(
-    onProceed: () -> Unit,
     collectionName: String,
+    autoUploadEnabled: Boolean,
+    snackbarHostState: SnackbarHostState,
+    onProceed: () -> Unit,
     viewModel: ScannerViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
@@ -91,6 +94,11 @@ fun ScannerComponent(
             modifier = Modifier.fillMaxSize()
         )
 
-        ScanControls(collectionName = collectionName)
+        ScanControls(
+            collectionName = collectionName,
+            autoUploadEnabled = autoUploadEnabled,
+            snackbarHostState = snackbarHostState,
+            onProceed = onProceed
+        )
     }
 }

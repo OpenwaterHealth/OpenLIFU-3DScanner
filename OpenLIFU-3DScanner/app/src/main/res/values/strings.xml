@@ -1,6 +1,8 @@
 <resources>
     <string name="app_name">OpenLIFU</string>
     <string name="start_scan">Start Scan</string>
+    <string name="stop_scan">Stop</string>
+    <string name="recapture">Re-capture</string>
     <string name="cancel">Cancel</string>
     <string name="collection_id">Collection ID</string>
     <string name="enter_collection_id">Enter Collection ID</string>
@@ -13,7 +15,7 @@
     <string name="yes">Yes</string>
     <string name="navigate_back">Navigate Back</string>
     <string name="_1_point_camera_at_face">1. Point camera at face</string>
-    <string name="_2_tap_button">2. Tap ⏺️ button</string>
+    <string name="_2_tap_button">2. Tap \"Start Scan\" button</string>
     <string name="_3_walk_in_a_circle_around_person">3. Walk in a circle around person</string>
     <string name="photos_capture_automatically">Photos capture automatically</string>
     <string name="walk_to_next_capture_point">Walk to next capture point</string>

@@ -1,5 +1,6 @@
 package health.openwater.openlifu3dscanner.screen.scanner
 
+import android.annotation.SuppressLint
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -16,11 +17,19 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalContext
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -34,15 +43,25 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import health.openwater.openlifu3dscanner.R
 import health.openwater.openlifu3dscanner.extensions.drawSegmentedArc
+import health.openwater.openlifu3dscanner.viewmodel.CloudViewModel
 import health.openwater.openlifu3dscanner.viewmodel.ScannerViewModel
 
+private const val MIN_IMAGES_COUNT = 20
+
+@SuppressLint("LocalContextGetResourceValueCall")
 @Composable
 fun ScanControls(
     collectionName: String,
+    autoUploadEnabled: Boolean,
+    snackbarHostState: SnackbarHostState,
+    onProceed: () -> Unit,
+    cloudViewModel: CloudViewModel = hiltViewModel(),
     viewModel: ScannerViewModel = hiltViewModel()
 ) {
     val isScanning by viewModel.isScanning.collectAsState()
     val isCompleted by viewModel.isCompleted.collectAsState()
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
 
     Box(modifier = Modifier.fillMaxSize()) {
         // Semi-transparent black overlay with oval cutout
@@ -143,23 +162,105 @@ fun ScanControls(
                     )
                 }
 
-                if (viewModel.capturedBuckets.size < viewModel.totalBuckets) {
+                Spacer(modifier = Modifier.height(24.dp))
 
-                    Spacer(modifier = Modifier.height(24.dp))
-                    RecordButton(
-                        enabled = viewModel.faceDetected || isScanning,
-                        isRecording = isScanning,
-                        onClick = {
-                                if (!isScanning) {
-                                    viewModel.startScanning(collectionName)
-                                } else {
-                                    viewModel.stopScanning()
+                if (isScanning) {
+                    // Stop button - full width
+                    Button(
+                        onClick = { viewModel.stopScanning() },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFFE53935)  // Red
+                        )
+                    ) {
+                        Text(
+                            text = stringResource(R.string.stop_scan),
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                } else if (viewModel.capturedBuckets.isNotEmpty()) {
+                    // Re-capture and Proceed buttons - 50/50 width
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        OutlinedButton(
+                            onClick = {
+                                // Reset photocollection if auto-upload was enabled
+                                if (autoUploadEnabled) {
+                                    cloudViewModel.resetPhotocollection(collectionName, autoUploadEnabled)
                                 }
-                        },
-                        modifier = Modifier.align(Alignment.CenterHorizontally)
-                    )
-                    Spacer(modifier = Modifier.height(24.dp))
+                                viewModel.startScanning(collectionName)
+                            },
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(56.dp),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = Color.White
+                            )
+                        ) {
+                            Text(
+                                text = stringResource(R.string.recapture),
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+
+                        Button(
+                            onClick = {
+                                if (viewModel.capturedBuckets.size < MIN_IMAGES_COUNT) {
+                                    scope.launch {
+                                        snackbarHostState.showSnackbar(
+                                            message = context.getString(
+                                                R.string.you_need_to_capture_at_least_d_images_to_proceed,
+                                                MIN_IMAGES_COUNT
+                                            )
+                                        )
+                                    }
+                                } else {
+                                    onProceed()
+                                }
+                            },
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(56.dp),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF00E676)  // Green
+                            )
+                        ) {
+                            Text(
+                                text = stringResource(R.string.proceed),
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.Black
+                            )
+                        }
+                    }
+                } else {
+                    // Start button - full width
+                    Button(
+                        onClick = { viewModel.startScanning(collectionName) },
+                        enabled = viewModel.faceDetected,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text(
+                            text = stringResource(R.string.start_scan),
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
+
+                Spacer(modifier = Modifier.height(24.dp))
             }
         }
 

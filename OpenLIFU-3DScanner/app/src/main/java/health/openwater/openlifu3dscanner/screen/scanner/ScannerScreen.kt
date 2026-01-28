@@ -1,7 +1,6 @@
 package health.openwater.openlifu3dscanner.screen.scanner
 
 import android.Manifest
-import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -16,22 +15,15 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -41,13 +33,8 @@ import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import health.openwater.openlifu3dscanner.R
 import health.openwater.openlifu3dscanner.viewmodel.CloudViewModel
-import health.openwater.openlifu3dscanner.viewmodel.ScannerViewModel
 import health.openwater.openlifu3dscanner.viewmodel.UserViewModel
-import kotlinx.coroutines.launch
 
-const val MIN_IMAGES_COUNT = 20
-
-@SuppressLint("LocalContextGetResourceValueCall")
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @Composable
 fun ScannerScreen(
@@ -55,21 +42,14 @@ fun ScannerScreen(
     autoUploadEnabled: Boolean,
     onNavigateBack: () -> Unit,
     onNavigateToProcessing: (autoUploadEnabled: Boolean, isLoggedIn: Boolean) -> Unit,
-    cloudViewModel: CloudViewModel = hiltViewModel(),
-    scannerViewModel: ScannerViewModel = hiltViewModel()
+    cloudViewModel: CloudViewModel = hiltViewModel()
 ) {
-    val capturedBucketsCount by scannerViewModel.capturedBucketsCount.collectAsState(initial = 0)
-
     val userViewModel: UserViewModel = hiltViewModel()
     val uiState by userViewModel.uiState.collectAsStateWithLifecycle()
     val hasCredits = (uiState.credits ?: 0) > 0
     val isLoggedIn = uiState.user != null && hasCredits
 
     val snackbarHostState = remember { SnackbarHostState() }
-    val scope = rememberCoroutineScope()
-    val context = LocalContext.current
-
-    val isScanning by scannerViewModel.isScanning.collectAsState()
 
     LaunchedEffect(Unit) {
         cloudViewModel.reset(false)
@@ -91,33 +71,6 @@ fun ScannerScreen(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(R.string.navigate_back)
-                        )
-                    }
-                },
-                actions = {
-                    TextButton(
-                        enabled = !isScanning,
-                        modifier = Modifier.alpha(if (!isScanning) 1f else 0.5f),
-                        onClick = {
-                            if (capturedBucketsCount < MIN_IMAGES_COUNT) {
-                                scope.launch {
-                                    snackbarHostState.showSnackbar(
-                                        message = context.getString(
-                                            R.string.you_need_to_capture_at_least_d_images_to_proceed,
-                                            MIN_IMAGES_COUNT
-                                        ),
-                                        actionLabel = context.getString(R.string.dismiss)
-                                    )
-                                }
-                            } else {
-                                onNavigateToProcessing(autoUploadEnabled, isLoggedIn)
-                            }
-                        }
-                    ) {
-                        Text(
-                            text = stringResource(R.string.proceed).uppercase(),
-                            fontSize = 16.sp,
-                            color = MaterialTheme.colorScheme.onPrimary
                         )
                     }
                 },
@@ -147,6 +100,8 @@ fun ScannerScreen(
             if (cameraPermissionState.status.isGranted) {
                 ScannerComponent(
                     collectionName = collectionName,
+                    autoUploadEnabled = autoUploadEnabled,
+                    snackbarHostState = snackbarHostState,
                     onProceed = {
                         onNavigateToProcessing(autoUploadEnabled, isLoggedIn)
                     }
