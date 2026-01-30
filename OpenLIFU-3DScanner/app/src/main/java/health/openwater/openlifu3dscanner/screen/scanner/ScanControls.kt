@@ -67,7 +67,7 @@ fun ScanControls(
         // Semi-transparent black overlay with oval cutout
         Canvas(modifier = Modifier.fillMaxSize()) {
             // Draw full black background
-            drawRect(color = Color.Black.copy(alpha = 0.7f))
+            drawRect(color = Color.Black.copy(alpha = 0.3f))
 
             // Calculate oval dimensions (centered, portrait-oriented)
             val ovalWidth = size.width * 0.65f

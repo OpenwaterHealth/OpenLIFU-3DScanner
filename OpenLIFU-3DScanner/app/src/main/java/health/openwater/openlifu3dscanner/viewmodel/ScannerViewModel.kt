@@ -71,8 +71,7 @@ class ScannerViewModel @Inject constructor(
     fun initializeCameraAndSensors() {
         cameraExecutor = Executors.newSingleThreadExecutor()
         imageCapture = ImageCapture.Builder()
-            .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
-            .setJpegQuality(90)
+            .setCaptureMode(ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY)
             .build()
 
         sensorManager = application.getSystemService(Context.SENSOR_SERVICE) as SensorManager
