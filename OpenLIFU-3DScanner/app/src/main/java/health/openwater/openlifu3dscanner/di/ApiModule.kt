@@ -40,7 +40,7 @@ object ApiModule {
     private const val READ_TIMEOUT = 15L
     private const val WRITE_TIMEOUT = 15L
 
-    const val API_URL = "https://api.nvpsoftware.com"
+    const val API_URL = "https://api.openwater.health/"
 
     @Provides
     @Singleton
