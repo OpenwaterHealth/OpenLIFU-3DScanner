@@ -121,6 +121,21 @@
     <string name="scan_settings">Scan Settings</string>
     <string name="image_size">Image Size</string>
     <string name="photo_count_setting">Photo Count</string>
+    <string name="capture_mode">Capture Mode</string>
+
+    <!-- Image size options -->
+    <string name="image_size_1024">1024x1024</string>
+    <string name="image_size_2048">2048x2048</string>
+
+    <!-- Photo count options -->
+    <string name="photo_count_120">120 photos</string>
+    <string name="photo_count_60">60 photos</string>
+    <string name="photo_count_30">30 photos</string>
+
+    <!-- Capture mode options -->
+    <string name="capture_mode_max_quality">Maximum Quality</string>
+    <string name="capture_mode_min_latency">Minimum Latency</string>
+    <string name="capture_mode_zero_shutter_lag">Zero Shutter Lag</string>
     <string name="support_and_legal">Support &amp; Legal</string>
     <string name="video_tutorial">Video Tutorial</string>
     <string name="video_tutorial_summary">Watch how to use the app</string>

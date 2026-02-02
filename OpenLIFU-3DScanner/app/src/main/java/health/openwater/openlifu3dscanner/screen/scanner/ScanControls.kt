@@ -192,7 +192,10 @@ fun ScanControls(
                             onClick = {
                                 // Reset photocollection if auto-upload was enabled
                                 if (autoUploadEnabled) {
-                                    cloudViewModel.resetPhotocollection(collectionName, autoUploadEnabled)
+                                    cloudViewModel.resetPhotocollection(
+                                        collectionName,
+                                        autoUploadEnabled
+                                    )
                                 }
                                 viewModel.startScanning(collectionName)
                             },
@@ -276,8 +279,6 @@ fun ScanControls(
         )
 
         Canvas(modifier = Modifier.fillMaxSize()) {
-            if (!isScanning) return@Canvas
-
             val centerX = size.width / 2f
             val centerY = size.height / 2f - size.height * 0.2f
 
@@ -287,7 +288,7 @@ fun ScanControls(
 
             val totalSegments = (360f / viewModel.captureInterval).toInt()
             val segmentSweep = viewModel.captureInterval - 2f  // Gap between segments
-            val strokeWidth = 8f
+            val strokeWidth = 12f
 
             // Get relative angle from starting position
             val relativeAngle = viewModel.getRelativeAngle()
@@ -296,10 +297,11 @@ fun ScanControls(
             for (i in 0 until totalSegments) {
                 val startAngle = i * viewModel.captureInterval - 90f  // Start from top
                 val isCaptured = viewModel.capturedBuckets.contains(i)
-                val isCurrent = (relativeAngle / viewModel.captureInterval).toInt() == i
+                val isCurrent =
+                    isScanning && (relativeAngle / viewModel.captureInterval).toInt() == i
 
                 val segmentColor = when {
-                    isCurrent -> Color.Cyan
+                    isCurrent -> Color.Yellow
                     isCaptured -> Color(0xFF00E676)  // Bright green
                     else -> Color.White.copy(alpha = 0.25f)
                 }

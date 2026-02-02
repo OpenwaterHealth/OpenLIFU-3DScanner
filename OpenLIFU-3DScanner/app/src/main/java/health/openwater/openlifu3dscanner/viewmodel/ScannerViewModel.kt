@@ -70,8 +70,9 @@ class ScannerViewModel @Inject constructor(
 
     fun initializeCameraAndSensors() {
         cameraExecutor = Executors.newSingleThreadExecutor()
+        val captureMode = Prefs.getCaptureMode(application)
         imageCapture = ImageCapture.Builder()
-            .setCaptureMode(ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY)
+            .setCaptureMode(captureMode)
             .build()
 
         sensorManager = application.getSystemService(Context.SENSOR_SERVICE) as SensorManager

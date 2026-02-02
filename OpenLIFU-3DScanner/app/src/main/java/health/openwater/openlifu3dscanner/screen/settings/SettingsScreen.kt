@@ -93,11 +93,13 @@ fun SettingsScreen(
                         values = Prefs.IMAGE_SIZE_MAP.keys.toList(),
                         title = { Text(stringResource(R.string.image_size)) },
                         valueToText = {
-                            AnnotatedString(
-                                Prefs.IMAGE_SIZE_MAP[it] ?: it.toString()
-                            )
+                            val resId = Prefs.IMAGE_SIZE_MAP[it]
+                            AnnotatedString(if (resId != null) context.getString(resId) else it.toString())
                         },
-                        summary = { Text(Prefs.IMAGE_SIZE_MAP[it] ?: it.toString()) }
+                        summary = {
+                            val resId = Prefs.IMAGE_SIZE_MAP[it]
+                            Text(if (resId != null) stringResource(resId) else it.toString())
+                        }
                     )
 
                     // Photo Count Preference
@@ -107,11 +109,29 @@ fun SettingsScreen(
                         values = Prefs.PHOTO_COUNT_MAP.keys.toList(),
                         title = { Text(stringResource(R.string.photo_count_setting)) },
                         valueToText = {
-                            AnnotatedString(
-                                Prefs.PHOTO_COUNT_MAP[it] ?: it.toString()
-                            )
+                            val resId = Prefs.PHOTO_COUNT_MAP[it]
+                            AnnotatedString(if (resId != null) context.getString(resId) else it.toString())
                         },
-                        summary = { Text(Prefs.PHOTO_COUNT_MAP[it] ?: it.toString()) }
+                        summary = {
+                            val resId = Prefs.PHOTO_COUNT_MAP[it]
+                            Text(if (resId != null) stringResource(resId) else it.toString())
+                        }
+                    )
+
+                    // Capture Mode Preference
+                    listPreference(
+                        key = Prefs.CAPTURE_MODE_KEY,
+                        defaultValue = Prefs.CAPTURE_MODE_DEFAULT,
+                        values = Prefs.CAPTURE_MODE_MAP.keys.toList(),
+                        title = { Text(stringResource(R.string.capture_mode)) },
+                        valueToText = {
+                            val resId = Prefs.CAPTURE_MODE_MAP[it]
+                            AnnotatedString(if (resId != null) context.getString(resId) else it.toString())
+                        },
+                        summary = {
+                            val resId = Prefs.CAPTURE_MODE_MAP[it]
+                            Text(if (resId != null) stringResource(resId) else it.toString())
+                        }
                     )
 
                     // Support & Legal Category
