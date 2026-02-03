@@ -226,6 +226,7 @@ fun ScanControls(
                                         )
                                     }
                                 } else {
+                                    cloudViewModel.onScanComplete()
                                     onProceed()
                                 }
                             },

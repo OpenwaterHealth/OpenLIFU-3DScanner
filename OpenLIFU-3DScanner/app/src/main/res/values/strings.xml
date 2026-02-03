@@ -48,6 +48,8 @@
     <string name="upload">Upload</string>
     <string name="the_reconstruction_will_continue_running_in_the_cloud_you_may_safely_close_the_app_and_download_the_results_once_complete">The reconstruction will continue running in the cloud. You may safely close the app and download the results once complete.</string>
     <string name="reconstruction_complete">Reconstruction Complete!</string>
+    <string name="reconstruction_failed">Reconstruction Failed</string>
+    <string name="reconstruction_stopped">Reconstruction Stopped</string>
     <string name="reconstructing_3d_model">Reconstructing 3D Model</string>
     <string name="starting_reconstruction">Starting reconstruction…</string>
     <string name="start_3d_reconstruction">Start 3D Reconstruction</string>
@@ -152,4 +154,16 @@
     <string name="no_credits_message">You have no credits available. The scan will be saved locally only and won\'t be uploaded to the cloud for 3D reconstruction.</string>
     <string name="no_credits_contact_support">You have no credits available. Please contact support to recharge your credits.</string>
     <string name="continue_offline">Continue Offline</string>
+
+    <!-- Upload Service Notifications -->
+    <string name="notification_channel_upload">Image Upload</string>
+    <string name="notification_channel_upload_description">Shows upload and reconstruction progress</string>
+    <string name="notification_preparing_upload">Preparing upload…</string>
+    <string name="notification_preparing">Preparing…</string>
+    <string name="notification_uploading_images">Uploading images…</string>
+    <string name="notification_upload_complete_starting_reconstruction">Upload complete, starting reconstruction…</string>
+    <string name="notification_starting_reconstruction">Starting reconstruction…</string>
+    <string name="notification_reconstructing_3d_model">Reconstructing 3D model…</string>
+    <string name="notification_error">Error: %1$s</string>
+    <string name="notification_processing">Processing…</string>
 </resources>

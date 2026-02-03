@@ -1,5 +1,7 @@
 package health.openwater.openlifu3dscanner.screen.uploading
 
+import android.Manifest
+import android.os.Build
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -32,6 +34,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberPermissionState
 import health.openwater.openlifu3dscanner.R
 import health.openwater.openlifu3dscanner.network.model.ImageUploadProgress
 import health.openwater.openlifu3dscanner.network.model.ReconstructionProgress
@@ -41,6 +46,7 @@ import health.openwater.openlifu3dscanner.extensions.getModelsDir
 import health.openwater.openlifu3dscanner.viewmodel.CloudViewModel
 import java.io.File
 
+@OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun UploadingRoot(
     collectionName: String,
@@ -48,6 +54,17 @@ fun UploadingRoot(
     onViewModel: (scanId: Long, photocollectionId: Long) -> Unit,
     cloudViewModel: CloudViewModel = hiltViewModel()
 ) {
+    // Request notification permission for Android 13+ (fallback if not already granted in ScannerScreen)
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        val notificationPermissionState =
+            rememberPermissionState(Manifest.permission.POST_NOTIFICATIONS)
+        LaunchedEffect(notificationPermissionState.status.isGranted) {
+            if (!notificationPermissionState.status.isGranted) {
+                notificationPermissionState.launchPermissionRequest()
+            }
+        }
+    }
+
     val scanDir =
         remember(collectionName) { File(getModelsDir(), collectionName) }
 
@@ -63,25 +80,41 @@ fun UploadingRoot(
     val reconstructionProgress by cloudViewModel.reconstructionProgress.collectAsState()
     val photocollectionReady by cloudViewModel.photocollectionReady.collectAsState()
 
-    // Reset and initialize for this collection
+    // Initialize upload for this collection
     LaunchedEffect(collectionName) {
-        if (imageFiles.isNotEmpty()) {
-            val currentCollection = cloudViewModel.getCurrentPhotocollection()
-            // If no photocollection exists, or it's for a different collection, reset and create new
-            if (currentCollection == null || currentCollection.name != collectionName) {
+        if (imageFiles.isEmpty()) return@LaunchedEffect
+
+        val currentCollection = cloudViewModel.getCurrentPhotocollection()
+
+        when {
+            // No collection exists - create new one
+            currentCollection == null -> {
                 cloudViewModel.reset(false)
                 cloudViewModel.createPhotocollection(collectionName, autoUpload = false)
-            } else {
-                // Same collection, just upload remaining photos
+            }
+            // Different collection - reset and create new
+            currentCollection.name != collectionName -> {
+                cloudViewModel.reset(false)
+                cloudViewModel.createPhotocollection(collectionName, autoUpload = false)
+            }
+            // Same collection exists - just start/continue upload
+            else -> {
                 cloudViewModel.uploadRemainingPhotos()
             }
         }
+
+        // Mark scan as complete since we're uploading from collections
+        // (all images are already captured)
+        cloudViewModel.onScanComplete()
     }
 
-    // Start uploading once the photocollection is created
+    // Start uploading once the photocollection is ready (for new collections)
     LaunchedEffect(photocollectionReady) {
         if (photocollectionReady && imageFiles.isNotEmpty()) {
+            // This will be a no-op if already running (checked in ImageUploader)
             cloudViewModel.uploadRemainingPhotos()
+            // Ensure scan is marked complete for auto-reconstruction
+            cloudViewModel.onScanComplete()
         }
     }
 

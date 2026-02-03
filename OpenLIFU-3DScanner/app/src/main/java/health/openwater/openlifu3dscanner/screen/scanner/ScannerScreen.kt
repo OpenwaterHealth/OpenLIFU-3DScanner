@@ -1,6 +1,7 @@
 package health.openwater.openlifu3dscanner.screen.scanner
 
 import android.Manifest
+import android.os.Build
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -86,9 +87,18 @@ fun ScannerScreen(
 
         val cameraPermissionState = rememberPermissionState(Manifest.permission.CAMERA)
 
+        // Request notification permission for Android 13+ (needed for upload progress notification)
+        val notificationPermissionState = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            rememberPermissionState(Manifest.permission.POST_NOTIFICATIONS)
+        } else null
+
         LaunchedEffect(Unit) {
             if (!cameraPermissionState.status.isGranted) {
                 cameraPermissionState.launchPermissionRequest()
+            }
+            // Request notification permission after camera permission
+            if (notificationPermissionState != null && !notificationPermissionState.status.isGranted) {
+                notificationPermissionState.launchPermissionRequest()
             }
         }
 

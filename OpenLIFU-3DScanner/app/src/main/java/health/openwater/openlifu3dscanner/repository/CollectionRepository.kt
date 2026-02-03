@@ -1,4 +1,4 @@
-package health.openwater.openlifu3dscanner.network.repository
+package health.openwater.openlifu3dscanner.repository
 
 import health.openwater.openlifu3dscanner.network.Result
 import health.openwater.openlifu3dscanner.network.api.AuthService

@@ -9,8 +9,8 @@ import health.openwater.openlifu3dscanner.network.dto.Photocollection
 import health.openwater.openlifu3dscanner.network.dto.Photoscan
 import health.openwater.openlifu3dscanner.network.model.DownloadingItem
 import health.openwater.openlifu3dscanner.network.model.Type
-import health.openwater.openlifu3dscanner.network.repository.CloudRepository
-import health.openwater.openlifu3dscanner.network.repository.CollectionRepository
+import health.openwater.openlifu3dscanner.repository.CloudRepository
+import health.openwater.openlifu3dscanner.repository.CollectionRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update

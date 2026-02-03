@@ -11,11 +11,13 @@ object Prefs {
     const val IMAGE_SIZE_KEY = "pref_image_size"
     const val PHOTO_COUNT_KEY = "pref_photo_count"
     const val CAPTURE_MODE_KEY = "pref_capture_mode"
+    const val AUTO_UPLOAD_KEY = "pref_auto_upload"
 
     // Default values
     const val IMAGE_SIZE_DEFAULT = 1024
     const val PHOTO_COUNT_DEFAULT = 120
     const val CAPTURE_MODE_DEFAULT = ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY
+    const val AUTO_UPLOAD_DEFAULT = true
 
     val IMAGE_SIZE_MAP = mapOf(
         1024 to R.string.image_size_1024,
@@ -55,5 +57,15 @@ object Prefs {
     fun getCaptureMode(context: Context): Int {
         val prefs = getInstance(context)
         return prefs.getInt(CAPTURE_MODE_KEY, CAPTURE_MODE_DEFAULT)
+    }
+
+    fun getAutoUpload(context: Context): Boolean {
+        val prefs = getInstance(context)
+        return prefs.getBoolean(AUTO_UPLOAD_KEY, AUTO_UPLOAD_DEFAULT)
+    }
+
+    fun setAutoUpload(context: Context, enabled: Boolean) {
+        val prefs = getInstance(context)
+        prefs.edit().putBoolean(AUTO_UPLOAD_KEY, enabled).apply()
     }
 }

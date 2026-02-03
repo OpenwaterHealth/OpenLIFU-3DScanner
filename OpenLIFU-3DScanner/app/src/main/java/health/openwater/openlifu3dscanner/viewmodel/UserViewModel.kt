@@ -6,7 +6,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import health.openwater.openlifu3dscanner.core.UserInfoState
 import health.openwater.openlifu3dscanner.network.Result
 import health.openwater.openlifu3dscanner.network.api.AuthService
-import health.openwater.openlifu3dscanner.network.repository.UserRepository
+import health.openwater.openlifu3dscanner.repository.UserRepository
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject

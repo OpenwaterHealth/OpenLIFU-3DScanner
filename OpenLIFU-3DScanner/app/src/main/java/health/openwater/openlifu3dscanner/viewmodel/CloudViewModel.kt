@@ -3,8 +3,7 @@ package health.openwater.openlifu3dscanner.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import health.openwater.openlifu3dscanner.core.UploadState
-import health.openwater.openlifu3dscanner.network.repository.CloudRepository
+import health.openwater.openlifu3dscanner.repository.CloudRepository
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -36,6 +35,8 @@ class CloudViewModel @Inject constructor(
     }
 
     fun uploadRemainingPhotos() = cloudRepository.uploadRemainingPhotos()
+
+    fun onScanComplete() = cloudRepository.onScanComplete()
 
     fun isLoggedInAndOnline() = cloudRepository.isLoggedInAndOnline()
 

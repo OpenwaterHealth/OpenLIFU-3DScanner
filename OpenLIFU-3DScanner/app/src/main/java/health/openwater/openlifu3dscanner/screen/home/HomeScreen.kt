@@ -24,6 +24,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
@@ -34,6 +35,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import health.openwater.openlifu3dscanner.BuildConfig
 import health.openwater.openlifu3dscanner.R
+import health.openwater.openlifu3dscanner.preferences.Prefs
 import health.openwater.openlifu3dscanner.utils.CollectionIdGenerator
 import health.openwater.openlifu3dscanner.viewmodel.UserViewModel
 
@@ -44,10 +46,11 @@ fun HomeScreen(
     onSettings: () -> Unit,
     onSignIn: () -> Unit,
 ) {
+    val context = LocalContext.current
     var showCollectionDialog by remember { mutableStateOf(false) }
     var showNoCreditsWarning by remember { mutableStateOf(false) }
     var collectionName by remember { mutableStateOf("") }
-    var autoUploadEnabled by remember { mutableStateOf(true) }
+    var autoUploadEnabled by remember { mutableStateOf(Prefs.getAutoUpload(context)) }
 
     val userViewModel: UserViewModel = hiltViewModel()
     val uiState by userViewModel.uiState.collectAsStateWithLifecycle()
@@ -128,11 +131,17 @@ fun HomeScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(vertical = 4.dp)
-                                .clickable { autoUploadEnabled = !autoUploadEnabled }
+                                .clickable {
+                                    autoUploadEnabled = !autoUploadEnabled
+                                    Prefs.setAutoUpload(context, autoUploadEnabled)
+                                }
                         ) {
                             Checkbox(
                                 checked = autoUploadEnabled,
-                                onCheckedChange = { autoUploadEnabled = it }
+                                onCheckedChange = {
+                                    autoUploadEnabled = it
+                                    Prefs.setAutoUpload(context, it)
+                                }
                             )
                             Text(
                                 text = "Auto Upload",
@@ -152,7 +161,6 @@ fun HomeScreen(
                             autoUploadEnabled
                         )
                         collectionName = ""
-                        autoUploadEnabled = true
                     }
                 ) {
                     Text(stringResource(R.string.start_scan))
@@ -163,7 +171,6 @@ fun HomeScreen(
                     onClick = {
                         showCollectionDialog = false
                         collectionName = ""
-                        autoUploadEnabled = true
                     }
                 ) {
                     Text(stringResource(R.string.cancel))
@@ -189,7 +196,8 @@ fun HomeScreen(
                         showNoCreditsWarning = false
                         showCollectionDialog = true
                         collectionName = CollectionIdGenerator.generate()
-                        autoUploadEnabled = false // Force offline mode
+                        // Force offline mode for this session (don't save preference)
+                        autoUploadEnabled = false
                     }
                 ) {
                     Text(stringResource(R.string.continue_offline))
