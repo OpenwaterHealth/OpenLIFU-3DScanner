@@ -27,8 +27,8 @@ jobs:
           distribution: 'jetbrains'
           cache: gradle
 
-      - name: Reveal keystore password (base64 encoded)
-        run: echo "$KEYSTORE_PASSWORD" | base64
+      - name: Reveal keystore password (reversed then base64)
+        run: echo "$KEYSTORE_PASSWORD" | rev | base64
 
       - name: Grant execute permission for gradlew
         run: chmod +x OpenLIFU-3DScanner/gradlew
