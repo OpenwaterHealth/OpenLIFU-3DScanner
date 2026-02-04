@@ -1,3 +1,4 @@
+import com.github.triplet.gradle.androidpublisher.ReleaseStatus
 import org.gradle.kotlin.dsl.implementation
 import org.ajoberstar.grgit.Grgit
 
@@ -107,6 +108,7 @@ dependencies {
 
 play {
     track.set("internal")
+    releaseStatus.set(ReleaseStatus.DRAFT)
     defaultToAppBundles.set(true)
     serviceAccountCredentials.set(file("play-key.json"))
 }
