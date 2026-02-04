@@ -108,7 +108,7 @@ dependencies {
 
 play {
     track.set("internal")
-    releaseStatus.set(ReleaseStatus.DRAFT)
+    releaseStatus.set(ReleaseStatus.COMPLETED)
     defaultToAppBundles.set(true)
     serviceAccountCredentials.set(file("play-key.json"))
 }
