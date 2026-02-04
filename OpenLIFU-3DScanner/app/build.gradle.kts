@@ -1,10 +1,8 @@
-import com.android.build.gradle.internal.api.BaseVariantOutputImpl
 import org.gradle.kotlin.dsl.implementation
 import org.ajoberstar.grgit.Grgit
 
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
 
     alias(libs.plugins.google.devtools.ksp)
@@ -12,24 +10,12 @@ plugins {
     alias(libs.plugins.google.services)
     alias(libs.plugins.grgit)
     alias(libs.plugins.firebase.crashlytics)
+    id("com.github.triplet.play")
 }
 
 android {
     namespace = "health.openwater.openlifu3dscanner"
-    compileSdk {
-        version = release(36)
-    }
-
-    applicationVariants.all {
-        val version = defaultConfig.versionName
-        val buildTypeName = buildType.name
-        outputs.all {
-            if (this is BaseVariantOutputImpl) {
-                val appName = "OpenLifu3DScanner"
-                outputFileName = "$appName-v$version-$buildTypeName.apk"
-            }
-        }
-    }
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "health.openwater.openlifu3dscanner"
@@ -75,9 +61,9 @@ android {
     }
 }
 
+
 dependencies {
     implementation(libs.androidx.appcompat)
-//    implementation("com.google.android.material:material:1.13.0")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -116,6 +102,13 @@ dependencies {
     implementation(libs.gson)
 
     implementation(libs.preference)
+}
+
+
+play {
+    track.set("internal")
+    defaultToAppBundles.set(true)
+    serviceAccountCredentials.set(file("play-key.json"))
 }
 
 fun getCommitNumber(): Int {

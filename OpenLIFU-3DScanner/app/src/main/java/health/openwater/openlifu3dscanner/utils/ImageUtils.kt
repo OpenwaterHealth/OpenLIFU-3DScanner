@@ -71,7 +71,7 @@ fun File.resizeJpegAsSquareByteArray(
         square.recycle()
 
         // 9) Copy EXIF data (reset orientation since we applied rotation)
-        val newExif = ExifInterface(tempFile)
+        val newExif = ExifInterface(tempFile.absolutePath)
         copyExifAttributes(originalExif, newExif)
         newExif.setAttribute(
             ExifInterface.TAG_ORIENTATION,
