@@ -1,5 +1,7 @@
 package health.openwater.openlifu3dscanner.screen.home
 
+import android.Manifest
+import android.os.Build
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -33,15 +35,21 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberPermissionState
 import health.openwater.openlifu3dscanner.BuildConfig
+import health.openwater.openlifu3dscanner.extensions.hasAllFilesAccess
 import health.openwater.openlifu3dscanner.R
 import health.openwater.openlifu3dscanner.preferences.Prefs
 import health.openwater.openlifu3dscanner.utils.CollectionIdGenerator
 import health.openwater.openlifu3dscanner.viewmodel.UserViewModel
 
+@OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun HomeScreen(
     onStartScan: (collectionName: String, autoUploadEnabled: Boolean) -> Unit,
+    onRequestPermissions: () -> Unit,
     onViewCollection: () -> Unit,
     onSettings: () -> Unit,
     onSignIn: () -> Unit,
@@ -55,6 +63,30 @@ fun HomeScreen(
     val userViewModel: UserViewModel = hiltViewModel()
     val uiState by userViewModel.uiState.collectAsStateWithLifecycle()
     val hasCredits = (uiState.credits ?: 0) > 0
+
+    // Check permissions
+    val storageGranted = hasAllFilesAccess()
+    val cameraPermissionState = rememberPermissionState(Manifest.permission.CAMERA)
+    val notificationPermissionState = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        rememberPermissionState(Manifest.permission.POST_NOTIFICATIONS)
+    } else null
+
+    val allPermissionsGranted = storageGranted &&
+            cameraPermissionState.status.isGranted &&
+            (notificationPermissionState?.status?.isGranted ?: true)
+
+    fun handleStartScan() {
+        if (!allPermissionsGranted) {
+            onRequestPermissions()
+            return
+        }
+        if (uiState.user != null && !hasCredits) {
+            showNoCreditsWarning = true
+        } else {
+            showCollectionDialog = true
+            collectionName = CollectionIdGenerator.generate()
+        }
+    }
 
     Scaffold(
         bottomBar = {
@@ -89,15 +121,7 @@ fun HomeScreen(
             color = MaterialTheme.colorScheme.background
         ) {
             HomeRoot(
-                onStartScan = {
-                    if (uiState.user != null && !hasCredits) {
-                        // User is logged in but has no credits - show warning first
-                        showNoCreditsWarning = true
-                    } else {
-                        showCollectionDialog = true
-                        collectionName = CollectionIdGenerator.generate()
-                    }
-                },
+                onStartScan = { handleStartScan() },
                 onSettings = onSettings,
                 onViewCollection = onViewCollection,
                 onSignIn = onSignIn

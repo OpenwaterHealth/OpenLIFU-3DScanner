@@ -47,6 +47,14 @@ class ImageUploader(
 
         if (resetProgress) {
             uploadedImages.clear()
+        } else {
+            // Remove stale entries from uploadedImages that no longer exist in the directory
+            val currentFiles = getFiles().toSet()
+            val staleFiles = uploadedImages.filter { it !in currentFiles }
+            if (staleFiles.isNotEmpty()) {
+                Log.d(TAG, "Removing ${staleFiles.size} stale entries from uploadedImages: $staleFiles")
+                uploadedImages.removeAll(staleFiles.toSet())
+            }
         }
 
         Log.d(TAG, "Starting uploader - autoUpload: $autoUpload, resetProgress: $resetProgress")
@@ -161,8 +169,11 @@ class ImageUploader(
 
     private suspend fun emitProgress(failed: Boolean) {
         val files = getFiles()
+        val filesSet = files.toSet()
         val totalImages = files.size
-        val uploadedCount = uploadedImages.size
+        // Only count uploaded images that still exist in the directory
+        // This prevents uploadedCount > totalImages if files were deleted
+        val uploadedCount = uploadedImages.count { it in filesSet }
         val progress = if (totalImages > 0) {
             (uploadedCount.toFloat() / totalImages * 100).toInt()
         } else 0

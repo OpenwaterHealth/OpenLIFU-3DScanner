@@ -9,6 +9,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import health.openwater.openlifu3dscanner.screen.collection.ViewCollectionScreen
 import health.openwater.openlifu3dscanner.screen.home.HomeScreen
+import health.openwater.openlifu3dscanner.screen.permissions.PermissionsScreen
 import health.openwater.openlifu3dscanner.screen.photoscan.PhotoscanScreen
 import health.openwater.openlifu3dscanner.screen.processing.ProcessingScreen
 import health.openwater.openlifu3dscanner.screen.scanner.ScannerScreen
@@ -32,6 +33,8 @@ sealed class Screen(val route: String) {
         ) =
             "photoscan/$collectionName/$photoscanId/$photocollectionId"
     }
+
+    object Permissions : Screen("permissions")
 
     object Scanner : Screen("scanner/{collectionName}/{autoUploadEnabled}") {
         fun createRoute(collectionName: String, autoUploadEnabled: Boolean) =
@@ -76,10 +79,11 @@ fun AppNavigation() {
             HomeScreen(
                 onStartScan = { collectionName, autoUploadEnabled ->
                     navController.navigate(
-                        Screen.Scanner.createRoute(
-                            collectionName, autoUploadEnabled
-                        )
+                        Screen.Scanner.createRoute(collectionName, autoUploadEnabled)
                     )
+                },
+                onRequestPermissions = {
+                    navController.navigate(Screen.Permissions.route)
                 },
                 onSettings = { navController.navigate(Screen.Settings.route) },
                 onViewCollection = {
@@ -97,6 +101,13 @@ fun AppNavigation() {
         composable(Screen.Settings.route) {
             SettingsScreen(
                 onNavigateBack = { navController.popBackStack() },
+            )
+        }
+
+        composable(Screen.Permissions.route) {
+            PermissionsScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onPermissionsGranted = { navController.popBackStack() }
             )
         }
 

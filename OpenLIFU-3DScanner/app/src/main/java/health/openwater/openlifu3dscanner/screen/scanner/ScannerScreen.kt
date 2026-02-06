@@ -1,8 +1,5 @@
 package health.openwater.openlifu3dscanner.screen.scanner
 
-import android.Manifest
-import android.os.Build
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -22,21 +19,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.isGranted
-import com.google.accompanist.permissions.rememberPermissionState
 import health.openwater.openlifu3dscanner.R
 import health.openwater.openlifu3dscanner.viewmodel.CloudViewModel
 import health.openwater.openlifu3dscanner.viewmodel.UserViewModel
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScannerScreen(
     collectionName: String,
@@ -84,52 +75,19 @@ fun ScannerScreen(
             )
         }
     ) { contentPadding ->
-
-        val cameraPermissionState = rememberPermissionState(Manifest.permission.CAMERA)
-
-        // Request notification permission for Android 13+ (needed for upload progress notification)
-        val notificationPermissionState = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            rememberPermissionState(Manifest.permission.POST_NOTIFICATIONS)
-        } else null
-
-        LaunchedEffect(Unit) {
-            if (!cameraPermissionState.status.isGranted) {
-                cameraPermissionState.launchPermissionRequest()
-            }
-            // Request notification permission after camera permission
-            if (notificationPermissionState != null && !notificationPermissionState.status.isGranted) {
-                notificationPermissionState.launchPermissionRequest()
-            }
-        }
-
         Surface(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(contentPadding),
         ) {
-            if (cameraPermissionState.status.isGranted) {
-                ScannerComponent(
-                    collectionName = collectionName,
-                    autoUploadEnabled = autoUploadEnabled,
-                    snackbarHostState = snackbarHostState,
-                    onProceed = {
-                        onNavigateToProcessing(autoUploadEnabled, isLoggedIn)
-                    }
-                )
-            } else {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = stringResource(R.string.camera_permission_required),
-                        color = Color.White,
-                        fontSize = 18.sp
-                    )
+            ScannerComponent(
+                collectionName = collectionName,
+                autoUploadEnabled = autoUploadEnabled,
+                snackbarHostState = snackbarHostState,
+                onProceed = {
+                    onNavigateToProcessing(autoUploadEnabled, isLoggedIn)
                 }
-            }
+            )
         }
     }
-
 }
