@@ -22,6 +22,7 @@
     <string name="_3_walk_in_a_circle_around_person">3. Walk in a circle around person</string>
     <string name="photos_capture_automatically">Photos capture automatically</string>
     <string name="walk_to_next_capture_point">Walk to next capture point</string>
+    <string name="hold_phone_upright">Hold phone upright and steady</string>
     <string name="complete">%1$d%% complete</string>
     <string name="all_photos_captured">All photos captured</string>
     <string name="check_complete">✓ COMPLETE!</string>

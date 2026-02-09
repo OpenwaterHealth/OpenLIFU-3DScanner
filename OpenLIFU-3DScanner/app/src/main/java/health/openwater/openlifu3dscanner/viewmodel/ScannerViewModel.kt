@@ -43,6 +43,18 @@ class ScannerViewModel @Inject constructor(
     var startingAngle by mutableFloatStateOf(0f)
         private set
 
+    // Pitch and roll for orientation validation
+    var currentPitch by mutableFloatStateOf(0f)
+        private set
+    var currentRoll by mutableFloatStateOf(0f)
+        private set
+
+    // Phone must be held roughly upright to capture
+    // Pitch ~-90° when vertical; allow ±20° from vertical
+    // Roll ~0° when not tilted sideways; allow ±30°
+    val isOrientationValid: Boolean
+        get() = currentPitch in -110f..-70f && currentRoll in -30f..30f
+
     val totalBuckets = Prefs.getPhotoCount(application)
     val captureInterval = 360 / totalBuckets.toFloat()
     val capturedBuckets = mutableStateSetOf<Int>()
@@ -90,6 +102,8 @@ class ScannerViewModel @Inject constructor(
                 var azimuth = Math.toDegrees(orientation[0].toDouble()).toFloat()
                 if (azimuth < 0) azimuth += 360f
                 currentAngle = azimuth
+                currentPitch = Math.toDegrees(orientation[1].toDouble()).toFloat()
+                currentRoll = Math.toDegrees(orientation[2].toDouble()).toFloat()
             }
 
             override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
@@ -143,7 +157,7 @@ class ScannerViewModel @Inject constructor(
     }
 
     fun shouldCapture(): Boolean {
-        if (!_isScanning.value || isCapturing) return false
+        if (!_isScanning.value || isCapturing || !isOrientationValid) return false
         val bucket = angleToBucket(currentAngle)
         return bucket !in capturedBuckets
     }

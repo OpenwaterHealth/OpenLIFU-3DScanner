@@ -82,7 +82,7 @@ fun ScannerComponent(
         }
     }
 
-    LaunchedEffect(viewModel.currentAngle, viewModel.faceDetected, viewModel.isScanning) {
+    LaunchedEffect(viewModel.currentAngle, viewModel.faceDetected, viewModel.isScanning, viewModel.isOrientationValid) {
         if (viewModel.shouldCapture()) {
             viewModel.capturePhoto()
         }

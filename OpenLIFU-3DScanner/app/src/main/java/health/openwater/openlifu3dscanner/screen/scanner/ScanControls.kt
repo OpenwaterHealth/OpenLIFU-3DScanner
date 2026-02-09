@@ -154,12 +154,22 @@ fun ScanControls(
 
                 } else {
                     if (!isCompleted) {
-                        Text(
-                            text = stringResource(R.string.walk_to_next_capture_point),
-                            color = Color.White,
-                            fontSize = 18.sp,
-                            textAlign = TextAlign.Center
-                        )
+                        if (!viewModel.isOrientationValid) {
+                            Text(
+                                text = stringResource(R.string.hold_phone_upright),
+                                color = Color(0xFFFF9800),
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                textAlign = TextAlign.Center
+                            )
+                        } else {
+                            Text(
+                                text = stringResource(R.string.walk_to_next_capture_point),
+                                color = Color.White,
+                                fontSize = 18.sp,
+                                textAlign = TextAlign.Center
+                            )
+                        }
                     }
 
                     Spacer(modifier = Modifier.height(8.dp))
