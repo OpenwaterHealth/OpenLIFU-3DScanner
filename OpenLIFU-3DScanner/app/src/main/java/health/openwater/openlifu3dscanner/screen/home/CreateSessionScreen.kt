@@ -227,18 +227,6 @@ fun CreateCollectionScreen(
                     )
                 }
 
-                subjectsState.subjects.isEmpty() -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = stringResource(R.string.no_subjects_available),
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
-                }
-
                 else -> {
                     // ---------- Subject picker ----------
                     ExposedDropdownMenuBox(
