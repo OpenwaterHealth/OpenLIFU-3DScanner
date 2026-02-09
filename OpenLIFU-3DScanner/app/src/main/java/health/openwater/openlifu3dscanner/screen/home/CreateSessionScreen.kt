@@ -40,9 +40,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -174,6 +178,7 @@ fun CreateCollectionScreen(
                 .padding(contentPadding)
                 .padding(horizontal = 24.dp, vertical = 24.dp)
         ) {
+            val keyboardController = LocalSoftwareKeyboardController.current
             if (!isLoggedIn) {
                 val focusRequester = remember { FocusRequester() }
                 LaunchedEffect(Unit) { focusRequester.requestFocus() }
@@ -188,6 +193,8 @@ fun CreateCollectionScreen(
                     placeholder = {
                         Text(stringResource(R.string.example_session_name))
                     },
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(onDone = { keyboardController?.hide() }),
                     modifier = Modifier
                         .fillMaxWidth()
                         .focusRequester(focusRequester)
@@ -223,6 +230,8 @@ fun CreateCollectionScreen(
                         placeholder = {
                             Text(stringResource(R.string.example_session_name))
                         },
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                        keyboardActions = KeyboardActions(onDone = { keyboardController?.hide() }),
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
@@ -363,6 +372,8 @@ fun CreateCollectionScreen(
                                 placeholder = {
                                     Text(stringResource(R.string.example_session_name))
                                 },
+                                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                                keyboardActions = KeyboardActions(onDone = { keyboardController?.hide() }),
                                 modifier = Modifier.fillMaxWidth()
                             )
                         }
