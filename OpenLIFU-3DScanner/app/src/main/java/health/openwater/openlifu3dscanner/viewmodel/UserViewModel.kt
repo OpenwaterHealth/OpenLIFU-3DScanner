@@ -17,6 +17,7 @@ class UserViewModel @Inject constructor(
 ) : ViewModel() {
 
     val uiState: StateFlow<UserInfoState> = userRepository.userInfoState
+    val isConnected: StateFlow<Boolean> = userRepository.isConnected
 
     fun getCredits() = viewModelScope.launch {
         userRepository.refreshCredits()

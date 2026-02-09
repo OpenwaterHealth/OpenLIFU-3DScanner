@@ -1,5 +1,6 @@
 package health.openwater.openlifu3dscanner.screen.scanner
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
@@ -17,28 +18,28 @@ import health.openwater.openlifu3dscanner.R
 
 @Composable
 fun Instructions() {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
         Text(
             text = stringResource(R.string._1_point_camera_at_face),
             color = Color.White,
             fontSize = 18.sp,
             textAlign = TextAlign.Center
         )
-        Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = stringResource(R.string._2_tap_button),
             color = Color.White,
             fontSize = 18.sp,
             textAlign = TextAlign.Center
         )
-        Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = stringResource(R.string._3_walk_in_a_circle_around_person),
             color = Color.White,
             fontSize = 18.sp,
             textAlign = TextAlign.Center
         )
-        Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = stringResource(R.string.photos_capture_automatically),
             color = Color.Yellow,

@@ -40,6 +40,8 @@ class UserRepository @Inject constructor(
     private val _credits = MutableStateFlow<Int?>(null)
     val credits: StateFlow<Int?> = _credits.asStateFlow()
 
+    val isConnected: StateFlow<Boolean> = connectivityObserver.isConnected
+
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
 

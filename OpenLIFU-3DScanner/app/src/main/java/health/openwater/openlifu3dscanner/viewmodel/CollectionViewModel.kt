@@ -154,17 +154,25 @@ class CollectionViewModel @Inject constructor(
     suspend fun deleteScan(
         photoscanId: Long,
         photocollectionId: Long,
-        collectionName: String
+        collectionName: String,
+        deleteLocal: Boolean = true,
+        deleteCloud: Boolean = true
     ): Boolean {
-        // Delete photoscan from server
-        val photoscanDeleted = cloudRepository.deletePhotoscan(photoscanId)
+        var success = true
 
-        // Delete photocollection from server
-        val photocollectionDeleted = cloudRepository.deletePhotocollection(photocollectionId)
+        if (deleteCloud) {
+            if (photoscanId != 0L) {
+                success = cloudRepository.deletePhotoscan(photoscanId) && success
+            }
+            if (photocollectionId != 0L) {
+                success = cloudRepository.deletePhotocollection(photocollectionId) && success
+            }
+        }
 
-        // Delete local directory
-        val localDeleted = cloudRepository.deleteLocalScanDirectory(collectionName)
+        if (deleteLocal) {
+            success = cloudRepository.deleteLocalScanDirectory(collectionName) && success
+        }
 
-        return photoscanDeleted && photocollectionDeleted && localDeleted
+        return success
     }
 }

@@ -36,7 +36,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
-import health.openwater.openlifu3dscanner.screen.processing.PreviewItem
 import java.io.File
 
 @Composable

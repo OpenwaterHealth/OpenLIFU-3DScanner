@@ -118,6 +118,22 @@ fun SettingsScreen(
                         }
                     )
 
+                    // Oval Size Preference
+                    listPreference(
+                        key = Prefs.OVAL_SIZE_KEY,
+                        defaultValue = Prefs.OVAL_SIZE_DEFAULT,
+                        values = Prefs.OVAL_SIZE_MAP.keys.toList(),
+                        title = { Text(stringResource(R.string.oval_size)) },
+                        valueToText = {
+                            val resId = Prefs.OVAL_SIZE_MAP[it]
+                            AnnotatedString(if (resId != null) context.getString(resId) else it.toString())
+                        },
+                        summary = {
+                            val resId = Prefs.OVAL_SIZE_MAP[it]
+                            Text(if (resId != null) stringResource(resId) else it.toString())
+                        }
+                    )
+
                     // Capture Mode Preference
                     listPreference(
                         key = Prefs.CAPTURE_MODE_KEY,

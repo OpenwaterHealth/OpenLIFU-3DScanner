@@ -66,13 +66,9 @@ class ReconstructionService : Service() {
         super.onCreate()
         Log.d(TAG, "UploadService created")
         createNotificationChannel()
-        acquireWakeLock()
-    }
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        Log.d(TAG, "UploadService started")
-        _isRunning.value = true
-
+        // Must call startForeground() immediately in onCreate() to avoid
+        // ForegroundServiceDidNotStartInTimeException
         val notification = createNotification(
             getString(R.string.notification_preparing_upload),
             null,
@@ -87,6 +83,13 @@ class ReconstructionService : Service() {
         } else {
             startForeground(NOTIFICATION_ID, notification)
         }
+
+        acquireWakeLock()
+    }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        Log.d(TAG, "UploadService started")
+        _isRunning.value = true
 
         // Observe upload progress and update notification
         observeProgress()

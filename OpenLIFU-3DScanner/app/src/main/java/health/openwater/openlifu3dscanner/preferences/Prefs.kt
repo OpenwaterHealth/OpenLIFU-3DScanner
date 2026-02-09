@@ -11,12 +11,14 @@ object Prefs {
     const val IMAGE_SIZE_KEY = "pref_image_size"
     const val PHOTO_COUNT_KEY = "pref_photo_count"
     const val CAPTURE_MODE_KEY = "pref_capture_mode"
+    const val OVAL_SIZE_KEY = "pref_oval_size"
     const val AUTO_UPLOAD_KEY = "pref_auto_upload"
 
     // Default values
     const val IMAGE_SIZE_DEFAULT = 1024
     const val PHOTO_COUNT_DEFAULT = 120
     const val CAPTURE_MODE_DEFAULT = ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY
+    const val OVAL_SIZE_DEFAULT = 100
     const val AUTO_UPLOAD_DEFAULT = true
 
     val IMAGE_SIZE_MAP = mapOf(
@@ -28,6 +30,12 @@ object Prefs {
         120 to R.string.photo_count_120,
         60 to R.string.photo_count_60,
         30 to R.string.photo_count_30
+    )
+
+    val OVAL_SIZE_MAP = mapOf(
+        100 to R.string.oval_size_1x,
+        150 to R.string.oval_size_1_5x,
+        200 to R.string.oval_size_2x
     )
 
     val CAPTURE_MODE_MAP = mapOf(
@@ -57,6 +65,11 @@ object Prefs {
     fun getCaptureMode(context: Context): Int {
         val prefs = getInstance(context)
         return prefs.getInt(CAPTURE_MODE_KEY, CAPTURE_MODE_DEFAULT)
+    }
+
+    fun getOvalSize(context: Context): Int {
+        val prefs = getInstance(context)
+        return prefs.getInt(OVAL_SIZE_KEY, OVAL_SIZE_DEFAULT)
     }
 
     fun getAutoUpload(context: Context): Boolean {

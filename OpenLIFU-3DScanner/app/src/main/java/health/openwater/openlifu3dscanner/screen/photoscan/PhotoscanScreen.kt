@@ -1,12 +1,16 @@
 package health.openwater.openlifu3dscanner.screen.photoscan
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -45,6 +49,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import health.openwater.openlifu3dscanner.R
+import health.openwater.openlifu3dscanner.extensions.getModelsDir
 import health.openwater.openlifu3dscanner.repository.ScanConfig
 import health.openwater.openlifu3dscanner.viewmodel.CloudViewModel
 import health.openwater.openlifu3dscanner.viewmodel.CollectionViewModel
@@ -69,6 +74,13 @@ fun PhotoscanScreen(
     var showDeleteConfirmation by remember { mutableStateOf(false) }
     var isDeleting by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
+
+    val hasLocalFiles = remember(collectionName) {
+        java.io.File(getModelsDir(), collectionName).exists()
+    }
+    val hasCloudData = photoscanId != 0L || photocollectionId != 0L
+    var deleteLocal by remember { mutableStateOf(true) }
+    var deleteCloud by remember { mutableStateOf(true) }
 
     val userState by userViewModel.uiState.collectAsStateWithLifecycle()
     val hasCredits = (userState.credits ?: 0) > 0
@@ -101,7 +113,46 @@ fun PhotoscanScreen(
         AlertDialog(
             onDismissRequest = { showDeleteConfirmation = false },
             title = { Text(stringResource(R.string.delete_scan)) },
-            text = { Text(stringResource(R.string.delete_scan_confirmation)) },
+            text = {
+                Column {
+                    Text(stringResource(R.string.delete_scan_confirmation))
+                    Spacer(modifier = Modifier.height(12.dp))
+                    if (hasLocalFiles) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { deleteLocal = !deleteLocal }
+                        ) {
+                            Checkbox(
+                                checked = deleteLocal,
+                                onCheckedChange = { deleteLocal = it }
+                            )
+                            Text(
+                                text = stringResource(R.string.delete_local_files),
+                                modifier = Modifier.padding(start = 4.dp)
+                            )
+                        }
+                    }
+                    if (hasCloudData) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { deleteCloud = !deleteCloud }
+                        ) {
+                            Checkbox(
+                                checked = deleteCloud,
+                                onCheckedChange = { deleteCloud = it }
+                            )
+                            Text(
+                                text = stringResource(R.string.delete_from_cloud),
+                                modifier = Modifier.padding(start = 4.dp)
+                            )
+                        }
+                    }
+                }
+            },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -111,12 +162,15 @@ fun PhotoscanScreen(
                             collectionViewModel.deleteScan(
                                 photoscanId = photoscanId,
                                 photocollectionId = photocollectionId,
-                                collectionName = collectionName
+                                collectionName = collectionName,
+                                deleteLocal = deleteLocal,
+                                deleteCloud = deleteCloud
                             )
                             isDeleting = false
                             onNavigateBack()
                         }
-                    }
+                    },
+                    enabled = deleteLocal || deleteCloud
                 ) {
                     Text(stringResource(R.string.delete))
                 }
@@ -173,6 +227,8 @@ fun PhotoscanScreen(
                                 text = { Text(stringResource(R.string.delete_scan)) },
                                 onClick = {
                                     showMenu = false
+                                    deleteLocal = hasLocalFiles
+                                    deleteCloud = hasCloudData
                                     showDeleteConfirmation = true
                                 },
                                 leadingIcon = {

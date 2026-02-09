@@ -180,6 +180,7 @@ fun CreateCollectionScreen(
 
                 OutlinedTextField(
                     value = manualSessionName,
+                    maxLines = 1,
                     onValueChange = { manualSessionName = it },
                     label = {
                         Text(stringResource(R.string.new_session_name))

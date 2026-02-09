@@ -27,11 +27,14 @@ fun ProcessingScreen(
     val collectionName = cloudViewModel.scanConfig?.collectionName ?: ""
     val userViewModel: UserViewModel = hiltViewModel()
     val uiState by userViewModel.uiState.collectAsStateWithLifecycle()
+    val isConnected by userViewModel.isConnected.collectAsStateWithLifecycle()
+    val hasCredits = (uiState.credits ?: 0) > 0
+    val canUpload = uiState.user != null && hasCredits && isConnected
 
     var showCancelDialog by remember { mutableStateOf(false) }
 
     fun onBack() {
-        if (uiState.user != null) {
+        if (canUpload) {
             showCancelDialog = true
         } else {
             onNavigateBack()

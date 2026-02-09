@@ -59,8 +59,9 @@ fun ProcessingRoot(
 ) {
     val userViewModel: UserViewModel = hiltViewModel()
     val uiState by userViewModel.uiState.collectAsStateWithLifecycle()
+    val isConnected by userViewModel.isConnected.collectAsStateWithLifecycle()
     val hasCredits = (uiState.credits ?: 0) > 0
-    val isLoggedIn = uiState.user != null && hasCredits
+    val canUpload = uiState.user != null && hasCredits && isConnected
 
     val scanDir =
         remember(collectionName) { File(getModelsDir(), collectionName) }
@@ -205,7 +206,7 @@ fun ProcessingRoot(
             // Upload button
             Button(
                 onClick = {
-                    if (isLoggedIn) {
+                    if (canUpload) {
                         onUpload()
                     } else {
                         onTransferToPc()
@@ -215,7 +216,7 @@ fun ProcessingRoot(
                 enabled = imageFiles.isNotEmpty()
             ) {
                 Text(
-                    text = stringResource(if (isLoggedIn) R.string.upload else R.string.transfer_to_pc),
+                    text = stringResource(if (canUpload) R.string.upload else R.string.transfer_to_pc),
                     fontSize = 16.sp,
                     modifier = Modifier.padding(vertical = 8.dp)
                 )

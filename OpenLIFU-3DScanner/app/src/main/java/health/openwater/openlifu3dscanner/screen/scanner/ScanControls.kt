@@ -26,6 +26,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalContext
@@ -43,6 +44,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import health.openwater.openlifu3dscanner.R
 import health.openwater.openlifu3dscanner.extensions.drawSegmentedArc
+import health.openwater.openlifu3dscanner.preferences.Prefs
 import health.openwater.openlifu3dscanner.viewmodel.CloudViewModel
 import health.openwater.openlifu3dscanner.viewmodel.ScannerViewModel
 
@@ -63,6 +65,19 @@ fun ScanControls(
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
+    val ovalSizePref = remember { Prefs.getOvalSize(context) }
+    val ovalWidthFactor = when (ovalSizePref) {
+        150 -> 0.78f
+        200 -> 0.90f
+        else -> 0.65f
+    }
+    val ovalHeightFactor = when (ovalSizePref) {
+        150 -> 0.54f
+        200 -> 0.62f
+        else -> 0.45f
+    }
+    val ovalTop = 100f
+
     Box(modifier = Modifier.fillMaxSize()) {
         // Semi-transparent black overlay with oval cutout
         Canvas(modifier = Modifier.fillMaxSize()) {
@@ -70,10 +85,9 @@ fun ScanControls(
             drawRect(color = Color.Black.copy(alpha = 0.3f))
 
             // Calculate oval dimensions (centered, portrait-oriented)
-            val ovalWidth = size.width * 0.65f
-            val ovalHeight = size.height * 0.45f
+            val ovalWidth = size.width * ovalWidthFactor
+            val ovalHeight = size.height * ovalHeightFactor
             val ovalLeft = (size.width - ovalWidth) / 2f
-            val ovalTop = (size.height - ovalHeight) / 2f - size.height * 0.2f
 
             // Cut out the oval using BlendMode
             drawOval(
@@ -93,7 +107,7 @@ fun ScanControls(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(20.dp),
+                    .padding(8.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -264,7 +278,7 @@ fun ScanControls(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(16.dp))
             }
         }
 
@@ -281,10 +295,10 @@ fun ScanControls(
 
         Canvas(modifier = Modifier.fillMaxSize()) {
             val centerX = size.width / 2f
-            val centerY = size.height / 2f - size.height * 0.2f
+            val centerY = (size.height * ovalHeightFactor) / 2f + ovalTop
 
-            val ovalRadiusX = size.width * 0.65f / 2f + 8f  // Slightly outside the cutout
-            val ovalRadiusY = size.height * 0.45f / 2f + 8f
+            val ovalRadiusX = size.width * ovalWidthFactor / 2f + 8f  // Slightly outside the cutout
+            val ovalRadiusY = size.height * ovalHeightFactor / 2f + 8f
             val ovalCenter = Offset(centerX, centerY)
 
             val totalSegments = (360f / viewModel.captureInterval).toInt()
