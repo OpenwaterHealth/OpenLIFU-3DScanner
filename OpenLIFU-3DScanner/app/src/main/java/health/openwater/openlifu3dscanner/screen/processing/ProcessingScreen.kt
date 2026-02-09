@@ -13,16 +13,18 @@ import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import health.openwater.openlifu3dscanner.R
+import health.openwater.openlifu3dscanner.viewmodel.CloudViewModel
 import health.openwater.openlifu3dscanner.viewmodel.UserViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProcessingScreen(
-    collectionName: String,
     onNavigateBack: () -> Unit,
     onNavigateToUploading: () -> Unit,
     onNavigateToTransfer: () -> Unit,
+    cloudViewModel: CloudViewModel = hiltViewModel()
 ) {
+    val collectionName = cloudViewModel.scanConfig?.collectionName ?: ""
     val userViewModel: UserViewModel = hiltViewModel()
     val uiState by userViewModel.uiState.collectAsStateWithLifecycle()
 

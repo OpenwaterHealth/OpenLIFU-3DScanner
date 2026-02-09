@@ -30,12 +30,20 @@ import health.openwater.openlifu3dscanner.viewmodel.UserViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScannerScreen(
-    collectionName: String,
-    autoUploadEnabled: Boolean,
     onNavigateBack: () -> Unit,
     onNavigateToProcessing: (autoUploadEnabled: Boolean, isLoggedIn: Boolean) -> Unit,
     cloudViewModel: CloudViewModel = hiltViewModel()
 ) {
+    val scanConfig = cloudViewModel.scanConfig
+    if (scanConfig == null) {
+        LaunchedEffect(Unit) { onNavigateBack() }
+        return
+    }
+
+    val collectionName = scanConfig.collectionName
+    val autoUploadEnabled = scanConfig.autoUploadEnabled
+    val sessionId = scanConfig.sessionId
+
     val userViewModel: UserViewModel = hiltViewModel()
     val uiState by userViewModel.uiState.collectAsStateWithLifecycle()
     val hasCredits = (uiState.credits ?: 0) > 0
@@ -47,7 +55,7 @@ fun ScannerScreen(
         cloudViewModel.reset(false)
 
         if (cloudViewModel.isLoggedInAndOnline() && hasCredits) {
-            cloudViewModel.createPhotocollection(collectionName, autoUploadEnabled)
+            cloudViewModel.createPhotocollection(collectionName, autoUploadEnabled, sessionId)
         }
     }
 

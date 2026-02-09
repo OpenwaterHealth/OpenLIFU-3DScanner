@@ -3,35 +3,26 @@ package health.openwater.openlifu3dscanner.screen.home
 import android.Manifest
 import android.os.Build
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Checkbox
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -39,26 +30,21 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import health.openwater.openlifu3dscanner.BuildConfig
-import health.openwater.openlifu3dscanner.extensions.hasAllFilesAccess
 import health.openwater.openlifu3dscanner.R
-import health.openwater.openlifu3dscanner.preferences.Prefs
-import health.openwater.openlifu3dscanner.utils.CollectionIdGenerator
+import health.openwater.openlifu3dscanner.extensions.hasAllFilesAccess
 import health.openwater.openlifu3dscanner.viewmodel.UserViewModel
 
-@OptIn(ExperimentalPermissionsApi::class)
+@OptIn(ExperimentalPermissionsApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    onStartScan: (collectionName: String, autoUploadEnabled: Boolean) -> Unit,
+    onCreateCollection: () -> Unit,
     onRequestPermissions: () -> Unit,
     onViewCollection: () -> Unit,
     onSettings: () -> Unit,
     onSignIn: () -> Unit,
 ) {
-    val context = LocalContext.current
-    var showCollectionDialog by remember { mutableStateOf(false) }
     var showNoCreditsWarning by remember { mutableStateOf(false) }
-    var collectionName by remember { mutableStateOf("") }
-    var autoUploadEnabled by remember { mutableStateOf(Prefs.getAutoUpload(context)) }
+    var showNoInternetWarning by remember { mutableStateOf(false) }
 
     val userViewModel: UserViewModel = hiltViewModel()
     val uiState by userViewModel.uiState.collectAsStateWithLifecycle()
@@ -80,11 +66,12 @@ fun HomeScreen(
             onRequestPermissions()
             return
         }
-        if (uiState.user != null && !hasCredits) {
+        if (uiState.user != null && uiState.credits == null) {
+            showNoInternetWarning = true
+        } else if (uiState.user != null && !hasCredits) {
             showNoCreditsWarning = true
         } else {
-            showCollectionDialog = true
-            collectionName = CollectionIdGenerator.generate()
+            onCreateCollection()
         }
     }
 
@@ -129,112 +116,22 @@ fun HomeScreen(
         }
     }
 
-    if (showCollectionDialog) {
-
-        AlertDialog(
-            onDismissRequest = {
-                showCollectionDialog = false
-            },
-            title = {
-                Text(text = stringResource(R.string.enter_collection_id))
-            },
-            text = {
-                Column {
-                    OutlinedTextField(
-                        value = collectionName,
-                        onValueChange = { collectionName = it },
-                        label = { Text(stringResource(R.string.collection_id)) },
-                        singleLine = true
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    if (uiState.user != null && hasCredits) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 4.dp)
-                                .clickable {
-                                    autoUploadEnabled = !autoUploadEnabled
-                                    Prefs.setAutoUpload(context, autoUploadEnabled)
-                                }
-                        ) {
-                            Checkbox(
-                                checked = autoUploadEnabled,
-                                onCheckedChange = {
-                                    autoUploadEnabled = it
-                                    Prefs.setAutoUpload(context, it)
-                                }
-                            )
-                            Text(
-                                text = "Auto Upload",
-                                modifier = Modifier.padding(start = 8.dp)
-                            )
-                        }
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(
-                    enabled = collectionName.isNotBlank(),
-                    onClick = {
-                        showCollectionDialog = false
-                        onStartScan(
-                            collectionName.trim(),
-                            autoUploadEnabled
-                        )
-                        collectionName = ""
-                    }
-                ) {
-                    Text(stringResource(R.string.start_scan))
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = {
-                        showCollectionDialog = false
-                        collectionName = ""
-                    }
-                ) {
-                    Text(stringResource(R.string.cancel))
-                }
+    if (showNoCreditsWarning) {
+        NoCreditsModal(
+            onDismiss = { showNoCreditsWarning = false },
+            onProceedOffline = {
+                showNoCreditsWarning = false
+                onCreateCollection()
             }
         )
     }
 
-    if (showNoCreditsWarning) {
-        AlertDialog(
-            onDismissRequest = {
-                showNoCreditsWarning = false
-            },
-            title = {
-                Text(text = stringResource(R.string.no_credits_title))
-            },
-            text = {
-                Text(text = stringResource(R.string.no_credits_message))
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        showNoCreditsWarning = false
-                        showCollectionDialog = true
-                        collectionName = CollectionIdGenerator.generate()
-                        // Force offline mode for this session (don't save preference)
-                        autoUploadEnabled = false
-                    }
-                ) {
-                    Text(stringResource(R.string.continue_offline))
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = {
-                        showNoCreditsWarning = false
-                    }
-                ) {
-                    Text(stringResource(R.string.cancel))
-                }
+    if (showNoInternetWarning) {
+        NoInternetModal(
+            onDismiss = { showNoInternetWarning = false },
+            onProceedOffline = {
+                showNoInternetWarning = false
+                onCreateCollection()
             }
         )
     }

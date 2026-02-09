@@ -60,11 +60,15 @@ class CloudRepository @Inject constructor(
 
     fun getDownloadResultsFlow() = downloadResultsFlow.asStateFlow()
 
+    // Scan config
+    val scanConfig get() = reconstructionRepository.scanConfig
+    fun setScanConfig(config: ScanConfig) = reconstructionRepository.setScanConfig(config)
+
     // Delegate upload operations to UploadRepository
     fun isLoggedInAndOnline() = reconstructionRepository.isLoggedInAndOnline()
     fun getCurrentPhotocollection() = reconstructionRepository.getCurrentPhotocollection()
-    fun createPhotocollection(name: String, autoUpload: Boolean) =
-        reconstructionRepository.createPhotocollection(name, autoUpload)
+    fun createPhotocollection(name: String, sessionId: Long?, autoUpload: Boolean) =
+        reconstructionRepository.createPhotocollection(name, sessionId, autoUpload)
 
     fun onImageCaptured() = reconstructionRepository.onImageCaptured()
     fun onScanComplete() = reconstructionRepository.onScanComplete()

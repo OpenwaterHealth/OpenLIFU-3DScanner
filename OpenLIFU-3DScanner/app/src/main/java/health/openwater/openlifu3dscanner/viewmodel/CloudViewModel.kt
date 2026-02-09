@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import health.openwater.openlifu3dscanner.repository.CloudRepository
+import health.openwater.openlifu3dscanner.repository.ScanConfig
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -17,13 +18,17 @@ class CloudViewModel @Inject constructor(
     val reconstructionProgress = cloudRepository.getReconstructionProgress()
     val photocollectionReady = cloudRepository.photocollectionReady
     val currentPhotoscanId: Long? get() = cloudRepository.currentPhotoscanId
+    val scanConfig get() = cloudRepository.scanConfig
+
+    fun setScanConfig(config: ScanConfig) = cloudRepository.setScanConfig(config)
 
     fun getCurrentPhotocollection() = cloudRepository.getCurrentPhotocollection()
 
-    fun createPhotocollection(collectionName: String, autoUpload: Boolean) {
+    fun createPhotocollection(collectionName: String, autoUpload: Boolean, sessionId: Long? = null) {
         cloudRepository.createPhotocollection(
             name = collectionName,
-            autoUpload = autoUpload
+            autoUpload = autoUpload,
+            sessionId = sessionId
         )
     }
 
@@ -42,8 +47,8 @@ class CloudViewModel @Inject constructor(
 
     fun reset(removeLocalCollection: Boolean) = cloudRepository.reset(removeLocalCollection)
 
-    fun resetPhotocollection(collectionName: String, autoUpload: Boolean) {
+    fun resetPhotocollection(collectionName: String, autoUpload: Boolean, sessionId: Long? = null) {
         cloudRepository.resetCurrentPhotocollection()
-        createPhotocollection(collectionName, autoUpload)
+        createPhotocollection(collectionName, autoUpload, sessionId)
     }
 }

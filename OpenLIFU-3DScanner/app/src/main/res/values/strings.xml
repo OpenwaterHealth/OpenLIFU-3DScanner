@@ -156,8 +156,17 @@
     <string name="processing_in_progress_message">Your scan is being processed in the cloud. Please check back later.</string>
     <string name="no_credits_title">No Credits Available</string>
     <string name="no_credits_message">You have no credits available. The scan will be saved locally only and won\'t be uploaded to the cloud for 3D reconstruction.</string>
+    <string name="no_internet_title">No Internet Connection</string>
+    <string name="no_internet_message">Unable to verify your account. The scan will be saved locally only and won\'t be uploaded to the cloud for 3D reconstruction.</string>
     <string name="no_credits_contact_support">You have no credits available. Please contact support to recharge your credits.</string>
     <string name="continue_offline">Continue Offline</string>
+    <string name="start_new_session">Start New Session</string>
+    <string name="select_subject">Select Subject</string>
+    <string name="select_session">Select Session</string>
+    <string name="loading_subjects">Loading subjects…</string>
+    <string name="failed_to_load_subjects">Failed to load subjects</string>
+    <string name="no_subjects_available">No subjects available</string>
+    <string name="no_sessions_available">No sessions available for this subject</string>
 
     <!-- Upload Service Notifications -->
     <string name="notification_channel_upload">Image Upload</string>
@@ -170,4 +179,10 @@
     <string name="notification_reconstructing_3d_model">Reconstructing 3D model…</string>
     <string name="notification_error">Error: %1$s</string>
     <string name="notification_processing">Processing…</string>
+
+    <string name="session_type">Session</string>
+    <string name="select_existing">Select existing</string>
+    <string name="create_new">Create new</string>
+    <string name="new_session_name">New session name</string>
+    <string name="example_session_name">From the Desktop App</string>
 </resources>

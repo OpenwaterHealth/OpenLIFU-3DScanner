@@ -21,9 +21,8 @@ import health.openwater.openlifu3dscanner.R
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UploadingScreen(
-    collectionName: String,
     onNavigateBack: () -> Unit,
-    onViewModel: (scanId: Long, photocollectionId: Long) -> Unit,
+    onViewModel: (scanId: Long, photocollectionId: Long, collectionName: String) -> Unit,
 ) {
     // Upload continues in background with notification - safe to navigate away
     Scaffold(
@@ -53,7 +52,6 @@ fun UploadingScreen(
                 .padding(contentPadding)
         ) {
             UploadingRoot(
-                collectionName = collectionName,
                 onViewModel = onViewModel,
                 onNavigateBack = onNavigateBack
             )

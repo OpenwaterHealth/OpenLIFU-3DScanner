@@ -1,5 +1,7 @@
 package health.openwater.openlifu3dscanner.repository
 
+import android.util.Log
+import health.openwater.openlifu3dscanner.core.ConnectivityObserver
 import health.openwater.openlifu3dscanner.core.UserInfoState
 import health.openwater.openlifu3dscanner.core.UserState
 import health.openwater.openlifu3dscanner.network.Result
@@ -19,6 +21,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -26,7 +29,8 @@ import javax.inject.Singleton
 class UserRepository @Inject constructor(
     val authService: AuthService,
     val userService: UserService,
-    val photocollectionService: PhotocollectionService
+    val photocollectionService: PhotocollectionService,
+    private val connectivityObserver: ConnectivityObserver
 ) {
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
@@ -55,6 +59,17 @@ class UserRepository @Inject constructor(
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = UserInfoState()
     )
+
+    init {
+        scope.launch {
+            connectivityObserver.isConnected.collect { connected ->
+                if (connected && _credits.value == null && authService.isSignedIn()) {
+                    Log.d(TAG, "Connectivity restored, refreshing credits")
+                    refreshCredits()
+                }
+            }
+        }
+    }
 
     suspend fun initialize() {
         _userState.value = UserState.Loading
@@ -124,5 +139,9 @@ class UserRepository @Inject constructor(
 
     suspend fun resetPassword(email: String): Result<StatusResponse> {
         return safeCall { userService.resetPassword(ResetPasswordRequest(email)) }
+    }
+
+    companion object {
+        private val TAG = UserRepository::class.simpleName
     }
 }

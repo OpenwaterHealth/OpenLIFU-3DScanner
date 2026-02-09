@@ -6,12 +6,16 @@ import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import dagger.Module
 import dagger.Provides
+import android.content.Context
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import health.openwater.openlifu3dscanner.core.ConnectivityObserver
 import health.openwater.openlifu3dscanner.network.adapter.DateTypeAdapter
 import health.openwater.openlifu3dscanner.network.api.AuthService
 import health.openwater.openlifu3dscanner.network.api.PhotocollectionService
 import health.openwater.openlifu3dscanner.network.api.PhotoscanService
+import health.openwater.openlifu3dscanner.network.api.SubjectService
 import health.openwater.openlifu3dscanner.network.api.UserService
 import health.openwater.openlifu3dscanner.network.api.WebsocketService
 import kotlinx.coroutines.CoroutineScope
@@ -121,7 +125,17 @@ object ApiModule {
 
     @Provides
     @Singleton
+    fun provideSubjectService(retrofit: Retrofit): SubjectService =
+        retrofit.create(SubjectService::class.java)
+
+    @Provides
+    @Singleton
     fun provideAuthService(): AuthService = AuthService()
+
+    @Provides
+    @Singleton
+    fun provideConnectivityObserver(@ApplicationContext context: Context): ConnectivityObserver =
+        ConnectivityObserver(context)
 
     @Provides
     @Singleton

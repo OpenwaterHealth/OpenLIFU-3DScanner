@@ -17,14 +17,17 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import health.openwater.openlifu3dscanner.R
+import health.openwater.openlifu3dscanner.viewmodel.CloudViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TransferScreen(
-    collectionName: String,
     onNavigateBack: () -> Unit,
+    cloudViewModel: CloudViewModel = hiltViewModel()
 ) {
+    val collectionName = cloudViewModel.scanConfig?.collectionName ?: ""
     fun onBack() {
         onNavigateBack()
     }

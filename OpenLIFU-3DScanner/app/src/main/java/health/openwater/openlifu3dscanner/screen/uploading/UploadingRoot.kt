@@ -49,11 +49,12 @@ import java.io.File
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun UploadingRoot(
-    collectionName: String,
     onNavigateBack: () -> Unit,
-    onViewModel: (scanId: Long, photocollectionId: Long) -> Unit,
+    onViewModel: (scanId: Long, photocollectionId: Long, collectionName: String) -> Unit,
     cloudViewModel: CloudViewModel = hiltViewModel()
 ) {
+    val collectionName = cloudViewModel.scanConfig?.collectionName ?: ""
+    val sessionId = cloudViewModel.scanConfig?.sessionId
     // Request notification permission for Android 13+ (fallback if not already granted in ScannerScreen)
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         val notificationPermissionState =
@@ -90,12 +91,12 @@ fun UploadingRoot(
             // No collection exists - create new one
             currentCollection == null -> {
                 cloudViewModel.reset(false)
-                cloudViewModel.createPhotocollection(collectionName, autoUpload = false)
+                cloudViewModel.createPhotocollection(collectionName, autoUpload = false, sessionId = sessionId)
             }
             // Different collection - reset and create new
             currentCollection.name != collectionName -> {
                 cloudViewModel.reset(false)
-                cloudViewModel.createPhotocollection(collectionName, autoUpload = false)
+                cloudViewModel.createPhotocollection(collectionName, autoUpload = false, sessionId = sessionId)
             }
             // Same collection exists - just start/continue upload
             else -> {
@@ -129,7 +130,7 @@ fun UploadingRoot(
         if (reconstructionProgress?.status == PhotoscanStatus.FINISHED) {
             cloudViewModel.currentPhotoscanId?.let { photoscanId ->
                 cloudViewModel.getCurrentPhotocollection()?.id?.let { photocollectionId ->
-                    onViewModel(photoscanId, photocollectionId)
+                    onViewModel(photoscanId, photocollectionId, collectionName)
                 }
             }
         }

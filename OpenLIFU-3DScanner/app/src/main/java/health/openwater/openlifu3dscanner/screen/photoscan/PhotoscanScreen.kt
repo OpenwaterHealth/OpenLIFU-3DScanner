@@ -45,6 +45,8 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import health.openwater.openlifu3dscanner.R
+import health.openwater.openlifu3dscanner.repository.ScanConfig
+import health.openwater.openlifu3dscanner.viewmodel.CloudViewModel
 import health.openwater.openlifu3dscanner.viewmodel.CollectionViewModel
 import health.openwater.openlifu3dscanner.viewmodel.UserViewModel
 import kotlinx.coroutines.launch
@@ -57,6 +59,7 @@ fun PhotoscanScreen(
     photocollectionId: Long,
     onNavigateBack: () -> Unit,
     onStartProcessing: (() -> Unit)? = null,
+    cloudViewModel: CloudViewModel = hiltViewModel(),
     collectionViewModel: CollectionViewModel = hiltViewModel(),
     userViewModel: UserViewModel = hiltViewModel()
 ) {
@@ -218,6 +221,13 @@ fun PhotoscanScreen(
                     onStartProcessing = if (onStartProcessing != null) {
                         {
                             if (hasCredits) {
+                                cloudViewModel.setScanConfig(
+                                    ScanConfig(
+                                        collectionName = collectionName,
+                                        autoUploadEnabled = false,
+                                        sessionId = null
+                                    )
+                                )
                                 onStartProcessing()
                             } else {
                                 showNoCreditsWarning = true

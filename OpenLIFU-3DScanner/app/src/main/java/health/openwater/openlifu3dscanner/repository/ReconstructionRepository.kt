@@ -35,6 +35,12 @@ import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
 
+data class ScanConfig(
+    val collectionName: String,
+    val autoUploadEnabled: Boolean,
+    val sessionId: Long?
+)
+
 @Singleton
 class ReconstructionRepository @Inject constructor(
     @param:ApplicationContext private val context: Context,
@@ -81,6 +87,14 @@ class ReconstructionRepository @Inject constructor(
         private set
 
     var totalImageCount: String? = null
+
+    // Current scan configuration (set before navigating to scanner)
+    var scanConfig: ScanConfig? = null
+        private set
+
+    fun setScanConfig(config: ScanConfig) {
+        scanConfig = config
+    }
 
     // Flag to indicate the scan is complete (all buckets captured or user pressed proceed)
     private var scanComplete = false
@@ -172,7 +186,7 @@ class ReconstructionRepository @Inject constructor(
      * Create a new photocollection for uploading images.
      * This starts the foreground service and prepares for upload.
      */
-    fun createPhotocollection(name: String, autoUpload: Boolean) {
+    fun createPhotocollection(name: String, sessionId: Long?, autoUpload: Boolean) {
         Log.d(TAG, "Creating photocollection: $name, autoUpload: $autoUpload")
 
         this.currentReferenceNumber = name
@@ -196,7 +210,8 @@ class ReconstructionRepository @Inject constructor(
                 photocollectionService.createPhotocollection(
                     CreatePhotocollectionRequest(
                         accountId = uid,
-                        name = name
+                        name = name,
+                        sessionId = sessionId
                     )
                 )
             }

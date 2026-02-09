@@ -8,6 +8,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import health.openwater.openlifu3dscanner.screen.collection.ViewCollectionScreen
+import health.openwater.openlifu3dscanner.screen.home.CreateCollectionScreen
 import health.openwater.openlifu3dscanner.screen.home.HomeScreen
 import health.openwater.openlifu3dscanner.screen.permissions.PermissionsScreen
 import health.openwater.openlifu3dscanner.screen.photoscan.PhotoscanScreen
@@ -34,24 +35,13 @@ sealed class Screen(val route: String) {
             "photoscan/$collectionName/$photoscanId/$photocollectionId"
     }
 
+    object CreateCollection : Screen("create_collection")
     object Permissions : Screen("permissions")
 
-    object Scanner : Screen("scanner/{collectionName}/{autoUploadEnabled}") {
-        fun createRoute(collectionName: String, autoUploadEnabled: Boolean) =
-            "scanner/$collectionName/$autoUploadEnabled"
-    }
-
-    object Processing : Screen("processing/{collectionName}") {
-        fun createRoute(collectionName: String) = "processing/$collectionName"
-    }
-
-    object Uploading : Screen("uploading/{collectionName}") {
-        fun createRoute(collectionName: String) = "uploading/$collectionName"
-    }
-
-    object Transfer : Screen("transfer/{collectionName}") {
-        fun createRoute(collectionName: String) = "transfer/$collectionName"
-    }
+    object Scanner : Screen("scanner")
+    object Processing : Screen("processing")
+    object Uploading : Screen("uploading")
+    object Transfer : Screen("transfer")
 }
 
 @Composable
@@ -77,10 +67,8 @@ fun AppNavigation() {
     }) {
         composable(Screen.Home.route) {
             HomeScreen(
-                onStartScan = { collectionName, autoUploadEnabled ->
-                    navController.navigate(
-                        Screen.Scanner.createRoute(collectionName, autoUploadEnabled)
-                    )
+                onCreateCollection = {
+                    navController.navigate(Screen.CreateCollection.route)
                 },
                 onRequestPermissions = {
                     navController.navigate(Screen.Permissions.route)
@@ -90,6 +78,17 @@ fun AppNavigation() {
                     navController.navigate(Screen.ViewCollection.route)
                 },
                 onSignIn = { navController.navigate(Screen.SignIn.route) })
+        }
+
+        composable(Screen.CreateCollection.route) {
+            CreateCollectionScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onStartScan = {
+                    navController.navigate(Screen.Scanner.route) {
+                        popUpTo(Screen.CreateCollection.route) { inclusive = true }
+                    }
+                }
+            )
         }
 
         composable(Screen.SignIn.route) {
@@ -144,7 +143,7 @@ fun AppNavigation() {
                 onNavigateBack = { navController.popBackStack() },
                 onStartProcessing = if (isLocalOnly) {
                     {
-                        navController.navigate(Screen.Uploading.createRoute(collectionName)) {
+                        navController.navigate(Screen.Uploading.route) {
                             popUpTo(Screen.Photoscan.route) { inclusive = true }
                         }
                     }
@@ -152,83 +151,47 @@ fun AppNavigation() {
             )
         }
 
-        composable(
-            route = Screen.Scanner.route,
-            arguments = listOf(
-                navArgument("collectionName") { type = NavType.StringType },
-                navArgument("autoUploadEnabled") { type = NavType.BoolType })
-        ) { backStackEntry ->
-            val collectionName = backStackEntry.arguments?.getString("collectionName") ?: ""
-            val autoUploadEnabled =
-                backStackEntry.arguments?.getBoolean("autoUploadEnabled") ?: false
-
+        composable(Screen.Scanner.route) {
             ScannerScreen(
-                autoUploadEnabled = autoUploadEnabled,
-                collectionName = collectionName,
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToProcessing = { autoUploadEnabled, isLoggedIn ->
-
                     if (autoUploadEnabled && isLoggedIn) {
-                        navController.navigate(
-                            Screen.Uploading.createRoute(collectionName)
-                        ) {
+                        navController.navigate(Screen.Uploading.route) {
                             popUpTo(Screen.Scanner.route) { inclusive = true }
                         }
                     } else {
-                        navController.navigate(
-                            Screen.Processing.createRoute(collectionName)
-                        ) {
+                        navController.navigate(Screen.Processing.route) {
                             popUpTo(Screen.Scanner.route) { inclusive = true }
                         }
                     }
                 })
         }
 
-        composable(
-            route = Screen.Processing.route, arguments = listOf(
-                navArgument("collectionName") { type = NavType.StringType })
-        ) { backStackEntry ->
-            val collectionName = backStackEntry.arguments?.getString("collectionName") ?: ""
+        composable(Screen.Processing.route) {
             ProcessingScreen(
-                collectionName = collectionName,
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToUploading = {
-                    navController.navigate(
-                        Screen.Uploading.createRoute(collectionName)
-                    ) {
+                    navController.navigate(Screen.Uploading.route) {
                         popUpTo(Screen.Processing.route) { inclusive = true }
                     }
                 },
                 onNavigateToTransfer = {
-                    navController.navigate(
-                        Screen.Transfer.createRoute(collectionName)
-                    ) {
+                    navController.navigate(Screen.Transfer.route) {
                         popUpTo(Screen.Processing.route) { inclusive = true }
                     }
                 })
         }
 
-        composable(
-            route = Screen.Transfer.route, arguments = listOf(
-                navArgument("collectionName") { type = NavType.StringType })
-        ) { backStackEntry ->
-            val collectionName = backStackEntry.arguments?.getString("collectionName") ?: ""
+        composable(Screen.Transfer.route) {
             TransferScreen(
-                collectionName = collectionName,
                 onNavigateBack = { navController.popBackStack() },
             )
         }
 
-        composable(
-            route = Screen.Uploading.route,
-            arguments = listOf(navArgument("collectionName") { type = NavType.StringType })
-        ) { backStackEntry ->
-            val collectionName = backStackEntry.arguments?.getString("collectionName") ?: ""
-
+        composable(Screen.Uploading.route) {
             UploadingScreen(
-                collectionName = collectionName,
                 onNavigateBack = { navController.popBackStack() },
-                onViewModel = { scanId, photocollectionId ->
+                onViewModel = { scanId, photocollectionId, collectionName ->
                     navController.navigate(
                         Screen.Photoscan.createRoute(collectionName, scanId, photocollectionId)
                     ) {
