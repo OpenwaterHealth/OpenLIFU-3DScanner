@@ -15,6 +15,7 @@ import androidx.compose.runtime.mutableStateSetOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
+import health.openwater.openlifu3dscanner.core.FaceAnalysisResult
 import health.openwater.openlifu3dscanner.repository.CloudRepository
 import health.openwater.openlifu3dscanner.extensions.getModelsDir
 import health.openwater.openlifu3dscanner.preferences.Prefs
@@ -63,8 +64,20 @@ class ScannerViewModel @Inject constructor(
     val capturedBucketsCount = _capturedBucketsCount.asStateFlow()
 
 
-    var faceDetected by mutableStateOf(false)
+    var faceStatus by mutableStateOf(FaceStatus.NO_FACE)
         private set
+
+    val faceDetected: Boolean
+        get() = faceStatus == FaceStatus.READY
+
+    private var latestFaceResult by mutableStateOf(FaceAnalysisResult(detected = false))
+
+    // Oval bounds as normalized fractions (0..1)
+    private var ovalLeft = 0f
+    private var ovalTop = 0f
+    private var ovalRight = 1f
+    private var ovalBottom = 1f
+    private var ovalWidthNorm = 1f
 
     var currentScanPath by mutableStateOf<File?>(null)
         private set
@@ -202,7 +215,37 @@ class ScannerViewModel @Inject constructor(
             })
     }
 
-    fun setFace(face: Boolean) {
-        faceDetected = face
+    fun setOvalBounds(widthFactor: Float, heightFactor: Float, topFraction: Float) {
+        ovalWidthNorm = widthFactor
+        ovalLeft = (1f - widthFactor) / 2f
+        ovalRight = ovalLeft + widthFactor
+        ovalTop = topFraction
+        ovalBottom = topFraction + heightFactor
     }
+
+    fun setFaceResult(result: FaceAnalysisResult) {
+        latestFaceResult = result
+        if (!result.detected) {
+            faceStatus = FaceStatus.NO_FACE
+            return
+        }
+
+        val inOval = result.centerX in ovalLeft..ovalRight &&
+                result.centerY in ovalTop..ovalBottom
+        val minWidth = ovalWidthNorm * 0.4f
+        val largeEnough = result.widthFraction >= minWidth
+
+        faceStatus = when {
+            !inOval -> FaceStatus.CENTER_FACE
+            !largeEnough -> FaceStatus.MOVE_CLOSER
+            else -> FaceStatus.READY
+        }
+    }
+}
+
+enum class FaceStatus {
+    NO_FACE,
+    CENTER_FACE,
+    MOVE_CLOSER,
+    READY
 }

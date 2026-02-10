@@ -10,6 +10,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -24,6 +25,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -46,6 +48,7 @@ import health.openwater.openlifu3dscanner.R
 import health.openwater.openlifu3dscanner.extensions.drawSegmentedArc
 import health.openwater.openlifu3dscanner.preferences.Prefs
 import health.openwater.openlifu3dscanner.viewmodel.CloudViewModel
+import health.openwater.openlifu3dscanner.viewmodel.FaceStatus
 import health.openwater.openlifu3dscanner.viewmodel.ScannerViewModel
 
 private const val MIN_IMAGES_COUNT = 20
@@ -77,6 +80,18 @@ fun ScanControls(
         else -> 0.45f
     }
     val ovalTop = 100f
+
+    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+        val screenHeightPx = constraints.maxHeight.toFloat()
+        LaunchedEffect(ovalWidthFactor, ovalHeightFactor, screenHeightPx) {
+            if (screenHeightPx > 0f) {
+                viewModel.setOvalBounds(
+                    widthFactor = ovalWidthFactor,
+                    heightFactor = ovalHeightFactor,
+                    topFraction = ovalTop / screenHeightPx
+                )
+            }
+        }
 
     Box(modifier = Modifier.fillMaxSize()) {
         // Semi-transparent black overlay with oval cutout
@@ -127,11 +142,14 @@ fun ScanControls(
                 if (!isScanning) {
                     Column(horizontalAlignment = Alignment.End) {
                         Text(
-                            text = stringResource(
-                                R.string.face_s,
-                                if (viewModel.faceDetected) "☑" else "☐"
-                            ),
-                            color = Color.White,
+                            text = when (viewModel.faceStatus) {
+                                FaceStatus.READY -> stringResource(R.string.face_ready)
+                                FaceStatus.CENTER_FACE -> stringResource(R.string.center_face_in_oval)
+                                FaceStatus.MOVE_CLOSER -> stringResource(R.string.move_closer)
+                                FaceStatus.NO_FACE -> stringResource(R.string.no_face_found)
+                            },
+                            color = if (viewModel.faceStatus == FaceStatus.READY) Color(0xFF00E676)
+                                    else Color(0xFFFF9800),
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold
                         )
@@ -345,5 +363,6 @@ fun ScanControls(
                 )
             }
         }
+    }
     }
 }

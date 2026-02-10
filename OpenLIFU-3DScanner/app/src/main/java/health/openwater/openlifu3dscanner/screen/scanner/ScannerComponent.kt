@@ -59,8 +59,8 @@ fun ScannerComponent(
             .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
             .build()
             .also {
-                it.setAnalyzer(viewModel.cameraExecutor, FaceAnalyzer { face ->
-                    viewModel.setFace(face)
+                it.setAnalyzer(viewModel.cameraExecutor, FaceAnalyzer { result ->
+                    viewModel.setFaceResult(result)
                 })
             }
 
