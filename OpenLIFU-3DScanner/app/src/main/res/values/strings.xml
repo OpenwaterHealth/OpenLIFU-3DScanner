@@ -197,4 +197,10 @@
     <string name="create_new">Create new</string>
     <string name="new_session_name">New session name</string>
     <string name="example_session_name">From the Desktop App</string>
+
+    <!-- Customer Support -->
+    <string name="customer_support">Customer Support</string>
+    <string name="support_email">support@openwater.cc</string>
+    <string name="support_phone">(415) 484-3776</string>
+    <string name="support_website">openwater.health</string>
 </resources>
