@@ -25,6 +25,9 @@ class UserViewModel @Inject constructor(
 
     suspend fun initialize() = userRepository.initialize()
 
+    val shouldShowNotice: Boolean get() = userRepository.shouldShowNotice
+    fun noticeAcknowledged() = userRepository.noticeAcknowledged()
+
     fun signOut() = userRepository.signOut()
 
     suspend fun signIn(email: String, password: String): AuthService.AuthResponse {

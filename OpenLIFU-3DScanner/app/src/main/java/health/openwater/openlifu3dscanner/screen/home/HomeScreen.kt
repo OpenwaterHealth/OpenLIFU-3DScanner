@@ -16,9 +16,12 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -56,6 +59,13 @@ fun HomeScreen(
     val userViewModel: UserViewModel = hiltViewModel()
     val uiState by userViewModel.uiState.collectAsStateWithLifecycle()
     val hasCredits = (uiState.credits ?: 0) > 0
+
+    var showNotice by remember { mutableStateOf(userViewModel.shouldShowNotice) }
+    LaunchedEffect(uiState.user) {
+        if (userViewModel.shouldShowNotice) {
+            showNotice = true
+        }
+    }
 
     // Check permissions
     val storageGranted = hasAllFilesAccess()
@@ -161,5 +171,24 @@ fun HomeScreen(
 
     if (showSupportDialog) {
         SupportDialog(onDismiss = { showSupportDialog = false })
+    }
+
+    if (showNotice) {
+        AlertDialog(
+            onDismissRequest = {
+                showNotice = false
+                userViewModel.noticeAcknowledged()
+            },
+            title = { Text(stringResource(R.string.notice_title)) },
+            text = { Text(stringResource(R.string.notice)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    showNotice = false
+                    userViewModel.noticeAcknowledged()
+                }) {
+                    Text(stringResource(R.string.ok))
+                }
+            }
+        )
     }
 }

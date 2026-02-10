@@ -1,6 +1,8 @@
 package health.openwater.openlifu3dscanner.repository
 
+import android.content.Context
 import android.util.Log
+import dagger.hilt.android.qualifiers.ApplicationContext
 import health.openwater.openlifu3dscanner.core.ConnectivityObserver
 import health.openwater.openlifu3dscanner.core.UserInfoState
 import health.openwater.openlifu3dscanner.core.UserState
@@ -12,6 +14,7 @@ import health.openwater.openlifu3dscanner.network.dto.ResetPasswordRequest
 import health.openwater.openlifu3dscanner.network.dto.StatusResponse
 import health.openwater.openlifu3dscanner.network.dto.UserCreditsResponse
 import health.openwater.openlifu3dscanner.network.safeCall
+import health.openwater.openlifu3dscanner.preferences.Prefs
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -27,6 +30,7 @@ import javax.inject.Singleton
 
 @Singleton
 class UserRepository @Inject constructor(
+    @param:ApplicationContext private val context: Context,
     val authService: AuthService,
     val userService: UserService,
     val photocollectionService: PhotocollectionService,
@@ -44,6 +48,24 @@ class UserRepository @Inject constructor(
 
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
+
+    /**
+     * Show the research notice once per user (or fresh install).
+     * Compares current user uid against the last uid that acknowledged.
+     * Empty stored uid means fresh install → show.
+     * Different uid means new user → show.
+     */
+    val shouldShowNotice: Boolean
+        get() {
+            val currentUid = authService.getCurrentUser()?.uid ?: ""
+            val acknowledgedUid = Prefs.getNoticeAcknowledgedUid(context)
+            return acknowledgedUid != currentUid
+        }
+
+    fun noticeAcknowledged() {
+        val currentUid = authService.getCurrentUser()?.uid ?: ""
+        Prefs.setNoticeAcknowledgedUid(context, currentUid)
+    }
 
     val userInfoState: StateFlow<UserInfoState> = combine(
         _userState,

@@ -2,8 +2,8 @@ package health.openwater.openlifu3dscanner.preferences
 
 import android.content.Context
 import android.content.SharedPreferences
-import androidx.camera.core.ExperimentalZeroShutterLag
 import androidx.camera.core.ImageCapture
+import androidx.core.content.edit
 import health.openwater.openlifu3dscanner.R
 
 object Prefs {
@@ -13,6 +13,7 @@ object Prefs {
     const val CAPTURE_MODE_KEY = "pref_capture_mode"
     const val OVAL_SIZE_KEY = "pref_oval_size"
     const val AUTO_UPLOAD_KEY = "pref_auto_upload"
+    const val NOTICE_ACKNOWLEDGED_UID_KEY = "pref_notice_acknowledged_uid"
 
     // Default values
     const val IMAGE_SIZE_DEFAULT = 1024
@@ -78,7 +79,14 @@ object Prefs {
     }
 
     fun setAutoUpload(context: Context, enabled: Boolean) {
-        val prefs = getInstance(context)
-        prefs.edit().putBoolean(AUTO_UPLOAD_KEY, enabled).apply()
+        getInstance(context).edit { putBoolean(AUTO_UPLOAD_KEY, enabled) }
+    }
+
+    fun getNoticeAcknowledgedUid(context: Context): String {
+        return getInstance(context).getString(NOTICE_ACKNOWLEDGED_UID_KEY, "") ?: ""
+    }
+
+    fun setNoticeAcknowledgedUid(context: Context, uid: String) {
+        getInstance(context).edit { putString(NOTICE_ACKNOWLEDGED_UID_KEY, uid) }
     }
 }
