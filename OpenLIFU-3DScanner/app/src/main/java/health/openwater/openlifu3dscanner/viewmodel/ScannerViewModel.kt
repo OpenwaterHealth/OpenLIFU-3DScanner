@@ -154,6 +154,17 @@ class ScannerViewModel @Inject constructor(
         _isScanning.value = false
     }
 
+    fun resetForRecapture(collectionName: String) {
+        currentScanPath?.deleteRecursively()
+        currentScanPath = null
+        val file = File(getModelsDir(), collectionName).apply { mkdirs() }
+        currentScanPath = file
+        capturedBuckets.clear()
+        _capturedBucketsCount.value = 0
+        _isCompleted.value = false
+        _isScanning.value = false
+    }
+
     // ---- Angle bucket logic ----
     fun angleToBucket(angle: Float): Int {
         // Calculate relative angle from starting position

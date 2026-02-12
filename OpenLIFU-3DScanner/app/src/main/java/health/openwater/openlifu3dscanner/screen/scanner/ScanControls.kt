@@ -244,7 +244,7 @@ fun ScanControls(
                                         autoUploadEnabled
                                     )
                                 }
-                                viewModel.startScanning(collectionName)
+                                viewModel.resetForRecapture(collectionName)
                             },
                             modifier = Modifier
                                 .weight(1f)

@@ -15,6 +15,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -59,6 +60,11 @@ fun ScannerScreen(
         }
     }
 
+    BackHandler {
+        cloudViewModel.reset(false)
+        onNavigateBack()
+    }
+
     KeepScreenOn()
 
     Scaffold(
@@ -67,7 +73,10 @@ fun ScannerScreen(
             TopAppBar(
                 title = { Text(text = stringResource(R.string.scanning)) },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    IconButton(onClick = {
+                        cloudViewModel.reset(false)
+                        onNavigateBack()
+                    }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(R.string.navigate_back)
