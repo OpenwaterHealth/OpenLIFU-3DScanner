@@ -2,8 +2,11 @@ package health.openwater.openlifu3dscanner.screen.scanner
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.unit.dp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Cloud
+import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -47,8 +50,10 @@ fun ScannerScreen(
 
     val userViewModel: UserViewModel = hiltViewModel()
     val uiState by userViewModel.uiState.collectAsStateWithLifecycle()
+    val isConnected by userViewModel.isConnected.collectAsStateWithLifecycle()
     val hasCredits = (uiState.credits ?: 0) > 0
     val isLoggedIn = uiState.user != null && hasCredits
+    val isOnline = isLoggedIn && isConnected
 
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -82,6 +87,15 @@ fun ScannerScreen(
                             contentDescription = stringResource(R.string.navigate_back)
                         )
                     }
+                },
+                actions = {
+                    Icon(
+                        imageVector = if (isOnline) Icons.Filled.Cloud else Icons.Filled.CloudOff,
+                        contentDescription = stringResource(
+                            if (isOnline) R.string.online else R.string.offline
+                        ),
+                        modifier = Modifier.padding(end = 16.dp)
+                    )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary,
