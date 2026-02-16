@@ -47,6 +47,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -64,6 +65,32 @@ import health.openwater.openlifu3dscanner.viewmodel.UserViewModel
 enum class SessionMode {
     EXISTING,
     NEW
+}
+
+@Composable
+private fun SessionNameField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    focusRequester: FocusRequester? = null,
+) {
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val idPattern = Regex("[a-zA-Z0-9 _\\-]*")
+    OutlinedTextField(
+        value = value,
+        onValueChange = { if (it.matches(idPattern)) onValueChange(it) },
+        maxLines = 1,
+        label = { Text(stringResource(R.string.new_session_name)) },
+        placeholder = { Text(stringResource(R.string.from_the_desktop_application)) },
+        keyboardOptions = KeyboardOptions(
+            imeAction = ImeAction.Done,
+            keyboardType = KeyboardType.Ascii
+        ),
+        keyboardActions = KeyboardActions(onDone = { keyboardController?.hide() }),
+        modifier = modifier
+            .fillMaxWidth()
+            .then(if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier)
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -110,7 +137,7 @@ fun CreateCollectionScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(text = stringResource(R.string.start_new_session)) },
+                title = { Text(text = stringResource(R.string.create_new_photo_collection)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
@@ -164,7 +191,7 @@ fun CreateCollectionScreen(
                         .padding(horizontal = 24.dp, vertical = 16.dp)
                 ) {
                     Text(
-                        text = stringResource(R.string.start_scan),
+                        text = stringResource(R.string.next),
                         fontSize = 16.sp,
                         modifier = Modifier.padding(vertical = 8.dp)
                     )
@@ -178,26 +205,14 @@ fun CreateCollectionScreen(
                 .padding(contentPadding)
                 .padding(horizontal = 24.dp, vertical = 24.dp)
         ) {
-            val keyboardController = LocalSoftwareKeyboardController.current
             if (!isLoggedIn) {
                 val focusRequester = remember { FocusRequester() }
                 LaunchedEffect(Unit) { focusRequester.requestFocus() }
 
-                OutlinedTextField(
+                SessionNameField(
                     value = manualSessionName,
-                    maxLines = 1,
                     onValueChange = { manualSessionName = it },
-                    label = {
-                        Text(stringResource(R.string.new_session_name))
-                    },
-                    placeholder = {
-                        Text(stringResource(R.string.example_session_name))
-                    },
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                    keyboardActions = KeyboardActions(onDone = { keyboardController?.hide() }),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .focusRequester(focusRequester)
+                    focusRequester = focusRequester
                 )
                 return@Column
             }
@@ -221,64 +236,16 @@ fun CreateCollectionScreen(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    OutlinedTextField(
+                    SessionNameField(
                         value = manualSessionName,
-                        onValueChange = { manualSessionName = it },
-                        label = {
-                            Text(stringResource(R.string.new_session_name))
-                        },
-                        placeholder = {
-                            Text(stringResource(R.string.example_session_name))
-                        },
-                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                        keyboardActions = KeyboardActions(onDone = { keyboardController?.hide() }),
-                        modifier = Modifier.fillMaxWidth()
+                        onValueChange = { manualSessionName = it }
                     )
                 }
 
                 else -> {
-                    // ---------- Subject picker ----------
-                    ExposedDropdownMenuBox(
-                        expanded = subjectExpanded,
-                        onExpandedChange = { subjectExpanded = it }
-                    ) {
-                        OutlinedTextField(
-                            value = selectedSubject?.name.orEmpty(),
-                            onValueChange = {},
-                            readOnly = true,
-                            label = { Text(stringResource(R.string.select_subject)) },
-                            trailingIcon = {
-                                ExposedDropdownMenuDefaults.TrailingIcon(subjectExpanded)
-                            },
-                            modifier = Modifier
-                                .menuAnchor(MenuAnchorType.PrimaryNotEditable)
-                                .fillMaxWidth()
-                        )
-
-                        ExposedDropdownMenu(
-                            expanded = subjectExpanded,
-                            onDismissRequest = { subjectExpanded = false }
-                        ) {
-                            subjectsState.subjects.forEach { subject ->
-                                DropdownMenuItem(
-                                    text = { Text(subject.name) },
-                                    onClick = {
-                                        selectedSubject = subject
-                                        selectedSession = null
-                                        manualSessionName = ""
-                                        sessionMode = SessionMode.EXISTING
-                                        subjectExpanded = false
-                                    }
-                                )
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(24.dp))
-
                     // ---------- Session mode selector ----------
                     Text(
-                        text = stringResource(R.string.session_type),
+                        text = stringResource(R.string.subject_id),
                         style = MaterialTheme.typography.labelLarge,
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
@@ -304,6 +271,7 @@ fun CreateCollectionScreen(
                             selected = sessionMode == SessionMode.NEW,
                             onClick = {
                                 sessionMode = SessionMode.NEW
+                                selectedSubject = null
                                 selectedSession = null
                             },
                             shape = SegmentedButtonDefaults.itemShape(
@@ -311,7 +279,7 @@ fun CreateCollectionScreen(
                                 count = 2
                             )
                         ) {
-                            Text(stringResource(R.string.create_new))
+                            Text(stringResource(R.string.manually_input))
                         }
                     }
 
@@ -320,6 +288,44 @@ fun CreateCollectionScreen(
                     // ---------- Session input ----------
                     when (sessionMode) {
                         SessionMode.EXISTING -> {
+                            // Subject picker
+                            ExposedDropdownMenuBox(
+                                expanded = subjectExpanded,
+                                onExpandedChange = { subjectExpanded = it }
+                            ) {
+                                OutlinedTextField(
+                                    value = selectedSubject?.name.orEmpty(),
+                                    onValueChange = {},
+                                    readOnly = true,
+                                    label = { Text(stringResource(R.string.select_subject_id)) },
+                                    trailingIcon = {
+                                        ExposedDropdownMenuDefaults.TrailingIcon(subjectExpanded)
+                                    },
+                                    modifier = Modifier
+                                        .menuAnchor(MenuAnchorType.PrimaryNotEditable)
+                                        .fillMaxWidth()
+                                )
+
+                                ExposedDropdownMenu(
+                                    expanded = subjectExpanded,
+                                    onDismissRequest = { subjectExpanded = false }
+                                ) {
+                                    subjectsState.subjects.forEach { subject ->
+                                        DropdownMenuItem(
+                                            text = { Text(subject.name) },
+                                            onClick = {
+                                                selectedSubject = subject
+                                                selectedSession = null
+                                                subjectExpanded = false
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            // Session picker
                             ExposedDropdownMenuBox(
                                 expanded = sessionExpanded,
                                 onExpandedChange = {
@@ -332,7 +338,7 @@ fun CreateCollectionScreen(
                                     readOnly = true,
                                     enabled = selectedSubject != null,
                                     label = {
-                                        Text(stringResource(R.string.select_session))
+                                        Text(stringResource(R.string.select_session_id))
                                     },
                                     trailingIcon = {
                                         ExposedDropdownMenuDefaults.TrailingIcon(
@@ -363,19 +369,19 @@ fun CreateCollectionScreen(
                         }
 
                         SessionMode.NEW -> {
-                            OutlinedTextField(
-                                value = manualSessionName,
-                                onValueChange = { manualSessionName = it },
-                                label = {
-                                    Text(stringResource(R.string.new_session_name))
-                                },
-                                placeholder = {
-                                    Text(stringResource(R.string.example_session_name))
-                                },
-                                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                                keyboardActions = KeyboardActions(onDone = { keyboardController?.hide() }),
-                                modifier = Modifier.fillMaxWidth()
+                            Text(
+                                text = stringResource(R.string.manual_input_hint),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            SessionNameField(
+                                value = manualSessionName,
+                                onValueChange = { manualSessionName = it }
+                            )
+
+                            Spacer(modifier = Modifier.height(8.dp))
                         }
                     }
 

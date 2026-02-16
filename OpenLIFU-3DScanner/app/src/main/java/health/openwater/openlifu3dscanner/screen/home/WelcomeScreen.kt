@@ -68,7 +68,7 @@ fun WelcomeScreen(
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Text(
-                    text = stringResource(R.string.start_scan),
+                    text = stringResource(R.string.begin),
                     fontSize = 16.sp,
                     modifier = Modifier.padding(vertical = 8.dp)
                 )

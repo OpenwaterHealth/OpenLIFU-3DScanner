@@ -76,7 +76,7 @@ fun ScannerScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text(text = stringResource(R.string.scanning)) },
+                title = { Text(text = stringResource(R.string.capturing)) },
                 navigationIcon = {
                     IconButton(onClick = {
                         cloudViewModel.reset(false)

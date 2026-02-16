@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -17,7 +16,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -31,7 +29,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import health.openwater.openlifu3dscanner.BuildConfig
 import health.openwater.openlifu3dscanner.R
+import health.openwater.openlifu3dscanner.screen.home.NoticeDialog
 import health.openwater.openlifu3dscanner.preferences.Prefs
+import health.openwater.openlifu3dscanner.viewmodel.UserViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import me.zhanghai.compose.preference.ProvidePreferenceLocals
 import me.zhanghai.compose.preference.createPreferenceFlow
 import me.zhanghai.compose.preference.listPreference
@@ -47,6 +48,7 @@ fun SettingsScreen(
 ) {
     val context = LocalContext.current
     val prefs = Prefs.getInstance(context)
+    val userViewModel: UserViewModel = hiltViewModel()
     var showNoticeDialog by remember { mutableStateOf(false) }
 
     Scaffold(
@@ -211,13 +213,12 @@ fun SettingsScreen(
     }
 
     if (showNoticeDialog) {
-        AlertDialog(
-            onDismissRequest = { showNoticeDialog = false },
-            title = { Text(stringResource(R.string.notice_title)) },
-            text = { Text(stringResource(R.string.notice)) },
-            confirmButton = {
-                TextButton(onClick = { showNoticeDialog = false }) {
-                    Text(stringResource(R.string.ok))
+        NoticeDialog(
+            isAcknowledged = !userViewModel.shouldShowNotice,
+            onDismiss = { dontShowAgain ->
+                showNoticeDialog = false
+                if (dontShowAgain) {
+                    userViewModel.noticeAcknowledged()
                 }
             }
         )

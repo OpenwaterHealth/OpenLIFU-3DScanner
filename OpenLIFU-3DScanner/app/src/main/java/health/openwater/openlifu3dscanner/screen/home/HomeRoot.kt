@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Cloud
+import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SupportAgent
 import androidx.compose.material3.Icon
@@ -31,6 +33,9 @@ fun HomeRoot(
 ) {
     val userViewModel: UserViewModel = hiltViewModel()
     val uiState by userViewModel.uiState.collectAsStateWithLifecycle()
+    val isConnected by userViewModel.isConnected.collectAsStateWithLifecycle()
+    val hasCredits = (uiState.credits ?: 0) > 0
+    val isOnline = uiState.user != null && hasCredits && isConnected
 
     LaunchedEffect(Unit) {
         userViewModel.initialize()
@@ -50,8 +55,17 @@ fun HomeRoot(
         Row(
             modifier = Modifier
                 .align(Alignment.TopEnd)
-                .padding(8.dp)
+                .padding(8.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
+            IconButton(onClick = {}) {
+                Icon(
+                    imageVector = if (isOnline) Icons.Filled.Cloud else Icons.Filled.CloudOff,
+                    contentDescription = stringResource(
+                        if (isOnline) R.string.online else R.string.offline
+                    )
+                )
+            }
             IconButton(onClick = onSupport) {
                 Icon(
                     imageVector = Icons.Default.SupportAgent,
