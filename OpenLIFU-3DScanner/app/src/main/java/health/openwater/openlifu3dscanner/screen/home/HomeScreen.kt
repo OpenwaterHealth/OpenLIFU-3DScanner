@@ -9,11 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.SupportAgent
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.AlertDialog
@@ -120,17 +116,6 @@ fun HomeScreen(
                     )
                 }
 
-                IconButton(
-                    onClick = { showSupportDialog = true },
-                    modifier = Modifier
-                        .align(Alignment.BottomStart)
-                        .padding(start = 16.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.SupportAgent,
-                        contentDescription = stringResource(R.string.customer_support)
-                    )
-                }
             }
         }
     ) { contentPadding ->
@@ -144,7 +129,8 @@ fun HomeScreen(
                 onStartScan = { handleStartScan() },
                 onSettings = onSettings,
                 onViewCollection = onViewCollection,
-                onSignIn = onSignIn
+                onSignIn = onSignIn,
+                onSupport = { showSupportDialog = true }
             )
         }
     }
