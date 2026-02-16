@@ -51,18 +51,14 @@ class ScannerViewModel @Inject constructor(
         private set
 
     // Phone must be held roughly upright to capture
-    // Pitch ~-90° when vertical; allow ±20° from vertical
+    // After coordinate remap: pitch ~0° when vertical; allow ±30°
     // Roll ~0° when not tilted sideways; allow ±30°
     val isOrientationValid: Boolean
-        get() = currentPitch in -110f..-70f && currentRoll in -30f..30f
+        get() = currentPitch in -30f..30f && currentRoll in -30f..30f
 
     val totalBuckets = Prefs.getPhotoCount(application)
     val captureInterval = 360 / totalBuckets.toFloat()
     val capturedBuckets = mutableStateSetOf<Int>()
-
-    val _capturedBucketsCount = MutableStateFlow(0)
-    val capturedBucketsCount = _capturedBucketsCount.asStateFlow()
-
 
     var faceStatus by mutableStateOf(FaceStatus.NO_FACE)
         private set
@@ -101,20 +97,36 @@ class ScannerViewModel @Inject constructor(
             .build()
 
         sensorManager = application.getSystemService(Context.SENSOR_SERVICE) as SensorManager
-        rotationSensor = sensorManager?.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
+        rotationSensor = sensorManager?.getDefaultSensor(Sensor.TYPE_GAME_ROTATION_VECTOR)
 
         sensorListener = object : SensorEventListener {
 
             private val rotationMatrix = FloatArray(9)
+            private val remappedMatrix = FloatArray(9)
             private val orientation = FloatArray(3)
 
             override fun onSensorChanged(event: SensorEvent) {
                 SensorManager.getRotationMatrixFromVector(rotationMatrix, event.values)
-                SensorManager.getOrientation(rotationMatrix, orientation)
 
-                var azimuth = Math.toDegrees(orientation[0].toDouble()).toFloat()
-                if (azimuth < 0) azimuth += 360f
-                currentAngle = azimuth
+                // Compass heading from camera direction, independent of phone tilt.
+                // Device -Z (camera) in world coords: (-R[2], -R[5], -R[8])
+                // Project onto horizontal plane (East/North) for bearing.
+                val heading = Math.toDegrees(
+                    kotlin.math.atan2(
+                        -rotationMatrix[2].toDouble(),
+                        -rotationMatrix[5].toDouble()
+                    )
+                ).toFloat()
+                currentAngle = if (heading < 0) heading + 360f else heading
+
+                // Pitch/roll for orientation validation (remapped for upright phone)
+                SensorManager.remapCoordinateSystem(
+                    rotationMatrix,
+                    SensorManager.AXIS_X,
+                    SensorManager.AXIS_Z,
+                    remappedMatrix
+                )
+                SensorManager.getOrientation(remappedMatrix, orientation)
                 currentPitch = Math.toDegrees(orientation[1].toDouble()).toFloat()
                 currentRoll = Math.toDegrees(orientation[2].toDouble()).toFloat()
             }
@@ -146,7 +158,6 @@ class ScannerViewModel @Inject constructor(
         startingAngle = currentAngle  // Store the starting orientation
         _isScanning.value = true
         capturedBuckets.clear()
-        _capturedBucketsCount.value = 0
         _isCompleted.value = false
     }
 
@@ -160,7 +171,6 @@ class ScannerViewModel @Inject constructor(
         val file = File(getModelsDir(), collectionName).apply { mkdirs() }
         currentScanPath = file
         capturedBuckets.clear()
-        _capturedBucketsCount.value = 0
         _isCompleted.value = false
         _isScanning.value = false
     }
@@ -208,7 +218,6 @@ class ScannerViewModel @Inject constructor(
             object : ImageCapture.OnImageSavedCallback {
                 override fun onImageSaved(output: ImageCapture.OutputFileResults) {
                     capturedBuckets.add(bucket)
-                    _capturedBucketsCount.value = capturedBuckets.size
 
                     if (capturedBuckets.size == totalBuckets) {
                         _isScanning.value = false
