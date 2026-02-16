@@ -21,6 +21,7 @@ import health.openwater.openlifu3dscanner.network.api.WebsocketService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.runBlocking
 import okhttp3.Authenticator
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -63,9 +64,16 @@ object ApiModule {
     @Singleton
     fun provideAuthenticator(authService: AuthService): Authenticator =
         Authenticator { _, response ->
-            if (response.code == 401) {
-                authService.signOut()
-                null
+            // Don't retry if we already attempted a refresh for this request
+            if (response.request.header("X-Auth-Retry") != null) return@Authenticator null
+
+            // Try to force-refresh the Firebase token and retry the request
+            val freshToken = runBlocking { authService.getToken() }
+            if (freshToken != null) {
+                response.request.newBuilder()
+                    .header("Authorization", "Bearer $freshToken")
+                    .header("X-Auth-Retry", "true")
+                    .build()
             } else {
                 null
             }
