@@ -114,7 +114,7 @@
     <string name="dismiss">Dismiss</string>
     <string name="model">Model</string>
     <string name="photos">Photos</string>
-    <string name="photos_d_d">Photos: %1$d / %2$d</string>
+    <string name="photos_d_d">Photos: %1$d/%2$d</string>
     <string name="face_ready">Face ready</string>
     <string name="no_face_found">No face found</string>
     <string name="center_face_in_oval">Center face in oval</string>
@@ -213,4 +213,5 @@
     <string name="manual_input_hint">1. Open the Open-LIFU desktop application.\n
         2. Navigate to the Transducer Localization module.\n
         3. Copy the auto-generated Scan ID in the box below.</string>
+    <string name="scan_id">Scan ID</string>
 </resources>

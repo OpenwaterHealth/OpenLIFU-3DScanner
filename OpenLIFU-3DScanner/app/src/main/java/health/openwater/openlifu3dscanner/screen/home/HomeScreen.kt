@@ -161,6 +161,8 @@ fun HomeScreen(
             showNotice = false
             if (dontShowAgain) {
                 userViewModel.noticeAcknowledged()
+            } else {
+                userViewModel.noticeDismissed()
             }
         })
     }

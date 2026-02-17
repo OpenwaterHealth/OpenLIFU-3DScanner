@@ -51,6 +51,9 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import health.openwater.openlifu3dscanner.R
 import health.openwater.openlifu3dscanner.extensions.getModelsDir
 import health.openwater.openlifu3dscanner.repository.ScanConfig
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import health.openwater.openlifu3dscanner.viewmodel.CloudViewModel
 import health.openwater.openlifu3dscanner.viewmodel.CollectionViewModel
 import health.openwater.openlifu3dscanner.viewmodel.UserViewModel
@@ -197,11 +200,24 @@ fun PhotoscanScreen(
         )
     }
 
+    val scanDate = remember(collectionName) {
+        val dir = java.io.File(getModelsDir(), collectionName)
+        val timestamp = if (dir.exists()) dir.lastModified() else System.currentTimeMillis()
+        SimpleDateFormat("MMM dd, yyyy HH:mm", Locale.getDefault()).format(Date(timestamp))
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
-                    Text(text = collectionName)
+                    Column {
+                        Text(
+                            text = scanDate,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f)
+                        )
+                        Text(text = collectionName)
+                    }
                 }, navigationIcon = {
                     IconButton(onClick = {
                         onNavigateBack()

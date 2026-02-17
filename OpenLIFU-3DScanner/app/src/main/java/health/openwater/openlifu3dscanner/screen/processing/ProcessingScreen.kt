@@ -1,6 +1,7 @@
 package health.openwater.openlifu3dscanner.screen.processing
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -48,7 +49,16 @@ fun ProcessingScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(text = collectionName) },
+                title = {
+                    Column {
+                        Text(
+                            text = stringResource(R.string.scan_id),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f)
+                        )
+                        Text(text = collectionName)
+                    }
+                },
                 navigationIcon = {
                     IconButton(onClick = { onBack() }) {
                         Icon(
