@@ -21,16 +21,22 @@ data class CollectionUiState(
     val loadingPhotocollections: Boolean = true,
     val photocollections: List<Photocollection>? = null,
     val photocollectionsError: String? = null,
+    val photocollectionsServerError: Boolean = false,
 
     val loadingPhotoscans: Boolean = true,
     val photoscans: List<Photoscan>? = null,
-    val photoscansError: String? = null
+    val photoscansError: String? = null,
+    val photoscansServerError: Boolean = false
 ) {
     val isLoading: Boolean
         get() = loadingPhotocollections || loadingPhotoscans
 
     val hasError: Boolean
         get() = photocollectionsError != null || photoscansError != null
+
+    /** True only for server/unexpected errors, not for auth/network (offline) errors */
+    val hasServerError: Boolean
+        get() = photocollectionsServerError || photoscansServerError
 }
 
 @HiltViewModel
@@ -44,7 +50,7 @@ class CollectionViewModel @Inject constructor(
     val uiState = _uiState.asStateFlow()
 
     fun loadPhotocollections() = viewModelScope.launch {
-        _uiState.update { it.copy(loadingPhotocollections = true, photocollectionsError = null) }
+        _uiState.update { it.copy(loadingPhotocollections = true, photocollectionsError = null, photocollectionsServerError = false) }
 
         when (val result = collectionRepository.getPhotocollections()) {
             is Result.Success -> _uiState.update {
@@ -71,21 +77,23 @@ class CollectionViewModel @Inject constructor(
             is Result.ServerError -> _uiState.update {
                 it.copy(
                     loadingPhotocollections = false,
-                    photocollectionsError = "Server error: ${result.code}"
+                    photocollectionsError = "Server error: ${result.code}",
+                    photocollectionsServerError = true
                 )
             }
 
             is Result.UnexpectedError -> _uiState.update {
                 it.copy(
                     loadingPhotocollections = false,
-                    photocollectionsError = result.message ?: "Unexpected error"
+                    photocollectionsError = result.message ?: "Unexpected error",
+                    photocollectionsServerError = true
                 )
             }
         }
     }
 
     fun loadPhotoscans() = viewModelScope.launch {
-        _uiState.update { it.copy(loadingPhotoscans = true, photoscansError = null) }
+        _uiState.update { it.copy(loadingPhotoscans = true, photoscansError = null, photoscansServerError = false) }
 
         when (val result = collectionRepository.getPhotoscans()) {
             is Result.Success -> _uiState.update {
@@ -112,14 +120,16 @@ class CollectionViewModel @Inject constructor(
             is Result.ServerError -> _uiState.update {
                 it.copy(
                     loadingPhotoscans = false,
-                    photoscansError = "Server error: ${result.code}"
+                    photoscansError = "Server error: ${result.code}",
+                    photoscansServerError = true
                 )
             }
 
             is Result.UnexpectedError -> _uiState.update {
                 it.copy(
                     loadingPhotoscans = false,
-                    photoscansError = result.message ?: "Unexpected error"
+                    photoscansError = result.message ?: "Unexpected error",
+                    photoscansServerError = true
                 )
             }
         }

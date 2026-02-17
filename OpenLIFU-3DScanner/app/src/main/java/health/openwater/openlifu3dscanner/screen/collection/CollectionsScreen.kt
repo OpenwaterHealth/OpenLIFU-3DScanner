@@ -339,13 +339,13 @@ fun CollectionScreen(
                             verticalArrangement = Arrangement.Center
                         ) {
                             Text(
-                                text = if (uiState.hasError) {
+                                text = if (uiState.hasServerError) {
                                     stringResource(R.string.failed_to_load_photo_scans)
                                 } else {
                                     stringResource(R.string.no_photo_scans_available)
                                 },
                                 style = MaterialTheme.typography.bodyLarge,
-                                color = if (uiState.hasError) {
+                                color = if (uiState.hasServerError) {
                                     MaterialTheme.colorScheme.error
                                 } else {
                                     MaterialTheme.colorScheme.onSurfaceVariant
