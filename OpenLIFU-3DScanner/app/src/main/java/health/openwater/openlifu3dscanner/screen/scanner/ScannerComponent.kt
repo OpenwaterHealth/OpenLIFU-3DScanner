@@ -27,6 +27,7 @@ import health.openwater.openlifu3dscanner.viewmodel.ScannerViewModel
 fun ScannerComponent(
     collectionName: String,
     autoUploadEnabled: Boolean,
+    isOnline: Boolean,
     snackbarHostState: SnackbarHostState,
     onProceed: () -> Unit,
     viewModel: ScannerViewModel = hiltViewModel()
@@ -45,7 +46,7 @@ fun ScannerComponent(
     val previewView = remember { PreviewView(context) }
 
     LaunchedEffect(Unit) {
-        viewModel.initializeCameraAndSensors()
+        viewModel.initializeCameraAndSensors(isOnline)
     }
 
     LaunchedEffect(previewView) {

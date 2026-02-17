@@ -135,7 +135,8 @@
     <string name="scan_settings">Scan Settings</string>
     <string name="image_size">Image Size</string>
     <string name="photo_count_setting">Photo Count</string>
-    <string name="capture_mode">Capture Mode</string>
+    <string name="capture_mode_online">Capture Mode (Online)</string>
+    <string name="capture_mode_offline">Capture Mode (Offline)</string>
 
     <!-- Image size options -->
     <string name="image_size_1024">1024x1024</string>

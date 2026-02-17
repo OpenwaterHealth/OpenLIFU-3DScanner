@@ -89,9 +89,9 @@ class ScannerViewModel @Inject constructor(
     // Prevent concurrent captures
     private var isCapturing by mutableStateOf(false)
 
-    fun initializeCameraAndSensors() {
+    fun initializeCameraAndSensors(isOnline: Boolean) {
         cameraExecutor = Executors.newSingleThreadExecutor()
-        val captureMode = Prefs.getCaptureMode(application)
+        val captureMode = Prefs.getCaptureMode(application, isOnline)
         imageCapture = ImageCapture.Builder()
             .setCaptureMode(captureMode)
             .build()

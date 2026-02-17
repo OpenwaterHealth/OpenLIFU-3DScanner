@@ -136,12 +136,28 @@ fun SettingsScreen(
                         }
                     )
 
-                    // Capture Mode Preference
+                    // Capture Mode (Online) Preference
                     listPreference(
-                        key = Prefs.CAPTURE_MODE_KEY,
-                        defaultValue = Prefs.CAPTURE_MODE_DEFAULT,
+                        key = Prefs.CAPTURE_MODE_ONLINE_KEY,
+                        defaultValue = Prefs.CAPTURE_MODE_ONLINE_DEFAULT,
                         values = Prefs.CAPTURE_MODE_MAP.keys.toList(),
-                        title = { Text(stringResource(R.string.capture_mode)) },
+                        title = { Text(stringResource(R.string.capture_mode_online)) },
+                        valueToText = {
+                            val resId = Prefs.CAPTURE_MODE_MAP[it]
+                            AnnotatedString(if (resId != null) context.getString(resId) else it.toString())
+                        },
+                        summary = {
+                            val resId = Prefs.CAPTURE_MODE_MAP[it]
+                            Text(if (resId != null) stringResource(resId) else it.toString())
+                        }
+                    )
+
+                    // Capture Mode (Offline) Preference
+                    listPreference(
+                        key = Prefs.CAPTURE_MODE_OFFLINE_KEY,
+                        defaultValue = Prefs.CAPTURE_MODE_OFFLINE_DEFAULT,
+                        values = Prefs.CAPTURE_MODE_MAP.keys.toList(),
+                        title = { Text(stringResource(R.string.capture_mode_offline)) },
                         valueToText = {
                             val resId = Prefs.CAPTURE_MODE_MAP[it]
                             AnnotatedString(if (resId != null) context.getString(resId) else it.toString())

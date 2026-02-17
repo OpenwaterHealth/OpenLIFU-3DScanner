@@ -10,7 +10,8 @@ object Prefs {
     // Keys
     const val IMAGE_SIZE_KEY = "pref_image_size"
     const val PHOTO_COUNT_KEY = "pref_photo_count"
-    const val CAPTURE_MODE_KEY = "pref_capture_mode"
+    const val CAPTURE_MODE_ONLINE_KEY = "pref_capture_mode_online"
+    const val CAPTURE_MODE_OFFLINE_KEY = "pref_capture_mode_offline"
     const val OVAL_SIZE_KEY = "pref_oval_size"
     const val AUTO_UPLOAD_KEY = "pref_auto_upload"
     const val NOTICE_ACKNOWLEDGED_UID_KEY = "pref_notice_acknowledged_uid"
@@ -18,7 +19,8 @@ object Prefs {
     // Default values
     const val IMAGE_SIZE_DEFAULT = 1024
     const val PHOTO_COUNT_DEFAULT = 120
-    const val CAPTURE_MODE_DEFAULT = ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY
+    const val CAPTURE_MODE_ONLINE_DEFAULT = ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY
+    const val CAPTURE_MODE_OFFLINE_DEFAULT = ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY
     const val OVAL_SIZE_DEFAULT = 100
     const val AUTO_UPLOAD_DEFAULT = true
 
@@ -63,9 +65,13 @@ object Prefs {
         return prefs.getInt(IMAGE_SIZE_KEY, IMAGE_SIZE_DEFAULT)
     }
 
-    fun getCaptureMode(context: Context): Int {
+    fun getCaptureMode(context: Context, isOnline: Boolean): Int {
         val prefs = getInstance(context)
-        return prefs.getInt(CAPTURE_MODE_KEY, CAPTURE_MODE_DEFAULT)
+        return if (isOnline) {
+            prefs.getInt(CAPTURE_MODE_ONLINE_KEY, CAPTURE_MODE_ONLINE_DEFAULT)
+        } else {
+            prefs.getInt(CAPTURE_MODE_OFFLINE_KEY, CAPTURE_MODE_OFFLINE_DEFAULT)
+        }
     }
 
     fun getOvalSize(context: Context): Int {

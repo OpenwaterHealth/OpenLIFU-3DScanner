@@ -114,6 +114,7 @@ fun ScannerScreen(
             ScannerComponent(
                 collectionName = collectionName,
                 autoUploadEnabled = autoUploadEnabled,
+                isOnline = isOnline,
                 snackbarHostState = snackbarHostState,
                 onProceed = {
                     onNavigateToProcessing(autoUploadEnabled, isLoggedIn)
