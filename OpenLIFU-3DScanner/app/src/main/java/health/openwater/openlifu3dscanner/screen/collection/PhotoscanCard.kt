@@ -1,6 +1,9 @@
 package health.openwater.openlifu3dscanner.screen.collection
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,7 +13,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.ViewInAr
 import androidx.compose.material3.Card
@@ -22,6 +27,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -46,8 +52,14 @@ data class CollectionItem(
     val status: PhotoscanStatus?
 )
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun PhotoscanCard(item: CollectionItem, onClick: () -> Unit) {
+fun PhotoscanCard(
+    item: CollectionItem,
+    onClick: () -> Unit,
+    onLongClick: (() -> Unit)? = null,
+    isSelected: Boolean = false
+) {
     val collectionDir = remember(item.name) { File(getModelsDir(), item.name) }
 
     val firstImage = remember(item.name) {
@@ -59,11 +71,23 @@ fun PhotoscanCard(item: CollectionItem, onClick: () -> Unit) {
 
     val hasModel = remember(item.name) { hasLocalModel(item.name) }
 
+    val shape = RoundedCornerShape(12.dp)
+    val borderModifier = if (isSelected) {
+        Modifier.border(3.dp, MaterialTheme.colorScheme.primary, shape)
+    } else {
+        Modifier
+    }
+
     Card(
-        onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
-            .height(140.dp),
+            .height(140.dp)
+            .then(borderModifier)
+            .clip(shape)
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongClick
+            ),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
@@ -90,6 +114,19 @@ fun PhotoscanCard(item: CollectionItem, onClick: () -> Unit) {
                         )
                     )
             )
+
+            // Selection checkmark top right
+            if (isSelected) {
+                Icon(
+                    imageVector = Icons.Filled.CheckCircle,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(12.dp)
+                        .size(28.dp)
+                )
+            }
 
             // Status icons top left
             Row(

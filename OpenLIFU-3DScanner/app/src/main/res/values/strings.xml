@@ -21,7 +21,7 @@
     <string name="navigate_back">Navigate Back</string>
     <string name="_1_point_camera_at_face">1. Point camera at face</string>
     <string name="_2_tap_button">2. Tap \"Start Scan\" button</string>
-    <string name="_3_walk_in_a_circle_around_person">3. Walk in a circle around person</string>
+    <string name="_3_walk_in_a_circle_around_person">3. Walk counterclockwise in a full circle around the subject</string>
     <string name="photos_capture_automatically">Photos capture automatically</string>
     <string name="walk_to_next_capture_point">Walk to next capture point</string>
     <string name="hold_phone_upright">Hold phone upright and steady</string>
@@ -125,6 +125,8 @@
     <string name="delete_local_files">Delete local files</string>
     <string name="delete_from_cloud">Delete from cloud</string>
     <string name="deleting">Deleting…</string>
+    <string name="delete_selected_scans">Delete %1$d Scans</string>
+    <string name="n_selected">%1$d Selected</string>
     <string name="scan_not_processed">Scan Not Processed</string>
     <string name="upload_to_create_3d_model">Upload photos to create a 3D model</string>
     <string name="sign_in_to_process_scan">Sign in to upload and process this scan</string>
