@@ -141,6 +141,9 @@ fun AppNavigation() {
                 photoscanId = photoscanId,
                 photocollectionId = photocollectionId,
                 onNavigateBack = { navController.popBackStack() },
+                onNavigateToTransfer = {
+                    navController.navigate(Screen.Transfer.route)
+                },
                 onStartProcessing = if (isLocalOnly) {
                     {
                         navController.navigate(Screen.Uploading.route) {

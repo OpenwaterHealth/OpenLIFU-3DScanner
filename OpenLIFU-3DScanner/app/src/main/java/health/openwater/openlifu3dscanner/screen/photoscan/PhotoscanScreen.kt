@@ -67,6 +67,7 @@ fun PhotoscanScreen(
     photocollectionId: Long,
     onNavigateBack: () -> Unit,
     onStartProcessing: (() -> Unit)? = null,
+    onNavigateToTransfer: (() -> Unit)? = null,
     cloudViewModel: CloudViewModel = hiltViewModel(),
     collectionViewModel: CollectionViewModel = hiltViewModel(),
     userViewModel: UserViewModel = hiltViewModel()
@@ -290,6 +291,18 @@ fun PhotoscanScreen(
                     photoscanId = photoscanId,
                     photocollectionId = photocollectionId,
                     isLoggedIn = isLoggedIn,
+                    onTransferToPc = onNavigateToTransfer?.let { navigate ->
+                        {
+                            cloudViewModel.setScanConfig(
+                                ScanConfig(
+                                    collectionName = collectionName,
+                                    autoUploadEnabled = false,
+                                    sessionId = null
+                                )
+                            )
+                            navigate()
+                        }
+                    },
                     onStartProcessing = if (onStartProcessing != null) {
                         {
                             if (hasCredits) {

@@ -35,6 +35,7 @@ fun ModelTab(
     photocollectionId: Long,
     isLoggedIn: Boolean = false,
     onStartProcessing: (() -> Unit)? = null,
+    onTransferToPc: (() -> Unit)? = null,
     collectionViewModel: CollectionViewModel = hiltViewModel()
 ) {
     var downloadState by remember { mutableStateOf<DownloadState>(DownloadState.Init) }
@@ -158,7 +159,8 @@ fun ModelTab(
                 is DownloadState.NotProcessed -> {
                     StateNotProcessed(
                         isLoggedIn = isLoggedIn,
-                        onStartProcessing = onStartProcessing
+                        onStartProcessing = onStartProcessing,
+                        onTransferToPc = onTransferToPc,
                     )
                 }
             }

@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.PhotoCamera
+import androidx.compose.material.icons.filled.Usb
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -28,7 +29,8 @@ import health.openwater.openlifu3dscanner.R
 @Composable
 fun StateNotProcessed(
     isLoggedIn: Boolean,
-    onStartProcessing: (() -> Unit)?
+    onStartProcessing: (() -> Unit)?,
+    onTransferToPc: (() -> Unit)? = null,
 ) {
     Column(
         modifier = Modifier
@@ -81,6 +83,27 @@ fun StateNotProcessed(
                 Spacer(modifier = Modifier.size(8.dp))
                 Text(
                     text = stringResource(R.string.start_processing),
+                    fontSize = 16.sp,
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
+            }
+        }
+
+        if (!isLoggedIn && onTransferToPc != null) {
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Button(
+                onClick = onTransferToPc,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Usb,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.size(8.dp))
+                Text(
+                    text = stringResource(R.string.transfer_to_pc),
                     fontSize = 16.sp,
                     modifier = Modifier.padding(vertical = 8.dp)
                 )

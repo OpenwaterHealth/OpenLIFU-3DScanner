@@ -224,4 +224,9 @@
     <string name="offline_mode">Offline Mode</string>
     <string name="offline_mode_message">You are using offline mode. Contact support@openwater.cc to access online mode.</string>
     <string name="scan_settings_unlocked">Scan settings unlocked</string>
+    <string name="subject_scan_id_s">Subject Scan ID: %1$s</string>
+    <string name="connect_to_pc_via_usb_to_transfer_files">Connect to PC via USB to transfer files</string>
+    <string name="transfer_status_not_started">Status: Not Started</string>
+    <string name="transfer_status_in_progress">Status: In Progress…</string>
+    <string name="transfer_status_complete">Status: Complete. You can now safely disconnect your phone.</string>
 </resources>
