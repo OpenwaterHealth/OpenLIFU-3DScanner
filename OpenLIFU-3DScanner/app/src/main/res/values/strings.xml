@@ -214,4 +214,7 @@
         2. Navigate to the Transducer Localization module.\n
         3. Copy the auto-generated Scan ID in the box below.</string>
     <string name="scan_id">Scan ID</string>
+    <string name="overwrite_existing_data_title">Overwrite existing data?</string>
+    <string name="overwrite_existing_data_message">A collection named \"%s\" already exists on the device. Starting a new scan will overwrite the existing data.</string>
+    <string name="overwrite">Overwrite</string>
 </resources>

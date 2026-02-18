@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenuItem
@@ -30,6 +31,7 @@ import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -54,6 +56,8 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import health.openwater.openlifu3dscanner.R
+import health.openwater.openlifu3dscanner.extensions.getModelsDir
+import java.io.File
 import health.openwater.openlifu3dscanner.network.dto.Session
 import health.openwater.openlifu3dscanner.network.dto.SubjectWithSessions
 import health.openwater.openlifu3dscanner.preferences.Prefs
@@ -121,6 +125,10 @@ fun CreateCollectionScreen(
     var subjectExpanded by remember { mutableStateOf(false) }
     var sessionExpanded by remember { mutableStateOf(false) }
 
+    var showOverwriteDialog by remember { mutableStateOf(false) }
+    var pendingSessionName by remember { mutableStateOf("") }
+    var pendingSessionId by remember { mutableStateOf<Long?>(null) }
+
     LaunchedEffect(isLoggedIn) {
         if (isLoggedIn) {
             homeViewModel.loadSubjects()
@@ -175,14 +183,21 @@ fun CreateCollectionScreen(
                             sessionId = null
                         }
 
-                        cloudViewModel.setScanConfig(
-                            ScanConfig(
-                                collectionName = sessionName,
-                                autoUploadEnabled = if (hasCredits) autoUploadEnabled else false,
-                                sessionId = sessionId
+                        val existingDir = File(getModelsDir(), sessionName)
+                        if (existingDir.exists() && existingDir.listFiles()?.isNotEmpty() == true) {
+                            pendingSessionName = sessionName
+                            pendingSessionId = sessionId
+                            showOverwriteDialog = true
+                        } else {
+                            cloudViewModel.setScanConfig(
+                                ScanConfig(
+                                    collectionName = sessionName,
+                                    autoUploadEnabled = if (hasCredits) autoUploadEnabled else false,
+                                    sessionId = sessionId
+                                )
                             )
-                        )
-                        onStartScan()
+                            onStartScan()
+                        }
                     },
                     enabled = canStart,
                     modifier = Modifier
@@ -414,5 +429,38 @@ fun CreateCollectionScreen(
                 }
             }
         }
+    }
+
+    if (showOverwriteDialog) {
+        AlertDialog(
+            onDismissRequest = { showOverwriteDialog = false },
+            title = { Text(stringResource(R.string.overwrite_existing_data_title)) },
+            text = {
+                Text(stringResource(R.string.overwrite_existing_data_message, pendingSessionName))
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showOverwriteDialog = false
+                        File(getModelsDir(), pendingSessionName).deleteRecursively()
+                        cloudViewModel.setScanConfig(
+                            ScanConfig(
+                                collectionName = pendingSessionName,
+                                autoUploadEnabled = if (hasCredits) autoUploadEnabled else false,
+                                sessionId = pendingSessionId
+                            )
+                        )
+                        onStartScan()
+                    }
+                ) {
+                    Text(stringResource(R.string.overwrite))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showOverwriteDialog = false }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        )
     }
 }
