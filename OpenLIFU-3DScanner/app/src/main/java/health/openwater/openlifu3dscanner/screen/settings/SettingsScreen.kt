@@ -2,8 +2,9 @@ package health.openwater.openlifu3dscanner.screen.settings
 
 import android.annotation.SuppressLint
 import android.content.Intent
-import android.net.Uri
 import android.os.Build
+import android.widget.Toast
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -20,6 +21,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -27,18 +29,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
+import androidx.core.net.toUri
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import health.openwater.openlifu3dscanner.BuildConfig
 import health.openwater.openlifu3dscanner.R
-import health.openwater.openlifu3dscanner.screen.home.NoticeDialog
 import health.openwater.openlifu3dscanner.preferences.Prefs
+import health.openwater.openlifu3dscanner.screen.home.NoticeDialog
 import health.openwater.openlifu3dscanner.viewmodel.UserViewModel
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import me.zhanghai.compose.preference.ProvidePreferenceLocals
 import me.zhanghai.compose.preference.createPreferenceFlow
 import me.zhanghai.compose.preference.listPreference
 import me.zhanghai.compose.preference.preference
 import me.zhanghai.compose.preference.preferenceCategory
-import androidx.core.net.toUri
 
 @SuppressLint("LocalContextGetResourceValueCall")
 @OptIn(ExperimentalMaterial3Api::class)
@@ -50,11 +52,26 @@ fun SettingsScreen(
     val prefs = Prefs.getInstance(context)
     val userViewModel: UserViewModel = hiltViewModel()
     var showNoticeDialog by remember { mutableStateOf(false) }
+    var scanSettingsUnlocked by remember { mutableStateOf(false) }
+    var titleTapCount by remember { mutableIntStateOf(0) }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(text = stringResource(R.string.settings)) },
+                title = {
+                    Text(
+                        text = stringResource(R.string.settings),
+                        modifier = Modifier.clickable {
+                            if (!scanSettingsUnlocked) {
+                                titleTapCount++
+                                if (titleTapCount >= 7) {
+                                    scanSettingsUnlocked = true
+                                    Toast.makeText(context, context.getString(R.string.scan_settings_unlocked), Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        }
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
@@ -82,45 +99,13 @@ fun SettingsScreen(
             ) {
                 LazyColumn {
 
-                    // Scan Settings Category
+                    // Scan Settings Category (always visible)
                     preferenceCategory(
                         key = "scan_settings",
                         title = { Text(stringResource(R.string.scan_settings)) }
                     )
 
-                    // Image Size Preference
-                    listPreference(
-                        key = Prefs.IMAGE_SIZE_KEY,
-                        defaultValue = Prefs.IMAGE_SIZE_DEFAULT,
-                        values = Prefs.IMAGE_SIZE_MAP.keys.toList(),
-                        title = { Text(stringResource(R.string.image_size)) },
-                        valueToText = {
-                            val resId = Prefs.IMAGE_SIZE_MAP[it]
-                            AnnotatedString(if (resId != null) context.getString(resId) else it.toString())
-                        },
-                        summary = {
-                            val resId = Prefs.IMAGE_SIZE_MAP[it]
-                            Text(if (resId != null) stringResource(resId) else it.toString())
-                        }
-                    )
-
-                    // Photo Count Preference
-                    listPreference(
-                        key = Prefs.PHOTO_COUNT_KEY,
-                        defaultValue = Prefs.PHOTO_COUNT_DEFAULT,
-                        values = Prefs.PHOTO_COUNT_MAP.keys.toList(),
-                        title = { Text(stringResource(R.string.photo_count_setting)) },
-                        valueToText = {
-                            val resId = Prefs.PHOTO_COUNT_MAP[it]
-                            AnnotatedString(if (resId != null) context.getString(resId) else it.toString())
-                        },
-                        summary = {
-                            val resId = Prefs.PHOTO_COUNT_MAP[it]
-                            Text(if (resId != null) stringResource(resId) else it.toString())
-                        }
-                    )
-
-                    // Oval Size Preference
+                    // Oval Size Preference (always visible)
                     listPreference(
                         key = Prefs.OVAL_SIZE_KEY,
                         defaultValue = Prefs.OVAL_SIZE_DEFAULT,
@@ -136,37 +121,71 @@ fun SettingsScreen(
                         }
                     )
 
-                    // Capture Mode (Online) Preference
-                    listPreference(
-                        key = Prefs.CAPTURE_MODE_ONLINE_KEY,
-                        defaultValue = Prefs.CAPTURE_MODE_ONLINE_DEFAULT,
-                        values = Prefs.CAPTURE_MODE_MAP.keys.toList(),
-                        title = { Text(stringResource(R.string.capture_mode_online)) },
-                        valueToText = {
-                            val resId = Prefs.CAPTURE_MODE_MAP[it]
-                            AnnotatedString(if (resId != null) context.getString(resId) else it.toString())
-                        },
-                        summary = {
-                            val resId = Prefs.CAPTURE_MODE_MAP[it]
-                            Text(if (resId != null) stringResource(resId) else it.toString())
-                        }
-                    )
+                    if (scanSettingsUnlocked) {
+                        // Image Size Preference
+                        listPreference(
+                            key = Prefs.IMAGE_SIZE_KEY,
+                            defaultValue = Prefs.IMAGE_SIZE_DEFAULT,
+                            values = Prefs.IMAGE_SIZE_MAP.keys.toList(),
+                            title = { Text(stringResource(R.string.image_size)) },
+                            valueToText = {
+                                val resId = Prefs.IMAGE_SIZE_MAP[it]
+                                AnnotatedString(if (resId != null) context.getString(resId) else it.toString())
+                            },
+                            summary = {
+                                val resId = Prefs.IMAGE_SIZE_MAP[it]
+                                Text(if (resId != null) stringResource(resId) else it.toString())
+                            }
+                        )
 
-                    // Capture Mode (Offline) Preference
-                    listPreference(
-                        key = Prefs.CAPTURE_MODE_OFFLINE_KEY,
-                        defaultValue = Prefs.CAPTURE_MODE_OFFLINE_DEFAULT,
-                        values = Prefs.CAPTURE_MODE_MAP.keys.toList(),
-                        title = { Text(stringResource(R.string.capture_mode_offline)) },
-                        valueToText = {
-                            val resId = Prefs.CAPTURE_MODE_MAP[it]
-                            AnnotatedString(if (resId != null) context.getString(resId) else it.toString())
-                        },
-                        summary = {
-                            val resId = Prefs.CAPTURE_MODE_MAP[it]
-                            Text(if (resId != null) stringResource(resId) else it.toString())
-                        }
-                    )
+                        // Photo Count Preference
+                        listPreference(
+                            key = Prefs.PHOTO_COUNT_KEY,
+                            defaultValue = Prefs.PHOTO_COUNT_DEFAULT,
+                            values = Prefs.PHOTO_COUNT_MAP.keys.toList(),
+                            title = { Text(stringResource(R.string.photo_count_setting)) },
+                            valueToText = {
+                                val resId = Prefs.PHOTO_COUNT_MAP[it]
+                                AnnotatedString(if (resId != null) context.getString(resId) else it.toString())
+                            },
+                            summary = {
+                                val resId = Prefs.PHOTO_COUNT_MAP[it]
+                                Text(if (resId != null) stringResource(resId) else it.toString())
+                            }
+                        )
+
+                        // Capture Mode (Online) Preference
+                        listPreference(
+                            key = Prefs.CAPTURE_MODE_ONLINE_KEY,
+                            defaultValue = Prefs.CAPTURE_MODE_ONLINE_DEFAULT,
+                            values = Prefs.CAPTURE_MODE_MAP.keys.toList(),
+                            title = { Text(stringResource(R.string.capture_mode_online)) },
+                            valueToText = {
+                                val resId = Prefs.CAPTURE_MODE_MAP[it]
+                                AnnotatedString(if (resId != null) context.getString(resId) else it.toString())
+                            },
+                            summary = {
+                                val resId = Prefs.CAPTURE_MODE_MAP[it]
+                                Text(if (resId != null) stringResource(resId) else it.toString())
+                            }
+                        )
+
+                        // Capture Mode (Offline) Preference
+                        listPreference(
+                            key = Prefs.CAPTURE_MODE_OFFLINE_KEY,
+                            defaultValue = Prefs.CAPTURE_MODE_OFFLINE_DEFAULT,
+                            values = Prefs.CAPTURE_MODE_MAP.keys.toList(),
+                            title = { Text(stringResource(R.string.capture_mode_offline)) },
+                            valueToText = {
+                                val resId = Prefs.CAPTURE_MODE_MAP[it]
+                                AnnotatedString(if (resId != null) context.getString(resId) else it.toString())
+                            },
+                            summary = {
+                                val resId = Prefs.CAPTURE_MODE_MAP[it]
+                                Text(if (resId != null) stringResource(resId) else it.toString())
+                            }
+                        )
+                    }
 
                     // Support & Legal Category
                     preferenceCategory(

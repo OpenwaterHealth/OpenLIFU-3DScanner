@@ -223,4 +223,5 @@
     <string name="no_network_message">No network connection detected. Please check your connection and try again.</string>
     <string name="offline_mode">Offline Mode</string>
     <string name="offline_mode_message">You are using offline mode. Contact support@openwater.cc to access online mode.</string>
+    <string name="scan_settings_unlocked">Scan settings unlocked</string>
 </resources>
