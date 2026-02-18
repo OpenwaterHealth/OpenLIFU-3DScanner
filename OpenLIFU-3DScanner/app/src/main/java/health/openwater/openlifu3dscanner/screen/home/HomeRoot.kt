@@ -9,14 +9,26 @@ import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SupportAgent
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.withLink
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -35,7 +47,10 @@ fun HomeRoot(
     val uiState by userViewModel.uiState.collectAsStateWithLifecycle()
     val isConnected by userViewModel.isConnected.collectAsStateWithLifecycle()
     val hasCredits = (uiState.credits ?: 0) > 0
-    val isOnline = uiState.user != null && hasCredits && isConnected
+    val isLoggedIn = uiState.user != null
+    val isOnline = isLoggedIn && hasCredits && isConnected
+
+    var showOfflineDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         userViewModel.initialize()
@@ -58,7 +73,7 @@ fun HomeRoot(
                 .padding(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = {}) {
+            IconButton(onClick = { if (!isOnline) showOfflineDialog = true }) {
                 Icon(
                     imageVector = if (isOnline) Icons.Filled.Cloud else Icons.Filled.CloudOff,
                     contentDescription = stringResource(
@@ -83,5 +98,53 @@ fun HomeRoot(
                 .align(Alignment.TopStart)
                 .padding(16.dp)
         )
+
+        if (showOfflineDialog) {
+            val title = if (isLoggedIn) R.string.no_network else R.string.offline_mode
+            AlertDialog(
+                onDismissRequest = { showOfflineDialog = false },
+                title = { Text(stringResource(title)) },
+                text = {
+                    if (isLoggedIn) {
+                        Text(stringResource(R.string.no_network_message))
+                    } else {
+                        val email = stringResource(R.string.support_email)
+                        val fullText = stringResource(R.string.offline_mode_message)
+                        val linkColor = MaterialTheme.colorScheme.primary
+                        val annotatedString = buildAnnotatedString {
+                            val emailStart = fullText.indexOf(email)
+                            if (emailStart < 0) {
+                                append(fullText)
+                            } else {
+                                append(fullText.substring(0, emailStart))
+                                withLink(
+                                    LinkAnnotation.Url(
+                                        url = "mailto:$email",
+                                        styles = androidx.compose.ui.text.TextLinkStyles(
+                                            style = SpanStyle(
+                                                color = linkColor,
+                                                textDecoration = TextDecoration.Underline
+                                            )
+                                        )
+                                    )
+                                ) {
+                                    append(email)
+                                }
+                                append(fullText.substring(emailStart + email.length))
+                            }
+                        }
+                        Text(
+                            text = annotatedString,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = { showOfflineDialog = false }) {
+                        Text(stringResource(R.string.ok))
+                    }
+                }
+            )
+        }
     }
 }

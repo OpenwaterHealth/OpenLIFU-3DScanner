@@ -52,7 +52,7 @@ fun ProcessingScreen(
                 title = {
                     Column {
                         Text(
-                            text = stringResource(R.string.scan_id),
+                            text = stringResource(R.string.subject_scan_id),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f)
                         )

@@ -16,7 +16,7 @@
     <string name="notification_permission_description">Notifications allow you to see upload progress even when the app is in the background.</string>
     <string name="validation">Validation</string>
     <string name="cancel_processing">Cancel processing?</string>
-    <string name="are_you_sure_you_want_to_cancel_processing_all_unsaved_progress_will_be_lost">Are you sure you want to cancel processing? All unsaved progress will be lost.</string>
+    <string name="are_you_sure_you_want_to_cancel_processing_all_unsaved_progress_will_be_lost">Are you sure you want to cancel processing? You can resume it later from the collections screen.</string>
     <string name="yes">Yes</string>
     <string name="navigate_back">Navigate Back</string>
     <string name="_1_point_camera_at_face">1. Point camera at face</string>
@@ -103,7 +103,7 @@
     <string name="grant_permission">Grant permission</string>
     <string name="permissions">Permissions</string>
     <string name="welcome_back">Welcome back, %1$s</string>
-    <string name="auto_upload">Auto Upload</string>
+    <string name="auto_photo_upload">Auto Photo Upload</string>
     <string name="settings">Settings</string>
     <string name="transfer_to_pc">Transfer to PC</string>
     <string name="usb_connected">USB Connected</string>
@@ -202,7 +202,7 @@
     <string name="select_existing">Select Existing</string>
     <string name="create_new_photo_collection">Create New Photo Collection</string>
     <string name="new_session_name">New session name</string>
-    <string name="from_the_desktop_application">From the desktop application</string>
+    <string name="from_the_desktop_application">From the Desktop App</string>
 
     <!-- Customer Support -->
     <string name="customer_support">Customer Support</string>
@@ -217,4 +217,10 @@
     <string name="overwrite_existing_data_title">Overwrite existing data?</string>
     <string name="overwrite_existing_data_message">A collection named \"%s\" already exists on the device. Starting a new scan will overwrite the existing data.</string>
     <string name="overwrite">Overwrite</string>
+    <string name="input_subject_scan_id">Input Subject Scan ID</string>
+    <string name="subject_scan_id">Subject Scan ID</string>
+    <string name="no_network">No Network</string>
+    <string name="no_network_message">No network connection detected. Please check your connection and try again.</string>
+    <string name="offline_mode">Offline Mode</string>
+    <string name="offline_mode_message">You are using offline mode. Contact support@openwater.cc to access online mode.</string>
 </resources>

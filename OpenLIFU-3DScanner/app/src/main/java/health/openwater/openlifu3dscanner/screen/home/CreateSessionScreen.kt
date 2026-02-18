@@ -79,12 +79,12 @@ private fun SessionNameField(
     focusRequester: FocusRequester? = null,
 ) {
     val keyboardController = LocalSoftwareKeyboardController.current
-    val idPattern = Regex("[a-zA-Z0-9 _\\-]*")
+    val idPattern = Regex("[A-Z0-9 _\\-]*")
     OutlinedTextField(
         value = value,
-        onValueChange = { if (it.matches(idPattern)) onValueChange(it) },
+        onValueChange = { val upper = it.uppercase(); if (upper.matches(idPattern)) onValueChange(upper) },
         maxLines = 1,
-        label = { Text(stringResource(R.string.new_session_name)) },
+        label = { Text(stringResource(R.string.input_subject_scan_id)) },
         placeholder = { Text(stringResource(R.string.from_the_desktop_application)) },
         keyboardOptions = KeyboardOptions(
             imeAction = ImeAction.Done,
@@ -228,6 +228,14 @@ fun CreateCollectionScreen(
                     value = manualSessionName,
                     onValueChange = { manualSessionName = it },
                     focusRequester = focusRequester
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    text = stringResource(R.string.manual_input_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 return@Column
             }
@@ -421,7 +429,7 @@ fun CreateCollectionScreen(
                                 }
                             )
                             Text(
-                                text = stringResource(R.string.auto_upload),
+                                text = stringResource(R.string.auto_photo_upload),
                                 modifier = Modifier.padding(start = 8.dp)
                             )
                         }

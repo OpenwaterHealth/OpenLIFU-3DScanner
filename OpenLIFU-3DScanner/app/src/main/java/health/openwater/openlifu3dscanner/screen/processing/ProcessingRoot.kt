@@ -216,7 +216,7 @@ fun ProcessingRoot(
                 enabled = imageFiles.isNotEmpty()
             ) {
                 Text(
-                    text = stringResource(if (canUpload) R.string.upload else R.string.transfer_to_pc),
+                    text = stringResource(if (canUpload) R.string.start_processing else R.string.transfer_to_pc),
                     fontSize = 16.sp,
                     modifier = Modifier.padding(vertical = 8.dp)
                 )
