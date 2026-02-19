@@ -17,6 +17,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Cloud
+import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.ViewInAr
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -62,12 +63,15 @@ fun PhotoscanCard(
 ) {
     val collectionDir = remember(item.name) { File(getModelsDir(), item.name) }
 
-    val firstImage = remember(item.name) {
+    val imageFiles = remember(item.name) {
         collectionDir.listFiles { file ->
             file.extension.equals("jpg", ignoreCase = true) ||
                     file.extension.equals("jpeg", ignoreCase = true)
-        }?.minByOrNull { it.name }
+        } ?: emptyArray()
     }
+
+    val firstImage = remember(item.name) { imageFiles.minByOrNull { it.name } }
+    val photoCount = imageFiles.size
 
     val hasModel = remember(item.name) { hasLocalModel(item.name) }
 
@@ -159,7 +163,7 @@ fun PhotoscanCard(
                 verticalAlignment = Alignment.Bottom,
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(16.dp)
+                    .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 8.dp)
             ) {
                 Column {
                     Text(
@@ -169,11 +173,40 @@ fun PhotoscanCard(
                         color = Color.White
                     )
 
-                    Text(
-                        text = formatDate(item.creationDate),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color.White.copy(alpha = 0.8f)
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = formatDate(item.creationDate),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.White.copy(alpha = 0.8f)
+                        )
+                        if (photoCount > 0) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                modifier = Modifier
+                                    .background(
+                                        color = Color.Black.copy(alpha = 0.45f),
+                                        shape = RoundedCornerShape(50)
+                                    )
+                                    .padding(horizontal = 8.dp, vertical = 3.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.PhotoCamera,
+                                    contentDescription = null,
+                                    tint = Color.White.copy(alpha = 0.85f),
+                                    modifier = Modifier.size(12.dp)
+                                )
+                                Text(
+                                    text = "$photoCount",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = Color.White.copy(alpha = 0.85f)
+                                )
+                            }
+                        }
+                    }
                 }
 
                 if (item.status != null) {
