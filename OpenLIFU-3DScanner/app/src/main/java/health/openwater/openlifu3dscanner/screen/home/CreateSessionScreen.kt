@@ -317,7 +317,7 @@ fun CreateCollectionScreen(
                                 onExpandedChange = { subjectExpanded = it }
                             ) {
                                 OutlinedTextField(
-                                    value = selectedSubject?.name.orEmpty(),
+                                    value = selectedSubject?.localId.orEmpty(),
                                     onValueChange = {},
                                     readOnly = true,
                                     label = { Text(stringResource(R.string.select_subject_id)) },
@@ -335,7 +335,7 @@ fun CreateCollectionScreen(
                                 ) {
                                     subjectsState.subjects.forEach { subject ->
                                         DropdownMenuItem(
-                                            text = { Text(subject.name) },
+                                            text = { Text(subject.localId) },
                                             onClick = {
                                                 selectedSubject = subject
                                                 selectedSession = null
