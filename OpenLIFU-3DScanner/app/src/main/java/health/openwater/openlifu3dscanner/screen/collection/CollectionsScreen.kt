@@ -19,6 +19,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Cloud
+import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
@@ -53,6 +55,7 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import health.openwater.openlifu3dscanner.R
 import health.openwater.openlifu3dscanner.extensions.getModelsDir
 import health.openwater.openlifu3dscanner.viewmodel.CollectionViewModel
+import health.openwater.openlifu3dscanner.viewmodel.UserViewModel
 import kotlinx.coroutines.launch
 import java.util.Date
 
@@ -61,10 +64,16 @@ import java.util.Date
 fun CollectionScreen(
     onNavigateBack: () -> Unit,
     onPhotoscanClick: (CollectionItem) -> Unit,
-    collectionViewModel: CollectionViewModel = hiltViewModel()
+    collectionViewModel: CollectionViewModel = hiltViewModel(),
+    userViewModel: UserViewModel = hiltViewModel()
 ) {
     val uiState by collectionViewModel.uiState.collectAsStateWithLifecycle()
     val coroutineScope = rememberCoroutineScope()
+
+    val userUiState by userViewModel.uiState.collectAsStateWithLifecycle()
+    val isConnected by userViewModel.isConnected.collectAsStateWithLifecycle()
+    val isLoggedIn = userUiState.user != null
+    val isOnline = isLoggedIn && isConnected
 
     // Multi-select state
     val selectedItems = remember { mutableListOf<CollectionItem>().toMutableStateList() }
@@ -92,26 +101,27 @@ fun CollectionScreen(
     }
 
     // Compute combined collectionItems (cloud scans + on-device scans)
-    val collectionItems = remember(uiState.photocollections, uiState.photoscans, uiState.hasError, localRefreshKey) {
-        val photocollections = uiState.photocollections
-        val photoscans = uiState.photoscans
-        val localScans = onDeviceScans()
+    val collectionItems =
+        remember(uiState.photocollections, uiState.photoscans, uiState.hasError, localRefreshKey) {
+            val photocollections = uiState.photocollections
+            val photoscans = uiState.photoscans
+            val localScans = onDeviceScans()
 
-        if (uiState.isLoading && photoscans == null) return@remember emptyList()
+            if (uiState.isLoading && photoscans == null) return@remember emptyList()
 
-        (photoscans?.map { photoscan ->
-            val collection = photocollections?.find { it.id == photoscan.photocollectionId }
-            CollectionItem(
-                photoscanId = photoscan.id,
-                photocollectionId = photoscan.photocollectionId,
-                name = collection?.name ?: "",
-                creationDate = photoscan.creationDate,
-                status = photoscan.status
-            )
-        } ?: emptyList()).plus(localScans)
-            .distinctBy { it.name }
-            .sortedByDescending { it.creationDate }
-    }
+            (photoscans?.map { photoscan ->
+                val collection = photocollections?.find { it.id == photoscan.photocollectionId }
+                CollectionItem(
+                    photoscanId = photoscan.id,
+                    photocollectionId = photoscan.photocollectionId,
+                    name = collection?.name ?: "",
+                    creationDate = photoscan.creationDate,
+                    status = photoscan.status
+                )
+            } ?: emptyList()).plus(localScans)
+                .distinctBy { it.name }
+                .sortedByDescending { it.creationDate }
+        }
 
     fun refresh() {
         collectionViewModel.loadPhotocollections()
@@ -249,7 +259,14 @@ fun CollectionScreen(
         topBar = {
             if (isSelectionMode) {
                 TopAppBar(
-                    title = { Text(text = stringResource(R.string.n_selected, selectedItems.size)) },
+                    title = {
+                        Text(
+                            text = stringResource(
+                                R.string.n_selected,
+                                selectedItems.size
+                            )
+                        )
+                    },
                     navigationIcon = {
                         IconButton(onClick = { selectedItems.clear() }) {
                             Icon(
@@ -294,6 +311,15 @@ fun CollectionScreen(
                             )
                         }
                     },
+                    actions = {
+                        Icon(
+                            imageVector = if (isOnline) Icons.Filled.Cloud else Icons.Filled.CloudOff,
+                            contentDescription = stringResource(
+                                if (isOnline) R.string.online else R.string.offline
+                            ),
+                            modifier = Modifier.padding(end = 16.dp)
+                        )
+                    },
                     colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = MaterialTheme.colorScheme.primary,
                         titleContentColor = MaterialTheme.colorScheme.onPrimary,
@@ -318,16 +344,6 @@ fun CollectionScreen(
                 modifier = Modifier.fillMaxSize(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Show offline banner when there's an error but we have local scans
-                if (uiState.hasError && collectionItems.isNotEmpty()) {
-                    Text(
-                        text = stringResource(R.string.showing_offline_scans),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
-                    )
-                }
-
                 when {
                     !uiState.isLoading && collectionItems.isEmpty() -> {
                         // Empty state
