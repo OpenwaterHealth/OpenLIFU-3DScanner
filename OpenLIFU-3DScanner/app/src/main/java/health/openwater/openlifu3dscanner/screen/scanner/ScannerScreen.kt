@@ -58,7 +58,7 @@ fun ScannerScreen(
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(Unit) {
-        cloudViewModel.reset(false)
+        cloudViewModel.reset(removeLocalCollection = true)
 
         if (cloudViewModel.isLoggedInAndOnline() && hasCredits) {
             cloudViewModel.createPhotocollection(collectionName, autoUploadEnabled, sessionId)
@@ -66,7 +66,7 @@ fun ScannerScreen(
     }
 
     BackHandler {
-        cloudViewModel.reset(false)
+        cloudViewModel.reset(autoUploadEnabled)
         onNavigateBack()
     }
 
@@ -79,7 +79,7 @@ fun ScannerScreen(
                 title = { Text(text = stringResource(R.string.capturing)) },
                 navigationIcon = {
                     IconButton(onClick = {
-                        cloudViewModel.reset(false)
+                        cloudViewModel.reset(removeLocalCollection = true)
                         onNavigateBack()
                     }) {
                         Icon(
