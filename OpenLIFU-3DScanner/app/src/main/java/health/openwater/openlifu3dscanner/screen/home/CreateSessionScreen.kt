@@ -139,11 +139,11 @@ fun CreateCollectionScreen(
         }
     }
 
-    val canStart = if (!isLoggedIn || subjectsState.error != null) {
-        manualSessionName.isNotBlank()
-    } else when (sessionMode) {
-        SessionMode.EXISTING -> selectedSession != null
-        SessionMode.NEW -> manualSessionName.isNotBlank()
+    val isManualMode = !isLoggedIn || !hasCredits || subjectsState.error != null
+    val canStart = when {
+        isManualMode -> manualSessionName.isNotBlank()
+        sessionMode == SessionMode.EXISTING -> selectedSession != null
+        else -> manualSessionName.isNotBlank()
     }
 
     Scaffold(
