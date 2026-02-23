@@ -73,7 +73,7 @@ fun ScanControls(
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
-    val ovalSizePref = remember { Prefs.getOvalSize(context) }
+    val ovalSizePref = remember { Prefs.getOvalSize(context, isOnline = autoUploadEnabled) }
     val ovalWidthFactor = when (ovalSizePref) {
         150 -> 0.78f
         200 -> 0.90f

@@ -150,7 +150,8 @@
     <string name="photo_count_30">30 photos</string>
 
     <!-- Oval size options -->
-    <string name="oval_size">Oval Size</string>
+    <string name="oval_size_online">Oval Size (Online)</string>
+    <string name="oval_size_offline">Oval Size (Offline)</string>
     <string name="oval_size_1x">1× (Default)</string>
     <string name="oval_size_1_5x">1.5×</string>
     <string name="oval_size_2x">2× (Large)</string>

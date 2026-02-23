@@ -99,29 +99,44 @@ fun SettingsScreen(
             ) {
                 LazyColumn {
 
-                    // Scan Settings Category (always visible)
-                    preferenceCategory(
-                        key = "scan_settings",
-                        title = { Text(stringResource(R.string.scan_settings)) }
-                    )
-
-                    // Oval Size Preference (always visible)
-                    listPreference(
-                        key = Prefs.OVAL_SIZE_KEY,
-                        defaultValue = Prefs.OVAL_SIZE_DEFAULT,
-                        values = Prefs.OVAL_SIZE_MAP.keys.toList(),
-                        title = { Text(stringResource(R.string.oval_size)) },
-                        valueToText = {
-                            val resId = Prefs.OVAL_SIZE_MAP[it]
-                            AnnotatedString(if (resId != null) context.getString(resId) else it.toString())
-                        },
-                        summary = {
-                            val resId = Prefs.OVAL_SIZE_MAP[it]
-                            Text(if (resId != null) stringResource(resId) else it.toString())
-                        }
-                    )
-
                     if (scanSettingsUnlocked) {
+                        preferenceCategory(
+                            key = "scan_settings",
+                            title = { Text(stringResource(R.string.scan_settings)) }
+                        )
+
+                        // Oval Size (Online) Preference
+                        listPreference(
+                            key = Prefs.OVAL_SIZE_ONLINE_KEY,
+                            defaultValue = Prefs.OVAL_SIZE_ONLINE_DEFAULT,
+                            values = Prefs.OVAL_SIZE_MAP.keys.toList(),
+                            title = { Text(stringResource(R.string.oval_size_online)) },
+                            valueToText = {
+                                val resId = Prefs.OVAL_SIZE_MAP[it]
+                                AnnotatedString(if (resId != null) context.getString(resId) else it.toString())
+                            },
+                            summary = {
+                                val resId = Prefs.OVAL_SIZE_MAP[it]
+                                Text(if (resId != null) stringResource(resId) else it.toString())
+                            }
+                        )
+
+                        // Oval Size (Offline) Preference
+                        listPreference(
+                            key = Prefs.OVAL_SIZE_OFFLINE_KEY,
+                            defaultValue = Prefs.OVAL_SIZE_OFFLINE_DEFAULT,
+                            values = Prefs.OVAL_SIZE_MAP.keys.toList(),
+                            title = { Text(stringResource(R.string.oval_size_offline)) },
+                            valueToText = {
+                                val resId = Prefs.OVAL_SIZE_MAP[it]
+                                AnnotatedString(if (resId != null) context.getString(resId) else it.toString())
+                            },
+                            summary = {
+                                val resId = Prefs.OVAL_SIZE_MAP[it]
+                                Text(if (resId != null) stringResource(resId) else it.toString())
+                            }
+                        )
+
                         // Image Size Preference
                         listPreference(
                             key = Prefs.IMAGE_SIZE_KEY,
