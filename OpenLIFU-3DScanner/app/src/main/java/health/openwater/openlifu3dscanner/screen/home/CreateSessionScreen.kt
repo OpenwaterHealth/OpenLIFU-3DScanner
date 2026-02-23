@@ -176,7 +176,7 @@ fun CreateCollectionScreen(
                         val sessionName: String
                         val sessionId: Long?
 
-                        if (!isLoggedIn || subjectsState.error != null) {
+                        if (isManualMode) {
                             sessionName = manualSessionName.trim()
                             sessionId = null
                         } else if (sessionMode == SessionMode.EXISTING) {
