@@ -82,7 +82,11 @@ private fun SessionNameField(
     val idPattern = Regex("[A-Z0-9 _\\-]*")
     OutlinedTextField(
         value = value,
-        onValueChange = { val upper = it.uppercase(); if (upper.matches(idPattern)) onValueChange(upper) },
+        onValueChange = {
+            val upper = it.uppercase(); if (upper.matches(idPattern)) onValueChange(
+            upper
+        )
+        },
         maxLines = 1,
         label = { Text(stringResource(R.string.input_subject_scan_id)) },
         placeholder = { Text(stringResource(R.string.from_the_desktop_application)) },
@@ -220,7 +224,7 @@ fun CreateCollectionScreen(
                 .padding(contentPadding)
                 .padding(horizontal = 24.dp, vertical = 24.dp)
         ) {
-            if (!isLoggedIn) {
+            if (!isLoggedIn || !hasCredits) {
                 val focusRequester = remember { FocusRequester() }
                 LaunchedEffect(Unit) { focusRequester.requestFocus() }
 
@@ -408,31 +412,28 @@ fun CreateCollectionScreen(
                         }
                     }
 
-                    // ---------- Auto upload ----------
-                    if (hasCredits) {
-                        Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(24.dp))
 
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    autoUploadEnabled = !autoUploadEnabled
-                                    Prefs.setAutoUpload(context, autoUploadEnabled)
-                                }
-                        ) {
-                            Checkbox(
-                                checked = autoUploadEnabled,
-                                onCheckedChange = {
-                                    autoUploadEnabled = it
-                                    Prefs.setAutoUpload(context, it)
-                                }
-                            )
-                            Text(
-                                text = stringResource(R.string.auto_photo_upload),
-                                modifier = Modifier.padding(start = 8.dp)
-                            )
-                        }
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                autoUploadEnabled = !autoUploadEnabled
+                                Prefs.setAutoUpload(context, autoUploadEnabled)
+                            }
+                    ) {
+                        Checkbox(
+                            checked = autoUploadEnabled,
+                            onCheckedChange = {
+                                autoUploadEnabled = it
+                                Prefs.setAutoUpload(context, it)
+                            }
+                        )
+                        Text(
+                            text = stringResource(R.string.auto_photo_upload),
+                            modifier = Modifier.padding(start = 8.dp)
+                        )
                     }
                 }
             }

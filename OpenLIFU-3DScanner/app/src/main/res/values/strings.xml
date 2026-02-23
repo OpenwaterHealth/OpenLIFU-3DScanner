@@ -211,9 +211,7 @@
     <string name="support_phone">(415) 484–3776</string>
     <string name="support_website">openwater.health</string>
     <string name="manually_input">Manually Input</string>
-    <string name="manual_input_hint">1. Open the Open-LIFU desktop application.\n
-        2. Navigate to the Transducer Localization module.\n
-        3. Copy the auto-generated Scan ID in the box below.</string>
+    <string name="manual_input_hint">1. Open the Open-LIFU desktop application.\n2. Navigate to the Transducer Localization module.\n3. Copy the auto-generated Scan ID in the box below.</string>
     <string name="scan_id">Scan ID</string>
     <string name="overwrite_existing_data_title">Overwrite existing data?</string>
     <string name="overwrite_existing_data_message">A collection named \"%s\" already exists on the device. Starting a new scan will overwrite the existing data.</string>
