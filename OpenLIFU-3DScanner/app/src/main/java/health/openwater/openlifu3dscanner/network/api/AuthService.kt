@@ -4,10 +4,13 @@ import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.tasks.await
 import java.util.Date
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.coroutines.resume
 
 @Singleton
 class AuthService @Inject constructor() {
@@ -81,6 +84,26 @@ class AuthService @Inject constructor() {
 
     fun signOut() {
         auth.signOut()
+        idToken = null
+        tokenExpirationTimestamp = 0
+        isInitialized = false
+    }
+
+    suspend fun signOutAndAwait() {
+        suspendCancellableCoroutine { continuation ->
+            var listener: FirebaseAuth.AuthStateListener? = null
+            listener = FirebaseAuth.AuthStateListener { firebaseAuth ->
+                if (firebaseAuth.currentUser == null && continuation.isActive) {
+                    auth.removeAuthStateListener(listener!!)
+                    continuation.resume(Unit)
+                }
+            }
+            auth.addAuthStateListener(listener)
+            continuation.invokeOnCancellation { auth.removeAuthStateListener(listener) }
+            auth.signOut()
+        }
+        // Auth state changed in memory; give Firebase time to flush its SharedPreferences to disk
+        delay(300)
         idToken = null
         tokenExpirationTimestamp = 0
         isInitialized = false

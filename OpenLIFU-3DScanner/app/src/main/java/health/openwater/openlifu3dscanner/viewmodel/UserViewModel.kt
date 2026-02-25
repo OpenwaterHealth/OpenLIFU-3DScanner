@@ -51,6 +51,8 @@ class UserViewModel @Inject constructor(
 
     fun signOut() = userRepository.signOut()
 
+    suspend fun signOutAndAwait() = userRepository.signOutAndAwait()
+
     suspend fun signIn(email: String, password: String): AuthService.AuthResponse {
         return userRepository.signIn(email, password)
     }

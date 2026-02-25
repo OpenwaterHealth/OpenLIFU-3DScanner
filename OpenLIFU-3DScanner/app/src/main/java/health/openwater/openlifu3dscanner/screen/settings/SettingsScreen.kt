@@ -5,18 +5,24 @@ import android.content.Intent
 import android.os.Build
 import android.widget.Toast
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -24,7 +30,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.launch
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -33,6 +42,7 @@ import androidx.core.net.toUri
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import health.openwater.openlifu3dscanner.BuildConfig
 import health.openwater.openlifu3dscanner.R
+import health.openwater.openlifu3dscanner.preferences.ApiEnvironment
 import health.openwater.openlifu3dscanner.preferences.Prefs
 import health.openwater.openlifu3dscanner.screen.home.NoticeDialog
 import health.openwater.openlifu3dscanner.viewmodel.UserViewModel
@@ -41,6 +51,12 @@ import me.zhanghai.compose.preference.createPreferenceFlow
 import me.zhanghai.compose.preference.listPreference
 import me.zhanghai.compose.preference.preference
 import me.zhanghai.compose.preference.preferenceCategory
+
+private fun envDisplayName(env: ApiEnvironment): Int = when (env) {
+    ApiEnvironment.PRODUCTION -> R.string.env_prod
+    ApiEnvironment.DEV -> R.string.env_dev
+    ApiEnvironment.SANDBOX -> R.string.env_sandbox
+}
 
 @SuppressLint("LocalContextGetResourceValueCall")
 @OptIn(ExperimentalMaterial3Api::class)
@@ -51,9 +67,13 @@ fun SettingsScreen(
     val context = LocalContext.current
     val prefs = Prefs.getInstance(context)
     val userViewModel: UserViewModel = hiltViewModel()
+    val scope = rememberCoroutineScope()
     var showNoticeDialog by remember { mutableStateOf(false) }
     var scanSettingsUnlocked by remember { mutableStateOf(false) }
+    var showEnvSwitcherDialog by remember { mutableStateOf(false) }
     var titleTapCount by remember { mutableIntStateOf(0) }
+    val currentEnv = remember { Prefs.getApiEnv(context) }
+    var selectedEnv by remember { mutableStateOf(currentEnv) }
 
     Scaffold(
         topBar = {
@@ -62,12 +82,14 @@ fun SettingsScreen(
                     Text(
                         text = stringResource(R.string.settings),
                         modifier = Modifier.clickable {
-                            if (!scanSettingsUnlocked) {
-                                titleTapCount++
-                                if (titleTapCount >= 7) {
-                                    scanSettingsUnlocked = true
-                                    Toast.makeText(context, context.getString(R.string.scan_settings_unlocked), Toast.LENGTH_SHORT).show()
-                                }
+                            titleTapCount++
+                            if (!scanSettingsUnlocked && titleTapCount >= 7) {
+                                scanSettingsUnlocked = true
+                                Toast.makeText(context, context.getString(R.string.scan_settings_unlocked), Toast.LENGTH_SHORT).show()
+                            }
+                            if (titleTapCount >= 14) {
+                                showEnvSwitcherDialog = true
+                                titleTapCount = 0
                             }
                         }
                     )
@@ -269,6 +291,63 @@ fun SettingsScreen(
                 showNoticeDialog = false
                 if (dontShowAgain) {
                     userViewModel.noticeAcknowledged()
+                }
+            }
+        )
+    }
+
+    if (showEnvSwitcherDialog) {
+        AlertDialog(
+            onDismissRequest = {},
+            title = { Text(stringResource(R.string.env_switcher_title)) },
+            text = {
+                Column {
+                    ApiEnvironment.entries.forEach { env ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .then(
+                                    if (env.enabled) Modifier.clickable { selectedEnv = env }
+                                    else Modifier
+                                )
+                        ) {
+                            RadioButton(
+                                selected = selectedEnv == env,
+                                onClick = { if (env.enabled) selectedEnv = env },
+                                enabled = env.enabled
+                            )
+                            Text(
+                                text = stringResource(envDisplayName(env)),
+                                color = if (env.enabled) MaterialTheme.colorScheme.onSurface
+                                        else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    enabled = selectedEnv != currentEnv,
+                    onClick = {
+                        showEnvSwitcherDialog = false
+                        scope.launch {
+                            userViewModel.signOutAndAwait()
+                            Prefs.setApiEnv(context, selectedEnv)
+                            val intent = context.packageManager
+                                .getLaunchIntentForPackage(context.packageName)
+                                ?.apply {
+                                    addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK)
+                                }
+                            context.startActivity(intent)
+                            android.os.Process.killProcess(android.os.Process.myPid())
+                        }
+                    }
+                ) { Text(stringResource(R.string.env_switcher_confirm)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showEnvSwitcherDialog = false }) {
+                    Text(stringResource(R.string.cancel))
                 }
             }
         )

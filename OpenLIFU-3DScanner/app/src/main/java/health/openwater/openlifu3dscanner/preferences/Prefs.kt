@@ -16,6 +16,7 @@ object Prefs {
     const val OVAL_SIZE_OFFLINE_KEY = "pref_oval_size_offline"
     const val AUTO_UPLOAD_KEY = "pref_auto_upload"
     const val NOTICE_ACKNOWLEDGED_UID_KEY = "pref_notice_acknowledged_uid"
+    const val API_ENV_KEY = "pref_api_env"
 
     // Default values
     const val IMAGE_SIZE_DEFAULT = 1024
@@ -101,4 +102,15 @@ object Prefs {
     fun setNoticeAcknowledgedUid(context: Context, uid: String) {
         getInstance(context).edit { putString(NOTICE_ACKNOWLEDGED_UID_KEY, uid) }
     }
+
+    fun getApiEnv(context: Context): ApiEnvironment {
+        val key = getInstance(context).getString(API_ENV_KEY, null)
+        return ApiEnvironment.fromKey(key ?: ApiEnvironment.DEFAULT.key)
+    }
+
+    fun setApiEnv(context: Context, env: ApiEnvironment) {
+        getInstance(context).edit(commit = true) { putString(API_ENV_KEY, env.key) }
+    }
+
+    fun getApiBaseUrl(context: Context): String = getApiEnv(context).baseUrl
 }

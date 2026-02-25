@@ -23,6 +23,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
@@ -32,7 +33,11 @@ import androidx.compose.ui.text.withLink
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.material3.Surface
+import androidx.compose.ui.platform.LocalContext
 import health.openwater.openlifu3dscanner.R
+import health.openwater.openlifu3dscanner.preferences.ApiEnvironment
+import health.openwater.openlifu3dscanner.preferences.Prefs
 import health.openwater.openlifu3dscanner.viewmodel.UserViewModel
 
 @Composable
@@ -43,6 +48,9 @@ fun HomeRoot(
     onSettings: () -> Unit,
     onSupport: () -> Unit,
 ) {
+    val context = LocalContext.current
+    val apiEnv = remember { Prefs.getApiEnv(context) }
+
     val userViewModel: UserViewModel = hiltViewModel()
     val uiState by userViewModel.uiState.collectAsStateWithLifecycle()
     val isConnected by userViewModel.isConnected.collectAsStateWithLifecycle()
@@ -98,6 +106,26 @@ fun HomeRoot(
                 .align(Alignment.TopStart)
                 .padding(16.dp)
         )
+
+        if (apiEnv != ApiEnvironment.PRODUCTION) {
+            Surface(
+                color = Color(0xFFE65100.toInt()),
+                shape = MaterialTheme.shapes.small,
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(top = 64.dp)
+            ) {
+                Text(
+                    text = stringResource(when (apiEnv) {
+                        ApiEnvironment.DEV -> R.string.env_dev
+                        ApiEnvironment.SANDBOX -> R.string.env_sandbox
+                    }),
+                    color = Color.White,
+                    style = MaterialTheme.typography.labelMedium,
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                )
+            }
+        }
 
         if (showOfflineDialog) {
             val title = if (isLoggedIn) R.string.no_network else R.string.offline_mode

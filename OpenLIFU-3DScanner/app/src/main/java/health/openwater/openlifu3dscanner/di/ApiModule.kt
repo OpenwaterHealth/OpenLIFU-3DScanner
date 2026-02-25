@@ -9,6 +9,8 @@ import dagger.Provides
 import android.content.Context
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
+import health.openwater.openlifu3dscanner.preferences.ApiEnvironment
+import health.openwater.openlifu3dscanner.preferences.Prefs
 import dagger.hilt.components.SingletonComponent
 import health.openwater.openlifu3dscanner.core.ConnectivityObserver
 import health.openwater.openlifu3dscanner.network.adapter.DateTypeAdapter
@@ -45,7 +47,8 @@ object ApiModule {
     private const val READ_TIMEOUT = 15L
     private const val WRITE_TIMEOUT = 15L
 
-    const val API_URL = "https://api.openwater.health/"
+    // Kept for reference; actual URL is resolved at runtime from Prefs
+    val API_URL = ApiEnvironment.PRODUCTION.baseUrl
 
     @Provides
     @Singleton
@@ -108,10 +111,11 @@ object ApiModule {
     @Provides
     @Singleton
     fun provideRetrofit(
+        @ApplicationContext context: Context,
         client: OkHttpClient,
         gson: Gson
     ): Retrofit = Retrofit.Builder()
-        .baseUrl(API_URL)
+        .baseUrl(Prefs.getApiBaseUrl(context))
         .client(client)
         .addConverterFactory(GsonConverterFactory.create(gson))
         .build()

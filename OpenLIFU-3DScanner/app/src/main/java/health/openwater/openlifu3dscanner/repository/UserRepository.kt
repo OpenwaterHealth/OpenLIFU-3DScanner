@@ -178,6 +178,14 @@ class UserRepository @Inject constructor(
         _error.value = null
     }
 
+    suspend fun signOutAndAwait() {
+        authService.signOutAndAwait()
+        _userState.value = UserState.Unauthenticated
+        _credits.value = null
+        _institutionName.value = null
+        _error.value = null
+    }
+
     suspend fun resetPassword(email: String): Result<StatusResponse> {
         return safeCall { userService.resetPassword(ResetPasswordRequest(email)) }
     }
