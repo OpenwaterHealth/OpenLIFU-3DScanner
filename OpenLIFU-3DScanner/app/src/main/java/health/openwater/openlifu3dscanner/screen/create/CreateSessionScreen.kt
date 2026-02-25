@@ -1,4 +1,4 @@
-package health.openwater.openlifu3dscanner.screen.home
+package health.openwater.openlifu3dscanner.screen.create
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -12,14 +12,15 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -42,14 +43,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -57,7 +52,6 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import health.openwater.openlifu3dscanner.R
 import health.openwater.openlifu3dscanner.extensions.getModelsDir
-import java.io.File
 import health.openwater.openlifu3dscanner.network.dto.Session
 import health.openwater.openlifu3dscanner.network.dto.SubjectWithSessions
 import health.openwater.openlifu3dscanner.preferences.Prefs
@@ -65,41 +59,13 @@ import health.openwater.openlifu3dscanner.repository.ScanConfig
 import health.openwater.openlifu3dscanner.viewmodel.CloudViewModel
 import health.openwater.openlifu3dscanner.viewmodel.HomeViewModel
 import health.openwater.openlifu3dscanner.viewmodel.UserViewModel
+import java.io.File
 
 enum class SessionMode {
     EXISTING,
     NEW
 }
 
-@Composable
-private fun SessionNameField(
-    value: String,
-    onValueChange: (String) -> Unit,
-    modifier: Modifier = Modifier,
-    focusRequester: FocusRequester? = null,
-) {
-    val keyboardController = LocalSoftwareKeyboardController.current
-    val idPattern = Regex("[A-Z0-9 _\\-]*")
-    OutlinedTextField(
-        value = value,
-        onValueChange = {
-            val upper = it.uppercase(); if (upper.matches(idPattern)) onValueChange(
-            upper
-        )
-        },
-        maxLines = 1,
-        label = { Text(stringResource(R.string.input_subject_scan_id)) },
-        placeholder = { Text(stringResource(R.string.from_the_desktop_application)) },
-        keyboardOptions = KeyboardOptions(
-            imeAction = ImeAction.Done,
-            keyboardType = KeyboardType.Ascii
-        ),
-        keyboardActions = KeyboardActions(onDone = { keyboardController?.hide() }),
-        modifier = modifier
-            .fillMaxWidth()
-            .then(if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier)
-    )
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -156,6 +122,19 @@ fun CreateCollectionScreen(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(R.string.navigate_back)
                         )
+                    }
+                },
+                actions = {
+                    if (isLoggedIn) {
+                        IconButton(
+                            onClick = { homeViewModel.loadSubjects() },
+                            enabled = !subjectsState.isLoading
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Refresh,
+                                contentDescription = stringResource(R.string.refresh)
+                            )
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -360,7 +339,7 @@ fun CreateCollectionScreen(
                                 }
                             ) {
                                 OutlinedTextField(
-                                    value = selectedSession?.name.orEmpty(),
+                                    value = selectedSession?.localId.orEmpty(),
                                     onValueChange = {},
                                     readOnly = true,
                                     enabled = selectedSubject != null,
@@ -384,7 +363,7 @@ fun CreateCollectionScreen(
                                     selectedSubject?.sessions.orEmpty()
                                         .forEach { session ->
                                             DropdownMenuItem(
-                                                text = { Text(session.name) },
+                                                text = { Text(session.localId) },
                                                 onClick = {
                                                     selectedSession = session
                                                     sessionExpanded = false

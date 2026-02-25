@@ -8,7 +8,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import health.openwater.openlifu3dscanner.screen.collection.CollectionScreen
-import health.openwater.openlifu3dscanner.screen.home.CreateCollectionScreen
+import health.openwater.openlifu3dscanner.screen.create.CreateCollectionScreen
 import health.openwater.openlifu3dscanner.screen.home.HomeScreen
 import health.openwater.openlifu3dscanner.screen.permissions.PermissionsScreen
 import health.openwater.openlifu3dscanner.screen.photoscan.PhotoscanScreen
