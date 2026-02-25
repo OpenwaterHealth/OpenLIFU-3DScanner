@@ -11,6 +11,7 @@ sealed class UserState {
 data class UserInfoState(
     val user: FirebaseUser? = null,
     val credits: Int? = null,
+    val institutionName: String? = null,
     val isLoading: Boolean = true,
     val error: String? = null
 )

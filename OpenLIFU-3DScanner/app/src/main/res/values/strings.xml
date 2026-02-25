@@ -48,6 +48,7 @@
     <string name="sign_out">Sign Out</string>
     <string name="are_you_sure_you_want_to_sign_out">Are you sure you want to sign out?</string>
     <string name="credits_d">Credits: %1$d</string>
+    <string name="institution_s">Institution: %1$s</string>
     <string name="delete_image">Delete Image</string>
     <string name="are_you_sure_you_want_to_delete_photo">Are you sure you want to delete photo?</string>
     <string name="delete">Delete</string>
