@@ -8,6 +8,7 @@ data class UserInfo(
     val displayName: String?,
     val email: String?,
     val institutionId: Int?,
+    val institutionName: String?,
     val isActive: Boolean?,
     val modificationDate: String?,
     val role: String?,

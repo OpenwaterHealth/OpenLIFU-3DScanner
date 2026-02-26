@@ -10,7 +10,6 @@ import health.openwater.openlifu3dscanner.network.Result
 import health.openwater.openlifu3dscanner.network.api.AuthService
 import health.openwater.openlifu3dscanner.network.api.PhotocollectionService
 import health.openwater.openlifu3dscanner.network.api.UserService
-import health.openwater.openlifu3dscanner.network.dto.InstitutionResponse
 import health.openwater.openlifu3dscanner.network.dto.ResetPasswordRequest
 import health.openwater.openlifu3dscanner.network.dto.StatusResponse
 import health.openwater.openlifu3dscanner.network.dto.UserResponse
@@ -141,10 +140,6 @@ class UserRepository @Inject constructor(
         return safeCall { userService.getUser(uid) }
     }
 
-    private suspend fun getInstitution(id: Int): Result<InstitutionResponse> {
-        return safeCall { userService.getInstitution(id) }
-    }
-
     suspend fun refreshCredits() {
         val currentUser = authService.getCurrentUser()
         if (currentUser != null) {
@@ -154,14 +149,8 @@ class UserRepository @Inject constructor(
         when (val result = getUser()) {
             is Result.Success -> {
                 _credits.value = result.body.data?.user?.credit
+                _institutionName.value = result.body.data?.user?.institutionName
                 _error.value = null
-                val institutionId = result.body.data?.user?.institutionId
-                if (institutionId != null) {
-                    val institutionResult = getInstitution(institutionId)
-                    if (institutionResult is Result.Success) {
-                        _institutionName.value = institutionResult.body.data?.institution?.name
-                    }
-                }
             }
             is Result.NetworkError -> _error.value = result.message ?: "Network error"
             is Result.AuthError -> _error.value = "Authentication required"
