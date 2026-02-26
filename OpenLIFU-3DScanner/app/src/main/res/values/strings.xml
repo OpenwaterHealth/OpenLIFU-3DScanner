@@ -231,6 +231,12 @@
     <string name="env_switcher_title">Switch Environment</string>
     <string name="env_switcher_confirm">Switch</string>
     <string name="subject_scan_id_s">Subject Scan ID: %1$s</string>
+    <string name="scan_qr_code">Scan QR Code</string>
+    <string name="qr_scan_confirm_title">Confirm Session</string>
+    <string name="qr_subject_id">Subject ID: %1$s</string>
+    <string name="qr_session_id">Session ID: %1$s</string>
+    <string name="qr_db_path">DB Path: %1$s</string>
+    <string name="qr_invalid">No valid QR code data found</string>
     <string name="connect_to_pc_via_usb_to_transfer_files">Connect to PC via USB to transfer files</string>
     <string name="transfer_status_not_started">Status: Not Started</string>
     <string name="transfer_status_in_progress">Status: In Progress…</string>

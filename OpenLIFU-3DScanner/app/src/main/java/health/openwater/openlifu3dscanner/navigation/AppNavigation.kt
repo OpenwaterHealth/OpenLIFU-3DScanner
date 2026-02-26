@@ -13,6 +13,7 @@ import health.openwater.openlifu3dscanner.screen.home.HomeScreen
 import health.openwater.openlifu3dscanner.screen.permissions.PermissionsScreen
 import health.openwater.openlifu3dscanner.screen.photoscan.PhotoscanScreen
 import health.openwater.openlifu3dscanner.screen.processing.ProcessingScreen
+import health.openwater.openlifu3dscanner.screen.qr.QrScannerScreen
 import health.openwater.openlifu3dscanner.screen.scanner.ScannerScreen
 import health.openwater.openlifu3dscanner.screen.settings.SettingsScreen
 import health.openwater.openlifu3dscanner.screen.signin.LoginScreen
@@ -42,6 +43,7 @@ sealed class Screen(val route: String) {
     object Processing : Screen("processing")
     object Uploading : Screen("uploading")
     object Transfer : Screen("transfer")
+    object QrScanner : Screen("qr_scanner")
 }
 
 @Composable
@@ -77,7 +79,19 @@ fun AppNavigation() {
                 onViewCollection = {
                     navController.navigate(Screen.ViewCollection.route)
                 },
-                onSignIn = { navController.navigate(Screen.SignIn.route) })
+                onSignIn = { navController.navigate(Screen.SignIn.route) },
+                onQrScan = { navController.navigate(Screen.QrScanner.route) })
+        }
+
+        composable(Screen.QrScanner.route) {
+            QrScannerScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onScanConfirmed = {
+                    navController.navigate(Screen.Scanner.route) {
+                        popUpTo(Screen.QrScanner.route) { inclusive = true }
+                    }
+                }
+            )
         }
 
         composable(Screen.CreateCollection.route) {

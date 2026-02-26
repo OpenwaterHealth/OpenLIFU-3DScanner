@@ -44,6 +44,7 @@ import health.openwater.openlifu3dscanner.viewmodel.UserViewModel
 fun HomeRoot(
     onStartScan: () -> Unit,
     onViewCollection: () -> Unit,
+    onQrScan: () -> Unit,
     onSignIn: () -> Unit,
     onSettings: () -> Unit,
     onSupport: () -> Unit,
@@ -71,7 +72,8 @@ fun HomeRoot(
         } else {
             WelcomeScreen(
                 onStartScan = onStartScan,
-                onViewCollection = onViewCollection
+                onViewCollection = onViewCollection,
+                onQrScan = onQrScan
             )
         }
 
