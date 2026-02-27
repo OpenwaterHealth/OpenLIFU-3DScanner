@@ -472,13 +472,27 @@ class ReconstructionRepository @Inject constructor(
     }
 
     fun resetCurrentPhotocollection() {
-        deletePhotocollection()
-        currentReferenceNumber?.let {
-            val dir = getImagesDir(it)
-            if (dir.exists()) {
-                Log.d(TAG, "Deleting directory: $dir")
-                dir.deleteRecursively()
+        val reconstructionStarted = _uploadState.value is UploadState.StartingReconstruction ||
+            _uploadState.value is UploadState.Reconstructing
+
+        if (!reconstructionStarted) {
+            // Don't delete from server if reconstruction was already triggered — the collection
+            // is linked to an active/completed photoscan and must not be removed.
+            currentPhotocollection?.let { collection ->
+                scope.launch {
+                    deletePhotocollection(collection.id)
+                }
             }
+
+            currentReferenceNumber?.let {
+                val dir = getImagesDir(it)
+                if (dir.exists()) {
+                    Log.d(TAG, "Deleting directory: $dir")
+                    dir.deleteRecursively()
+                }
+            }
+        } else {
+            Log.d(TAG, "Skipping local file delete — reconstruction already started")
         }
 
         imageUploader?.stop()
@@ -490,14 +504,6 @@ class ReconstructionRepository @Inject constructor(
         _reconstructionProgress.value = null
         _photocollectionReady.value = false
         Log.d(TAG, "Photocollection reset complete")
-    }
-
-    private fun deletePhotocollection() {
-        currentPhotocollection?.let { collection ->
-            scope.launch {
-                deletePhotocollection(collection.id)
-            }
-        }
     }
 
     suspend fun deletePhotocollection(id: Long): Boolean {
