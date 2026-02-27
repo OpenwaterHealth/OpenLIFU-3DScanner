@@ -116,20 +116,21 @@ fun CreateCollectionScreen(
         onQrPayloadConsumed()
         var foundSubject: SubjectWithSessions? = null
         var foundSession: Session? = null
-        for (subject in subjectsState.subjects) {
+        val subject = subjectsState.subjects.find { it.localId == qrPayload.subjectId }
+        if (subject != null) {
             val session = subject.sessions.find { it.localId == qrPayload.sessionId }
             if (session != null) {
                 foundSubject = subject
                 foundSession = session
-                break
             }
         }
+
         if (foundSubject != null) {
             sessionMode = SessionMode.EXISTING
             selectedSubject = foundSubject
             selectedSession = foundSession
         } else {
-            qrError = qrPayload.sessionName
+            qrError = qrPayload.subjectId
         }
     }
 
@@ -230,6 +231,8 @@ fun CreateCollectionScreen(
             isRefreshing = isRefreshing,
             onRefresh = {
                 if (isLoggedIn) {
+                    selectedSubject = null
+                    selectedSession = null
                     isRefreshing = true
                     homeViewModel.loadSubjects()
                 }
@@ -238,217 +241,217 @@ fun CreateCollectionScreen(
                 .fillMaxSize()
                 .padding(contentPadding)
         ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 24.dp, vertical = 24.dp)
-        ) {
-            if (!isLoggedIn || !hasCredits) {
-                val focusRequester = remember { FocusRequester() }
-                LaunchedEffect(Unit) { focusRequester.requestFocus() }
-
-                SessionNameField(
-                    value = manualSessionName,
-                    onValueChange = { manualSessionName = it },
-                    focusRequester = focusRequester
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Text(
-                    text = stringResource(R.string.manual_input_hint),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                return@Column
-            }
-
-            when {
-                subjectsState.error != null -> {
-                    Text(
-                        text = stringResource(R.string.failed_to_load_subjects),
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 24.dp, vertical = 24.dp)
+            ) {
+                if (!isLoggedIn || !hasCredits) {
+                    val focusRequester = remember { FocusRequester() }
+                    LaunchedEffect(Unit) { focusRequester.requestFocus() }
 
                     SessionNameField(
                         value = manualSessionName,
-                        onValueChange = { manualSessionName = it }
+                        onValueChange = { manualSessionName = it },
+                        focusRequester = focusRequester
                     )
-                }
-
-                else -> {
-                    // ---------- Session mode selector ----------
-                    Text(
-                        text = stringResource(R.string.subject_id),
-                        style = MaterialTheme.typography.labelLarge,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-
-                    SingleChoiceSegmentedButtonRow(
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        SegmentedButton(
-                            selected = sessionMode == SessionMode.EXISTING,
-                            onClick = {
-                                sessionMode = SessionMode.EXISTING
-                                manualSessionName = ""
-                            },
-                            shape = SegmentedButtonDefaults.itemShape(
-                                index = 0,
-                                count = 2
-                            )
-                        ) {
-                            Text(stringResource(R.string.select_existing))
-                        }
-
-                        SegmentedButton(
-                            selected = sessionMode == SessionMode.NEW,
-                            onClick = {
-                                sessionMode = SessionMode.NEW
-                                selectedSubject = null
-                                selectedSession = null
-                            },
-                            shape = SegmentedButtonDefaults.itemShape(
-                                index = 1,
-                                count = 2
-                            )
-                        ) {
-                            Text(stringResource(R.string.manually_input))
-                        }
-                    }
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // ---------- Session input ----------
-                    when (sessionMode) {
-                        SessionMode.EXISTING -> {
-                            // Subject picker
-                            ExposedDropdownMenuBox(
-                                expanded = subjectExpanded,
-                                onExpandedChange = { subjectExpanded = it }
-                            ) {
-                                OutlinedTextField(
-                                    value = selectedSubject?.localId.orEmpty(),
-                                    onValueChange = {},
-                                    readOnly = true,
-                                    label = { Text(stringResource(R.string.select_subject_id)) },
-                                    trailingIcon = {
-                                        ExposedDropdownMenuDefaults.TrailingIcon(subjectExpanded)
-                                    },
-                                    modifier = Modifier
-                                        .menuAnchor(MenuAnchorType.PrimaryNotEditable)
-                                        .fillMaxWidth()
-                                )
+                    Text(
+                        text = stringResource(R.string.manual_input_hint),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    return@Column
+                }
 
-                                ExposedDropdownMenu(
+                when {
+                    subjectsState.error != null -> {
+                        Text(
+                            text = stringResource(R.string.failed_to_load_subjects),
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        SessionNameField(
+                            value = manualSessionName,
+                            onValueChange = { manualSessionName = it }
+                        )
+                    }
+
+                    else -> {
+                        // ---------- Session mode selector ----------
+                        Text(
+                            text = stringResource(R.string.subject_id),
+                            style = MaterialTheme.typography.labelLarge,
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+
+                        SingleChoiceSegmentedButtonRow(
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            SegmentedButton(
+                                selected = sessionMode == SessionMode.EXISTING,
+                                onClick = {
+                                    sessionMode = SessionMode.EXISTING
+                                    manualSessionName = ""
+                                },
+                                shape = SegmentedButtonDefaults.itemShape(
+                                    index = 0,
+                                    count = 2
+                                )
+                            ) {
+                                Text(stringResource(R.string.select_existing))
+                            }
+
+                            SegmentedButton(
+                                selected = sessionMode == SessionMode.NEW,
+                                onClick = {
+                                    sessionMode = SessionMode.NEW
+                                    selectedSubject = null
+                                    selectedSession = null
+                                },
+                                shape = SegmentedButtonDefaults.itemShape(
+                                    index = 1,
+                                    count = 2
+                                )
+                            ) {
+                                Text(stringResource(R.string.manually_input))
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        // ---------- Session input ----------
+                        when (sessionMode) {
+                            SessionMode.EXISTING -> {
+                                // Subject picker
+                                ExposedDropdownMenuBox(
                                     expanded = subjectExpanded,
-                                    onDismissRequest = { subjectExpanded = false }
+                                    onExpandedChange = { subjectExpanded = it }
                                 ) {
-                                    subjectsState.subjects.forEach { subject ->
-                                        DropdownMenuItem(
-                                            text = { Text(subject.localId) },
-                                            onClick = {
-                                                selectedSubject = subject
-                                                selectedSession = null
-                                                subjectExpanded = false
+                                    OutlinedTextField(
+                                        value = selectedSubject?.localId.orEmpty(),
+                                        onValueChange = {},
+                                        readOnly = true,
+                                        label = { Text(stringResource(R.string.select_subject_id)) },
+                                        trailingIcon = {
+                                            ExposedDropdownMenuDefaults.TrailingIcon(subjectExpanded)
+                                        },
+                                        modifier = Modifier
+                                            .menuAnchor(MenuAnchorType.PrimaryNotEditable)
+                                            .fillMaxWidth()
+                                    )
+
+                                    ExposedDropdownMenu(
+                                        expanded = subjectExpanded,
+                                        onDismissRequest = { subjectExpanded = false }
+                                    ) {
+                                        subjectsState.subjects.forEach { subject ->
+                                            DropdownMenuItem(
+                                                text = { Text(subject.localId) },
+                                                onClick = {
+                                                    selectedSubject = subject
+                                                    selectedSession = null
+                                                    subjectExpanded = false
+                                                }
+                                            )
+                                        }
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(16.dp))
+
+                                // Session picker
+                                ExposedDropdownMenuBox(
+                                    expanded = sessionExpanded,
+                                    onExpandedChange = {
+                                        if (selectedSubject != null) sessionExpanded = it
+                                    }
+                                ) {
+                                    OutlinedTextField(
+                                        value = selectedSession?.localId.orEmpty(),
+                                        onValueChange = {},
+                                        readOnly = true,
+                                        enabled = selectedSubject != null,
+                                        label = {
+                                            Text(stringResource(R.string.select_session_id))
+                                        },
+                                        trailingIcon = {
+                                            ExposedDropdownMenuDefaults.TrailingIcon(
+                                                sessionExpanded
+                                            )
+                                        },
+                                        modifier = Modifier
+                                            .menuAnchor(MenuAnchorType.PrimaryNotEditable)
+                                            .fillMaxWidth()
+                                    )
+
+                                    ExposedDropdownMenu(
+                                        expanded = sessionExpanded,
+                                        onDismissRequest = { sessionExpanded = false }
+                                    ) {
+                                        selectedSubject?.sessions.orEmpty()
+                                            .forEach { session ->
+                                                DropdownMenuItem(
+                                                    text = { Text(session.localId) },
+                                                    onClick = {
+                                                        selectedSession = session
+                                                        sessionExpanded = false
+                                                    }
+                                                )
                                             }
-                                        )
                                     }
                                 }
                             }
 
-                            Spacer(modifier = Modifier.height(16.dp))
+                            SessionMode.NEW -> {
+                                Text(
+                                    text = stringResource(R.string.manual_input_hint),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
 
-                            // Session picker
-                            ExposedDropdownMenuBox(
-                                expanded = sessionExpanded,
-                                onExpandedChange = {
-                                    if (selectedSubject != null) sessionExpanded = it
-                                }
-                            ) {
-                                OutlinedTextField(
-                                    value = selectedSession?.localId.orEmpty(),
-                                    onValueChange = {},
-                                    readOnly = true,
-                                    enabled = selectedSubject != null,
-                                    label = {
-                                        Text(stringResource(R.string.select_session_id))
-                                    },
-                                    trailingIcon = {
-                                        ExposedDropdownMenuDefaults.TrailingIcon(
-                                            sessionExpanded
-                                        )
-                                    },
-                                    modifier = Modifier
-                                        .menuAnchor(MenuAnchorType.PrimaryNotEditable)
-                                        .fillMaxWidth()
+                                SessionNameField(
+                                    value = manualSessionName,
+                                    onValueChange = { manualSessionName = it }
                                 )
 
-                                ExposedDropdownMenu(
-                                    expanded = sessionExpanded,
-                                    onDismissRequest = { sessionExpanded = false }
-                                ) {
-                                    selectedSubject?.sessions.orEmpty()
-                                        .forEach { session ->
-                                            DropdownMenuItem(
-                                                text = { Text(session.localId) },
-                                                onClick = {
-                                                    selectedSession = session
-                                                    sessionExpanded = false
-                                                }
-                                            )
-                                        }
+                                Spacer(modifier = Modifier.height(8.dp))
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(24.dp))
+
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    autoUploadEnabled = !autoUploadEnabled
+                                    Prefs.setAutoUpload(context, autoUploadEnabled)
                                 }
-                            }
-                        }
-
-                        SessionMode.NEW -> {
+                        ) {
+                            Checkbox(
+                                checked = autoUploadEnabled,
+                                onCheckedChange = {
+                                    autoUploadEnabled = it
+                                    Prefs.setAutoUpload(context, it)
+                                }
+                            )
                             Text(
-                                text = stringResource(R.string.manual_input_hint),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                text = stringResource(R.string.auto_photo_upload),
+                                modifier = Modifier.padding(start = 8.dp)
                             )
-                            Spacer(modifier = Modifier.height(8.dp))
-
-                            SessionNameField(
-                                value = manualSessionName,
-                                onValueChange = { manualSessionName = it }
-                            )
-
-                            Spacer(modifier = Modifier.height(8.dp))
                         }
-                    }
-
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                autoUploadEnabled = !autoUploadEnabled
-                                Prefs.setAutoUpload(context, autoUploadEnabled)
-                            }
-                    ) {
-                        Checkbox(
-                            checked = autoUploadEnabled,
-                            onCheckedChange = {
-                                autoUploadEnabled = it
-                                Prefs.setAutoUpload(context, it)
-                            }
-                        )
-                        Text(
-                            text = stringResource(R.string.auto_photo_upload),
-                            modifier = Modifier.padding(start = 8.dp)
-                        )
                     }
                 }
             }
-        }
         } // end PullToRefreshBox
     }
 

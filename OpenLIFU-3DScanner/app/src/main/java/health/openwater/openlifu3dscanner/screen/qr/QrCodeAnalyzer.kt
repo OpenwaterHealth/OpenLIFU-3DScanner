@@ -17,7 +17,7 @@ private const val SCHEME = "openlifu://"
 
 data class QrPayload(
     val sessionId: String,
-    val sessionName: String
+    val subjectId: String
 )
 
 internal class QrCodeAnalyzer(
@@ -68,5 +68,5 @@ private fun parseQrData(raw: String): QrPayload? {
         Log.e(TAG, "Unexpected QR format (expected 2 parts separated by '|'): $raw")
         return null
     }
-    return QrPayload(sessionId = parts[0], sessionName = parts[1])
+    return QrPayload(subjectId = parts[0], sessionId = parts[1])
 }
