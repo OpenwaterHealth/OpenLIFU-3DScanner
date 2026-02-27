@@ -16,7 +16,7 @@ private const val TAG = "QrCodeAnalyzer"
 private const val SCHEME = "openlifu://"
 
 data class QrPayload(
-    val sessionId: Long,
+    val sessionId: String,
     val sessionName: String
 )
 
@@ -68,9 +68,5 @@ private fun parseQrData(raw: String): QrPayload? {
         Log.e(TAG, "Unexpected QR format (expected 2 parts separated by '|'): $raw")
         return null
     }
-    val sessionId = parts[0].toLongOrNull() ?: run {
-        Log.e(TAG, "Session ID is not a valid Long: ${parts[0]}")
-        return null
-    }
-    return QrPayload(sessionId = sessionId, sessionName = parts[1])
+    return QrPayload(sessionId = parts[0], sessionName = parts[1])
 }

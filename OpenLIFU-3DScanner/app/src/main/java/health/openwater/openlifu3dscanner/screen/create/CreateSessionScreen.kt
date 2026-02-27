@@ -1,7 +1,8 @@
 package health.openwater.openlifu3dscanner.screen.create
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -12,11 +13,11 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -52,6 +53,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import health.openwater.openlifu3dscanner.R
 import health.openwater.openlifu3dscanner.extensions.getModelsDir
+import health.openwater.openlifu3dscanner.screen.qr.QrPayload
 import health.openwater.openlifu3dscanner.network.dto.Session
 import health.openwater.openlifu3dscanner.network.dto.SubjectWithSessions
 import health.openwater.openlifu3dscanner.preferences.Prefs
@@ -72,6 +74,9 @@ enum class SessionMode {
 fun CreateCollectionScreen(
     onNavigateBack: () -> Unit,
     onStartScan: () -> Unit,
+    onQrScan: () -> Unit = {},
+    qrPayload: QrPayload? = null,
+    onQrPayloadConsumed: () -> Unit = {},
 ) {
     val homeViewModel: HomeViewModel = hiltViewModel()
     val userViewModel: UserViewModel = hiltViewModel()
@@ -99,6 +104,35 @@ fun CreateCollectionScreen(
     var pendingSessionName by remember { mutableStateOf("") }
     var pendingSessionId by remember { mutableStateOf<Long?>(null) }
 
+    var isRefreshing by remember { mutableStateOf(false) }
+    var qrError by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(subjectsState.isLoading) {
+        if (!subjectsState.isLoading) isRefreshing = false
+    }
+
+    LaunchedEffect(qrPayload) {
+        if (qrPayload == null) return@LaunchedEffect
+        onQrPayloadConsumed()
+        var foundSubject: SubjectWithSessions? = null
+        var foundSession: Session? = null
+        for (subject in subjectsState.subjects) {
+            val session = subject.sessions.find { it.localId == qrPayload.sessionId }
+            if (session != null) {
+                foundSubject = subject
+                foundSession = session
+                break
+            }
+        }
+        if (foundSubject != null) {
+            sessionMode = SessionMode.EXISTING
+            selectedSubject = foundSubject
+            selectedSession = foundSession
+        } else {
+            qrError = qrPayload.sessionName
+        }
+    }
+
     LaunchedEffect(isLoggedIn) {
         if (isLoggedIn) {
             homeViewModel.loadSubjects()
@@ -125,16 +159,11 @@ fun CreateCollectionScreen(
                     }
                 },
                 actions = {
-                    if (isLoggedIn) {
-                        IconButton(
-                            onClick = { homeViewModel.loadSubjects() },
-                            enabled = !subjectsState.isLoading
-                        ) {
-                            Icon(
-                                imageVector = Icons.Filled.Refresh,
-                                contentDescription = stringResource(R.string.refresh)
-                            )
-                        }
+                    IconButton(onClick = onQrScan) {
+                        Icon(
+                            imageVector = Icons.Filled.QrCodeScanner,
+                            contentDescription = stringResource(R.string.scan_qr_code)
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -197,10 +226,22 @@ fun CreateCollectionScreen(
             }
         }
     ) { contentPadding ->
-        Column(
+        PullToRefreshBox(
+            isRefreshing = isRefreshing,
+            onRefresh = {
+                if (isLoggedIn) {
+                    isRefreshing = true
+                    homeViewModel.loadSubjects()
+                }
+            },
             modifier = Modifier
                 .fillMaxSize()
                 .padding(contentPadding)
+        ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
                 .padding(horizontal = 24.dp, vertical = 24.dp)
         ) {
             if (!isLoggedIn || !hasCredits) {
@@ -224,15 +265,6 @@ fun CreateCollectionScreen(
             }
 
             when {
-                subjectsState.isLoading -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
-                    }
-                }
-
                 subjectsState.error != null -> {
                     Text(
                         text = stringResource(R.string.failed_to_load_subjects),
@@ -417,6 +449,20 @@ fun CreateCollectionScreen(
                 }
             }
         }
+        } // end PullToRefreshBox
+    }
+
+    qrError?.let { sessionName ->
+        AlertDialog(
+            onDismissRequest = { qrError = null },
+            title = { Text(stringResource(R.string.qr_invalid)) },
+            text = { Text(stringResource(R.string.qr_session_not_found, sessionName)) },
+            confirmButton = {
+                TextButton(onClick = { qrError = null }) {
+                    Text(stringResource(R.string.ok))
+                }
+            }
+        )
     }
 
     if (showOverwriteDialog) {

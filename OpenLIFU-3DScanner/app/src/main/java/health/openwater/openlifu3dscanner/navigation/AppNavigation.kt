@@ -2,6 +2,7 @@ package health.openwater.openlifu3dscanner.navigation
 
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.runtime.Composable
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -13,6 +14,7 @@ import health.openwater.openlifu3dscanner.screen.home.HomeScreen
 import health.openwater.openlifu3dscanner.screen.permissions.PermissionsScreen
 import health.openwater.openlifu3dscanner.screen.photoscan.PhotoscanScreen
 import health.openwater.openlifu3dscanner.screen.processing.ProcessingScreen
+import health.openwater.openlifu3dscanner.screen.qr.QrPayload
 import health.openwater.openlifu3dscanner.screen.qr.QrScannerScreen
 import health.openwater.openlifu3dscanner.screen.scanner.ScannerScreen
 import health.openwater.openlifu3dscanner.screen.settings.SettingsScreen
@@ -79,28 +81,44 @@ fun AppNavigation() {
                 onViewCollection = {
                     navController.navigate(Screen.ViewCollection.route)
                 },
-                onSignIn = { navController.navigate(Screen.SignIn.route) },
-                onQrScan = { navController.navigate(Screen.QrScanner.route) })
+                onSignIn = { navController.navigate(Screen.SignIn.route) })
         }
 
         composable(Screen.QrScanner.route) {
             QrScannerScreen(
                 onNavigateBack = { navController.popBackStack() },
-                onScanConfirmed = {
-                    navController.navigate(Screen.Scanner.route) {
-                        popUpTo(Screen.QrScanner.route) { inclusive = true }
+                onScanConfirmed = { payload ->
+                    navController.previousBackStackEntry?.savedStateHandle?.apply {
+                        set("qr_session_id", payload.sessionId)
+                        set("qr_session_name", payload.sessionName)
                     }
+                    navController.popBackStack()
                 }
             )
         }
 
-        composable(Screen.CreateCollection.route) {
+        composable(Screen.CreateCollection.route) { backStackEntry ->
+            val savedStateHandle = backStackEntry.savedStateHandle
+            val qrSessionId = savedStateHandle.getStateFlow<String?>("qr_session_id", null)
+                .collectAsStateWithLifecycle()
+            val qrSessionName = savedStateHandle.getStateFlow<String?>("qr_session_name", null)
+                .collectAsStateWithLifecycle()
+            val qrPayload = if (qrSessionId.value != null && qrSessionName.value != null) {
+                QrPayload(qrSessionId.value!!, qrSessionName.value!!)
+            } else null
+
             CreateCollectionScreen(
                 onNavigateBack = { navController.popBackStack() },
                 onStartScan = {
                     navController.navigate(Screen.Scanner.route) {
                         popUpTo(Screen.CreateCollection.route) { inclusive = true }
                     }
+                },
+                onQrScan = { navController.navigate(Screen.QrScanner.route) },
+                qrPayload = qrPayload,
+                onQrPayloadConsumed = {
+                    savedStateHandle.remove<String>("qr_session_id")
+                    savedStateHandle.remove<String>("qr_session_name")
                 }
             )
         }

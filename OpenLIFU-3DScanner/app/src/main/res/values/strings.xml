@@ -236,7 +236,8 @@
     <string name="qr_subject_id">Subject ID: %1$s</string>
     <string name="qr_session_id">Session ID: %1$s</string>
     <string name="qr_db_path">DB Path: %1$s</string>
-    <string name="qr_invalid">No valid QR code data found</string>
+    <string name="qr_invalid">No valid session found</string>
+    <string name="qr_session_not_found">Session \"%1$s\" was not found. Please check the data and try again.</string>
     <string name="connect_to_pc_via_usb_to_transfer_files">Connect to PC via USB to transfer files</string>
     <string name="transfer_status_not_started">Status: Not Started</string>
     <string name="transfer_status_in_progress">Status: In Progress…</string>

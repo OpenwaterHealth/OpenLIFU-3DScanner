@@ -44,7 +44,6 @@ fun HomeScreen(
     onViewCollection: () -> Unit,
     onSettings: () -> Unit,
     onSignIn: () -> Unit,
-    onQrScan: () -> Unit,
 ) {
     var showNoCreditsWarning by remember { mutableStateOf(false) }
     var showNoInternetWarning by remember { mutableStateOf(false) }
@@ -84,14 +83,6 @@ fun HomeScreen(
         } else {
             onCreateCollection()
         }
-    }
-
-    fun handleQrScan() {
-        if (!allPermissionsGranted) {
-            onRequestPermissions()
-            return
-        }
-        onQrScan()
     }
 
     Scaffold(
@@ -135,7 +126,6 @@ fun HomeScreen(
                 onStartScan = { handleStartScan() },
                 onSettings = onSettings,
                 onViewCollection = onViewCollection,
-                onQrScan = { handleQrScan() },
                 onSignIn = onSignIn,
                 onSupport = { showSupportDialog = true }
             )
