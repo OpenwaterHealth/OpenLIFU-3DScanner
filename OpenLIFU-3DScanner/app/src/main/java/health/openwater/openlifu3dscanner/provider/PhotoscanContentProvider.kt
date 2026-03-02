@@ -20,11 +20,17 @@ import java.io.FileNotFoundException
  *   # List all collections
  *   adb shell content query --uri content://health.openwater.openlifu3dscanner.photoscans/
  *
- *   # List files inside a collection
+ *   # List photo files inside a collection
  *   adb shell content query --uri content://health.openwater.openlifu3dscanner.photoscans/collections/my_scan
  *
- *   # Read a file (pipe via adb)
+ *   # Read a photo file (pipe via adb)
  *   adb shell content read --uri "content://health.openwater.openlifu3dscanner.photoscans/collections/my_scan/file/001.jpg" > 001.jpg
+ *
+ *   # List 3D model files in a collection's scan subfolder
+ *   adb shell content query --uri content://health.openwater.openlifu3dscanner.photoscans/collections/my_scan/scan
+ *
+ *   # Read a 3D model file from the scan subfolder
+ *   adb shell content read --uri "content://health.openwater.openlifu3dscanner.photoscans/collections/my_scan/scan/file/texturedMesh.obj" > texturedMesh.obj
  *
  * Storage root: <external-files-dir>/OpenLIFU-3DScanner/
  * Note: direct adb pull from Android/data/<package>/ is unreliable on Android 11+ due to scoped
@@ -38,12 +44,16 @@ class PhotoscanContentProvider : ContentProvider() {
         private const val CODE_COLLECTIONS = 1
         private const val CODE_COLLECTION_FILES = 2
         private const val CODE_FILE = 3
+        private const val CODE_COLLECTION_SCAN_FILES = 4
+        private const val CODE_SCAN_FILE = 5
 
         private val uriMatcher = UriMatcher(UriMatcher.NO_MATCH).apply {
             addURI(AUTHORITY, null, CODE_COLLECTIONS)
             addURI(AUTHORITY, "collections", CODE_COLLECTIONS)
             addURI(AUTHORITY, "collections/*", CODE_COLLECTION_FILES)
             addURI(AUTHORITY, "collections/*/file/*", CODE_FILE)
+            addURI(AUTHORITY, "collections/*/scan", CODE_COLLECTION_SCAN_FILES)
+            addURI(AUTHORITY, "collections/*/scan/file/*", CODE_SCAN_FILE)
         }
 
         val COLLECTION_COLUMNS = arrayOf("_id", "name", "path", "photo_count", "has_model", "last_modified")
@@ -68,6 +78,11 @@ class PhotoscanContentProvider : ContentProvider() {
                 val collectionName = uri.pathSegments.getOrNull(1)
                     ?: return MatrixCursor(FILE_COLUMNS)
                 queryCollectionFiles(modelsDir, collectionName, projection)
+            }
+            CODE_COLLECTION_SCAN_FILES, CODE_SCAN_FILE -> {
+                val collectionName = uri.pathSegments.getOrNull(1)
+                    ?: return MatrixCursor(FILE_COLUMNS)
+                queryScanFiles(modelsDir, collectionName, projection)
             }
             else -> MatrixCursor(COLLECTION_COLUMNS)
         }
@@ -132,23 +147,60 @@ class PhotoscanContentProvider : ContentProvider() {
         return cursor
     }
 
+    private fun queryScanFiles(
+        modelsDir: File,
+        collectionName: String,
+        projection: Array<out String>?
+    ): MatrixCursor {
+        val columns = projection ?: FILE_COLUMNS
+        val cursor = MatrixCursor(columns)
+        val dir = File(File(modelsDir, collectionName), SCAN_SUBDIR)
+        if (!dir.exists()) return cursor
+
+        dir.listFiles()
+            ?.sortedBy { it.name }
+            ?.forEachIndexed { index, file ->
+                cursor.addRow(columns.map { col ->
+                    when (col) {
+                        "_id" -> index.toLong()
+                        "name" -> file.name
+                        "path" -> file.absolutePath
+                        "size" -> file.length()
+                        "type" -> if (file.isDirectory) "directory" else "file"
+                        else -> null
+                    }
+                })
+            }
+
+        return cursor
+    }
+
     override fun openFile(uri: Uri, mode: String): ParcelFileDescriptor {
-        // URI: content://authority/collections/<collection>/file/<filename>
         val segments = uri.pathSegments
-        if (segments.size < 4 || segments[0] != "collections" || segments[2] != "file") {
-            throw FileNotFoundException("Invalid URI: $uri")
-        }
         val ctx = context ?: throw FileNotFoundException("No context")
-        val collectionName = segments[1]
-        val filename = segments[3]
-        val file = File(File(getModelsDir(ctx), collectionName), filename)
-        if (!file.exists()) throw FileNotFoundException("File not found: ${file.absolutePath}")
-        return ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY)
+        val modelsDir = getModelsDir(ctx)
+
+        // URI: content://authority/collections/<collection>/file/<filename>
+        if (segments.size == 4 && segments[0] == "collections" && segments[2] == "file") {
+            val file = File(File(modelsDir, segments[1]), segments[3])
+            if (!file.exists()) throw FileNotFoundException("File not found: ${file.absolutePath}")
+            return ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY)
+        }
+
+        // URI: content://authority/collections/<collection>/scan/file/<filename>
+        if (segments.size == 5 && segments[0] == "collections" && segments[2] == SCAN_SUBDIR && segments[3] == "file") {
+            val file = File(File(File(modelsDir, segments[1]), SCAN_SUBDIR), segments[4])
+            if (!file.exists()) throw FileNotFoundException("File not found: ${file.absolutePath}")
+            return ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY)
+        }
+
+        throw FileNotFoundException("Invalid URI: $uri")
     }
 
     override fun getType(uri: Uri): String? = when (uriMatcher.match(uri)) {
         CODE_COLLECTIONS -> "vnd.android.cursor.dir/vnd.$AUTHORITY.collection"
         CODE_COLLECTION_FILES -> "vnd.android.cursor.dir/vnd.$AUTHORITY.file"
+        CODE_COLLECTION_SCAN_FILES -> "vnd.android.cursor.dir/vnd.$AUTHORITY.scan_file"
         else -> null
     }
 
