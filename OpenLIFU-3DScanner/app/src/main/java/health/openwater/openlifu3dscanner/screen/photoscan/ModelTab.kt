@@ -22,6 +22,7 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import health.openwater.openlifu3dscanner.extensions.SCAN_SUBDIR
 import health.openwater.openlifu3dscanner.extensions.getModelsDir
 import health.openwater.openlifu3dscanner.extensions.hasLocalModel
+import androidx.compose.ui.platform.LocalContext
 import health.openwater.openlifu3dscanner.network.dto.PhotoscanStatus
 import health.openwater.openlifu3dscanner.viewmodel.CollectionViewModel
 import kotlinx.coroutines.flow.collectLatest
@@ -38,22 +39,23 @@ fun ModelTab(
     onTransferToPc: (() -> Unit)? = null,
     collectionViewModel: CollectionViewModel = hiltViewModel()
 ) {
+    val context = LocalContext.current
     var downloadState by remember { mutableStateOf<DownloadState>(DownloadState.Init) }
     val scanDir =
-        remember(collectionName) { File(getModelsDir(), "$collectionName/$SCAN_SUBDIR") }
+        remember(collectionName) { File(getModelsDir(context), "$collectionName/$SCAN_SUBDIR") }
     val isLocalOnly = photoscanId == 0L
 
     LaunchedEffect(photocollectionId, isLocalOnly, photoscanId) {
         if (isLocalOnly) {
             // Local-only scan - check if we have a model file
-            if (hasLocalModel(collectionName)) {
+            if (hasLocalModel(context, collectionName)) {
                 downloadState = DownloadState.Offline // Has local model, show it
             } else {
                 downloadState = DownloadState.NotProcessed // No model, needs processing
             }
         } else {
             // First check if we have a local model
-            if (hasLocalModel(collectionName)) {
+            if (hasLocalModel(context, collectionName)) {
                 downloadState = DownloadState.Success
                 return@LaunchedEffect
             }
@@ -92,7 +94,7 @@ fun ModelTab(
                 if (result.success) {
                     val collection = collectionViewModel.getPhotocollection(photocollectionId)
                     val name = collection?.name
-                    downloadState = if (name != null && hasLocalModel(name)) {
+                    downloadState = if (name != null && hasLocalModel(context, name)) {
                         DownloadState.Success
                     } else {
                         DownloadState.Failed

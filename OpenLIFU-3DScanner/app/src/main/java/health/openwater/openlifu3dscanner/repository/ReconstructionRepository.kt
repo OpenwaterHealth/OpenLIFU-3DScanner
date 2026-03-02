@@ -523,7 +523,7 @@ class ReconstructionRepository @Inject constructor(
     }
 
     fun getImagesDir(referenceNumber: String) = File(
-        getModelsDir(),
+        getModelsDir(context),
         referenceNumber
     )
 

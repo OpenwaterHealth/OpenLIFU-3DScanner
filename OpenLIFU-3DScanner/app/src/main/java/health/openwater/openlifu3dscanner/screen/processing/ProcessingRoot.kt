@@ -51,6 +51,7 @@ import coil.compose.rememberAsyncImagePainter
 import health.openwater.openlifu3dscanner.R
 import health.openwater.openlifu3dscanner.extensions.getModelsDir
 import health.openwater.openlifu3dscanner.viewmodel.UserViewModel
+import androidx.compose.ui.platform.LocalContext
 import java.io.File
 
 
@@ -61,13 +62,14 @@ fun ProcessingRoot(
     onTransferToPc: () -> Unit,
 ) {
     val userViewModel: UserViewModel = hiltViewModel()
+    val context = LocalContext.current
     val uiState by userViewModel.uiState.collectAsStateWithLifecycle()
     val isConnected by userViewModel.isConnected.collectAsStateWithLifecycle()
     val hasCredits = (uiState.credits ?: 0) > 0
     val canUpload = uiState.user != null && hasCredits && isConnected
 
     val scanDir =
-        remember(collectionName) { File(getModelsDir(), collectionName) }
+        remember(collectionName) { File(getModelsDir(context), collectionName) }
 
     var imageFiles by remember(scanDir) {
         mutableStateOf(

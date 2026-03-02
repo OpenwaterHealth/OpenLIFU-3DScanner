@@ -196,7 +196,7 @@ fun CreateCollectionScreen(
                             sessionId = null
                         }
 
-                        val existingDir = File(getModelsDir(), sessionName)
+                        val existingDir = File(getModelsDir(context), sessionName)
                         if (existingDir.exists() && existingDir.listFiles()?.isNotEmpty() == true) {
                             pendingSessionName = sessionName
                             pendingSessionId = sessionId
@@ -479,7 +479,7 @@ fun CreateCollectionScreen(
                 TextButton(
                     onClick = {
                         showOverwriteDialog = false
-                        File(getModelsDir(), pendingSessionName).deleteRecursively()
+                        File(getModelsDir(context), pendingSessionName).deleteRecursively()
                         cloudViewModel.setScanConfig(
                             ScanConfig(
                                 collectionName = pendingSessionName,

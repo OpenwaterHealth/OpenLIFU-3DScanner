@@ -152,7 +152,7 @@ class ScannerViewModel @Inject constructor(
         currentScanPath?.deleteRecursively()
         currentScanPath = null
 
-        val file = File(getModelsDir(), collectionName).apply { mkdirs() }
+        val file = File(getModelsDir(application), collectionName).apply { mkdirs() }
         currentScanPath = file
 
         startingAngle = currentAngle  // Store the starting orientation
@@ -168,7 +168,7 @@ class ScannerViewModel @Inject constructor(
     fun resetForRecapture(collectionName: String) {
         currentScanPath?.deleteRecursively()
         currentScanPath = null
-        val file = File(getModelsDir(), collectionName).apply { mkdirs() }
+        val file = File(getModelsDir(application), collectionName).apply { mkdirs() }
         currentScanPath = file
         capturedBuckets.clear()
         _isCompleted.value = false

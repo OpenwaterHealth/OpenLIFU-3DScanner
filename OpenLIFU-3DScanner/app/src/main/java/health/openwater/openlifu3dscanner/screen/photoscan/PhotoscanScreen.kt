@@ -51,6 +51,7 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import health.openwater.openlifu3dscanner.R
 import health.openwater.openlifu3dscanner.extensions.getModelsDir
 import health.openwater.openlifu3dscanner.repository.ScanConfig
+import androidx.compose.ui.platform.LocalContext
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -72,6 +73,7 @@ fun PhotoscanScreen(
     collectionViewModel: CollectionViewModel = hiltViewModel(),
     userViewModel: UserViewModel = hiltViewModel()
 ) {
+    val context = LocalContext.current
     val items = listOf(stringResource(R.string.model), stringResource(R.string.photos))
     var selectedItem by remember { mutableIntStateOf(0) }
     var showMenu by remember { mutableStateOf(false) }
@@ -80,7 +82,7 @@ fun PhotoscanScreen(
     val coroutineScope = rememberCoroutineScope()
 
     val hasLocalFiles = remember(collectionName) {
-        java.io.File(getModelsDir(), collectionName).exists()
+        java.io.File(getModelsDir(context), collectionName).exists()
     }
     val hasCloudData = photoscanId != 0L || photocollectionId != 0L
     var deleteLocal by remember { mutableStateOf(true) }
@@ -202,7 +204,7 @@ fun PhotoscanScreen(
     }
 
     val scanDate = remember(collectionName) {
-        val dir = java.io.File(getModelsDir(), collectionName)
+        val dir = java.io.File(getModelsDir(context), collectionName)
         val timestamp = if (dir.exists()) dir.lastModified() else System.currentTimeMillis()
         SimpleDateFormat("MMM dd, yyyy HH:mm", Locale.getDefault()).format(Date(timestamp))
     }

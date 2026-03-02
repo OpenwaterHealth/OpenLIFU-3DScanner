@@ -16,6 +16,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import health.openwater.openlifu3dscanner.extensions.getModelsDir
 import health.openwater.openlifu3dscanner.viewmodel.CollectionViewModel
+import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.flow.collectLatest
 import java.io.File
 
@@ -27,9 +28,10 @@ fun PhotosTab(
     photocollectionId: Long,
     collectionViewModel: CollectionViewModel = hiltViewModel()
 ) {
+    val context = LocalContext.current
     var downloadState by remember { mutableStateOf<DownloadState>(DownloadState.Init) }
     val scanDir =
-        remember(collectionName) { File(getModelsDir(), collectionName) }
+        remember(collectionName) { File(getModelsDir(context), collectionName) }
     val downloadProgress by collectionViewModel.getPhotoDownloadProgress().collectAsStateWithLifecycle()
 
     LaunchedEffect(photoscanId) {
@@ -40,7 +42,7 @@ fun PhotosTab(
             )
 
         if (collection != null) {
-            val dir = File(getModelsDir(), collectionName)
+            val dir = File(getModelsDir(context), collectionName)
 
             if (dir.exists() && (dir.listFiles()?.size ?: 0) >= (collection.photos?.size ?: 0)) {
                 downloadState = DownloadState.Success
@@ -60,7 +62,7 @@ fun PhotosTab(
                 if (result.success) {
                     val collection = collectionViewModel.getPhotocollection(photocollectionId)
                     if (collection != null) {
-                        val dir = File(getModelsDir(), "${collection.name}")
+                        val dir = File(getModelsDir(context), "${collection.name}")
                         if (dir.exists() && (dir.listFiles()?.size ?: 0) > (collection.photos?.size
                                 ?: 0)
                         ) {

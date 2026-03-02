@@ -39,6 +39,7 @@ import coil.compose.AsyncImage
 import health.openwater.openlifu3dscanner.R
 import health.openwater.openlifu3dscanner.extensions.getModelsDir
 import health.openwater.openlifu3dscanner.extensions.hasLocalModel
+import androidx.compose.ui.platform.LocalContext
 import health.openwater.openlifu3dscanner.network.dto.PhotoscanStatus
 import java.io.File
 import java.text.SimpleDateFormat
@@ -61,7 +62,8 @@ fun PhotoscanCard(
     onLongClick: (() -> Unit)? = null,
     isSelected: Boolean = false
 ) {
-    val collectionDir = remember(item.name) { File(getModelsDir(), item.name) }
+    val context = LocalContext.current
+    val collectionDir = remember(item.name) { File(getModelsDir(context), item.name) }
 
     val imageFiles = remember(item.name) {
         collectionDir.listFiles { file ->
@@ -73,7 +75,7 @@ fun PhotoscanCard(
     val firstImage = remember(item.name) { imageFiles.minByOrNull { it.name } }
     val photoCount = imageFiles.size
 
-    val hasModel = remember(item.name) { hasLocalModel(item.name) }
+    val hasModel = remember(item.name) { hasLocalModel(context, item.name) }
 
     val shape = RoundedCornerShape(12.dp)
     val borderModifier = if (isSelected) {

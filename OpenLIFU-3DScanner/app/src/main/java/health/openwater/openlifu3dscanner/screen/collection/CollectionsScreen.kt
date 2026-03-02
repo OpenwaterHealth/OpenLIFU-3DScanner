@@ -54,9 +54,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import health.openwater.openlifu3dscanner.R
 import health.openwater.openlifu3dscanner.extensions.getModelsDir
+import androidx.compose.ui.platform.LocalContext
 import health.openwater.openlifu3dscanner.viewmodel.CollectionViewModel
 import health.openwater.openlifu3dscanner.viewmodel.UserViewModel
 import kotlinx.coroutines.launch
+import java.io.File
 import java.util.Date
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
@@ -67,6 +69,7 @@ fun CollectionScreen(
     collectionViewModel: CollectionViewModel = hiltViewModel(),
     userViewModel: UserViewModel = hiltViewModel()
 ) {
+    val context = LocalContext.current
     val uiState by collectionViewModel.uiState.collectAsStateWithLifecycle()
     val coroutineScope = rememberCoroutineScope()
 
@@ -86,7 +89,7 @@ fun CollectionScreen(
 
     // Helper to convert on-device scans
     fun onDeviceScans(): List<CollectionItem> {
-        return getModelsDir().listFiles()
+        return getModelsDir(context).listFiles()
             ?.filter { it.isDirectory }
             ?.sortedByDescending { it.lastModified() }
             ?.map {
@@ -170,7 +173,7 @@ fun CollectionScreen(
     if (showDeleteConfirmation) {
         val anyHasLocalFiles = remember(selectedItems.toList()) {
             selectedItems.any { item ->
-                java.io.File(getModelsDir(), item.name).exists()
+                File(getModelsDir(context), item.name).exists()
             }
         }
         val anyHasCloudData = remember(selectedItems.toList()) {
@@ -278,7 +281,7 @@ fun CollectionScreen(
                     actions = {
                         IconButton(onClick = {
                             val anyHasLocal = selectedItems.any { item ->
-                                java.io.File(getModelsDir(), item.name).exists()
+                                File(getModelsDir(context), item.name).exists()
                             }
                             val anyHasCloud = selectedItems.any {
                                 it.photoscanId != 0L || it.photocollectionId != 0L

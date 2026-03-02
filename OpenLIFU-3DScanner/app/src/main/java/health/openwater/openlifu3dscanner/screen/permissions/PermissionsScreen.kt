@@ -24,7 +24,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -36,17 +35,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import com.google.accompanist.permissions.shouldShowRationale
 import health.openwater.openlifu3dscanner.R
-import health.openwater.openlifu3dscanner.extensions.hasAllFilesAccess
-import health.openwater.openlifu3dscanner.extensions.requestAllFilesAccess
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @Composable
@@ -55,29 +48,12 @@ fun PermissionsScreen(
     onPermissionsGranted: () -> Unit
 ) {
     val context = LocalContext.current
-    val lifecycleOwner = LocalLifecycleOwner.current
 
     val cameraPermissionState = rememberPermissionState(Manifest.permission.CAMERA)
 
     val notificationPermissionState = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         rememberPermissionState(Manifest.permission.POST_NOTIFICATIONS)
     } else null
-
-    // Storage permission state (needs lifecycle observer since it's checked via Settings)
-    var storageGranted by remember { mutableStateOf(hasAllFilesAccess()) }
-
-    // Re-check storage permission when returning from settings
-    DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) {
-                storageGranted = hasAllFilesAccess()
-            }
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(observer)
-        }
-    }
 
     val cameraGranted = cameraPermissionState.status.isGranted
     val notificationGranted = notificationPermissionState?.status?.isGranted ?: true
@@ -86,10 +62,10 @@ fun PermissionsScreen(
     var cameraRequested by remember { mutableStateOf(false) }
     var notificationRequested by remember { mutableStateOf(false) }
 
-    val allPermissionsGranted = storageGranted && cameraGranted && notificationGranted
+    val allPermissionsGranted = cameraGranted && notificationGranted
 
     // Auto-navigate when all permissions are granted
-    LaunchedEffect(storageGranted, cameraGranted, notificationGranted) {
+    LaunchedEffect(cameraGranted, notificationGranted) {
         if (allPermissionsGranted) {
             onPermissionsGranted()
         }
@@ -129,14 +105,6 @@ fun PermissionsScreen(
                 .padding(contentPadding),
         ) {
             when {
-                !storageGranted -> {
-                    PermissionRequestContent(
-                        title = stringResource(R.string.storage_access_required),
-                        message = stringResource(R.string.we_need_access_to_your_media_to_save_and_view_scans),
-                        onGrantClick = { context.requestAllFilesAccess() }
-                    )
-                }
-
                 !cameraGranted -> {
                     // Permanently denied = requested before + no rationale + not granted
                     val permanentlyDenied = cameraRequested &&

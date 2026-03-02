@@ -44,6 +44,7 @@ import health.openwater.openlifu3dscanner.core.UploadState
 import health.openwater.openlifu3dscanner.network.dto.PhotoscanStatus
 import health.openwater.openlifu3dscanner.extensions.getModelsDir
 import health.openwater.openlifu3dscanner.viewmodel.CloudViewModel
+import androidx.compose.ui.platform.LocalContext
 import java.io.File
 
 @OptIn(ExperimentalPermissionsApi::class)
@@ -53,6 +54,7 @@ fun UploadingRoot(
     onViewModel: (scanId: Long, photocollectionId: Long, collectionName: String) -> Unit,
     cloudViewModel: CloudViewModel = hiltViewModel()
 ) {
+    val context = LocalContext.current
     val collectionName = cloudViewModel.scanConfig?.collectionName ?: ""
     val sessionId = cloudViewModel.scanConfig?.sessionId
     // Request notification permission for Android 13+ (fallback if not already granted in ScannerScreen)
@@ -67,7 +69,7 @@ fun UploadingRoot(
     }
 
     val scanDir =
-        remember(collectionName) { File(getModelsDir(), collectionName) }
+        remember(collectionName) { File(getModelsDir(context), collectionName) }
 
     val imageFiles = remember(scanDir) {
         scanDir

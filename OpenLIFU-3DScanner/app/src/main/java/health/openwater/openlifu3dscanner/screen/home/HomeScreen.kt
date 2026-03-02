@@ -33,7 +33,6 @@ import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import health.openwater.openlifu3dscanner.BuildConfig
 import health.openwater.openlifu3dscanner.R
-import health.openwater.openlifu3dscanner.extensions.hasAllFilesAccess
 import health.openwater.openlifu3dscanner.viewmodel.UserViewModel
 
 @OptIn(ExperimentalPermissionsApi::class, ExperimentalMaterial3Api::class)
@@ -61,14 +60,12 @@ fun HomeScreen(
     }
 
     // Check permissions
-    val storageGranted = hasAllFilesAccess()
     val cameraPermissionState = rememberPermissionState(Manifest.permission.CAMERA)
     val notificationPermissionState = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         rememberPermissionState(Manifest.permission.POST_NOTIFICATIONS)
     } else null
 
-    val allPermissionsGranted = storageGranted &&
-            cameraPermissionState.status.isGranted &&
+    val allPermissionsGranted = cameraPermissionState.status.isGranted &&
             (notificationPermissionState?.status?.isGranted ?: true)
 
     fun handleStartScan() {
