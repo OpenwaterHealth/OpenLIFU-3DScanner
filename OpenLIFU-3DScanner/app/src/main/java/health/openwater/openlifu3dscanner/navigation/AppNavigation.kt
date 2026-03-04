@@ -91,6 +91,7 @@ fun AppNavigation() {
                     navController.previousBackStackEntry?.savedStateHandle?.apply {
                         set("qr_session_id", payload.sessionId)
                         set("qr_subject_id", payload.subjectId)
+                        set("qr_session_name", payload.sessionName)
                     }
                     navController.popBackStack()
                 }
@@ -103,8 +104,10 @@ fun AppNavigation() {
                 .collectAsStateWithLifecycle()
             val qrSubjectId = savedStateHandle.getStateFlow<String?>("qr_subject_id", null)
                 .collectAsStateWithLifecycle()
-            val qrPayload = if (qrSessionId.value != null && qrSubjectId.value != null) {
-                QrPayload(qrSessionId.value!!, qrSubjectId.value!!)
+            val qrSessionName = savedStateHandle.getStateFlow<String?>("qr_session_name", null)
+                .collectAsStateWithLifecycle()
+            val qrPayload = if (qrSessionId.value != null && qrSubjectId.value != null && qrSessionName.value != null) {
+                QrPayload(qrSessionId.value!!, qrSubjectId.value!!, qrSessionName.value!!)
             } else null
 
             CreateCollectionScreen(
@@ -119,6 +122,7 @@ fun AppNavigation() {
                 onQrPayloadConsumed = {
                     savedStateHandle.remove<String>("qr_session_id")
                     savedStateHandle.remove<String>("qr_subject_id")
+                    savedStateHandle.remove<String>("qr_session_name")
                 }
             )
         }

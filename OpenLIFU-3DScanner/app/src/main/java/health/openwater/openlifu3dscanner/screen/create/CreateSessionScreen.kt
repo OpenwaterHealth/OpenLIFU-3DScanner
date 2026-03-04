@@ -86,6 +86,8 @@ fun CreateCollectionScreen(
     val uiState by userViewModel.uiState.collectAsStateWithLifecycle()
 
     val isLoggedIn = uiState.user != null
+    val isConnected by userViewModel.isConnected.collectAsStateWithLifecycle()
+    val isOnline = isLoggedIn && isConnected
     val hasCredits = (uiState.credits ?: 0) > 0
 
     val context = LocalContext.current
@@ -130,7 +132,11 @@ fun CreateCollectionScreen(
             selectedSubject = foundSubject
             selectedSession = foundSession
         } else {
-            qrError = qrPayload.subjectId
+            if (isOnline) {
+                qrError = qrPayload.subjectId
+            } else {
+                manualSessionName = qrPayload.sessionName
+            }
         }
     }
 
