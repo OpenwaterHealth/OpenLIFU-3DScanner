@@ -58,8 +58,8 @@ fun ScannerScreen(
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(Unit) {
-        cloudViewModel.reset(removeLocalCollection = true)
-
+        // Move any previous session to background (or clean it up if idle/errored)
+        cloudViewModel.dismissCurrentSession()
         if (cloudViewModel.isLoggedInAndOnline() && hasCredits) {
             cloudViewModel.createPhotocollection(collectionName, autoUploadEnabled, sessionId)
         }
@@ -117,6 +117,7 @@ fun ScannerScreen(
                 isOnline = isOnline,
                 snackbarHostState = snackbarHostState,
                 onProceed = {
+                    cloudViewModel.onScanComplete()
                     onNavigateToProcessing(autoUploadEnabled, isLoggedIn)
                 }
             )

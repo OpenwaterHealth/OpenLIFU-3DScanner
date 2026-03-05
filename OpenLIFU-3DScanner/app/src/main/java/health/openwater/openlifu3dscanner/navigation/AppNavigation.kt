@@ -2,6 +2,7 @@ package health.openwater.openlifu3dscanner.navigation
 
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -49,8 +50,20 @@ sealed class Screen(val route: String) {
 }
 
 @Composable
-fun AppNavigation() {
+fun AppNavigation(
+    pendingDestination: String? = null,
+    onDestinationHandled: () -> Unit = {}
+) {
     val navController = rememberNavController()
+
+    LaunchedEffect(pendingDestination) {
+        val dest = pendingDestination ?: return@LaunchedEffect
+        navController.navigate(dest)
+        navController.navigate(dest) {
+            popUpTo(Screen.Home.route) { inclusive = false }
+        }
+        onDestinationHandled()
+    }
 
     NavHost(navController = navController, startDestination = Screen.Home.route, enterTransition = {
         slideIntoContainer(
@@ -106,9 +119,10 @@ fun AppNavigation() {
                 .collectAsStateWithLifecycle()
             val qrSessionName = savedStateHandle.getStateFlow<String?>("qr_session_name", null)
                 .collectAsStateWithLifecycle()
-            val qrPayload = if (qrSessionId.value != null && qrSubjectId.value != null && qrSessionName.value != null) {
-                QrPayload(qrSessionId.value!!, qrSubjectId.value!!, qrSessionName.value!!)
-            } else null
+            val qrPayload =
+                if (qrSessionId.value != null && qrSubjectId.value != null && qrSessionName.value != null) {
+                    QrPayload(qrSessionId.value!!, qrSubjectId.value!!, qrSessionName.value!!)
+                } else null
 
             CreateCollectionScreen(
                 onNavigateBack = { navController.popBackStack() },

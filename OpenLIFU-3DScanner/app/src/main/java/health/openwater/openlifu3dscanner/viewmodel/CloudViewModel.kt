@@ -1,11 +1,9 @@
 package health.openwater.openlifu3dscanner.viewmodel
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import health.openwater.openlifu3dscanner.repository.CloudRepository
 import health.openwater.openlifu3dscanner.repository.ScanConfig
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
@@ -32,12 +30,7 @@ class CloudViewModel @Inject constructor(
         )
     }
 
-    fun startReconstruction() {
-        cloudRepository.setStartingReconstruction()
-        viewModelScope.launch {
-            cloudRepository.startReconstructionFlow()
-        }
-    }
+    fun startReconstruction() = cloudRepository.startReconstruction()
 
     fun uploadRemainingPhotos() = cloudRepository.uploadRemainingPhotos()
 
@@ -45,10 +38,20 @@ class CloudViewModel @Inject constructor(
 
     fun isLoggedInAndOnline() = cloudRepository.isLoggedInAndOnline()
 
+    fun dismissCurrentSession() = cloudRepository.dismissCurrentSession()
+
     fun reset(removeLocalCollection: Boolean) = cloudRepository.reset(removeLocalCollection)
 
+    /**
+     * Reset and recreate the photocollection (used for recapture).
+     * Cancels and deletes the current session, then starts a fresh one.
+     */
     fun resetPhotocollection(collectionName: String, autoUpload: Boolean, sessionId: Long? = null) {
-        cloudRepository.resetCurrentPhotocollection()
-        createPhotocollection(collectionName, autoUpload, sessionId)
+        cloudRepository.createPhotocollection(
+            name = collectionName,
+            autoUpload = autoUpload,
+            sessionId = sessionId,
+            cancelPrevious = true
+        )
     }
 }

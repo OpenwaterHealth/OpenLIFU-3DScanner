@@ -86,6 +86,8 @@ fun UploadingRoot(
     // Initialize upload for this collection
     LaunchedEffect(collectionName) {
         if (imageFiles.isEmpty()) return@LaunchedEffect
+        // Don't reinitialize if upload/reconstruction is already in progress
+        if (uploadState !is UploadState.Idle) return@LaunchedEffect
 
         val currentCollection = cloudViewModel.getCurrentPhotocollection()
 
@@ -113,18 +115,15 @@ fun UploadingRoot(
 
     // Start uploading once the photocollection is ready (for new collections)
     LaunchedEffect(photocollectionReady) {
-        if (photocollectionReady && imageFiles.isNotEmpty()) {
-            // This will be a no-op if already running (checked in ImageUploader)
+        if (photocollectionReady && imageFiles.isNotEmpty() && uploadState is UploadState.Idle) {
             cloudViewModel.uploadRemainingPhotos()
-            // Ensure scan is marked complete for auto-reconstruction
             cloudViewModel.onScanComplete()
         }
     }
 
     LaunchedEffect(uploadState) {
-        when (uploadState) {
-            is UploadState.UploadComplete -> cloudViewModel.startReconstruction()
-            else -> {}
+        if (uploadState is UploadState.UploadComplete) {
+            cloudViewModel.startReconstruction()
         }
     }
 

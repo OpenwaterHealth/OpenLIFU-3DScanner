@@ -59,6 +59,7 @@ import health.openwater.openlifu3dscanner.viewmodel.CloudViewModel
 import health.openwater.openlifu3dscanner.viewmodel.CollectionViewModel
 import health.openwater.openlifu3dscanner.viewmodel.UserViewModel
 import kotlinx.coroutines.launch
+import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @Composable
@@ -82,7 +83,7 @@ fun PhotoscanScreen(
     val coroutineScope = rememberCoroutineScope()
 
     val hasLocalFiles = remember(collectionName) {
-        java.io.File(getModelsDir(context), collectionName).exists()
+        File(getModelsDir(context), collectionName).exists()
     }
     val hasCloudData = photoscanId != 0L || photocollectionId != 0L
     var deleteLocal by remember { mutableStateOf(true) }
@@ -204,7 +205,7 @@ fun PhotoscanScreen(
     }
 
     val scanDate = remember(collectionName) {
-        val dir = java.io.File(getModelsDir(context), collectionName)
+        val dir = File(getModelsDir(context), collectionName)
         val timestamp = if (dir.exists()) dir.lastModified() else System.currentTimeMillis()
         SimpleDateFormat("MMM dd, yyyy HH:mm", Locale.getDefault()).format(Date(timestamp))
     }

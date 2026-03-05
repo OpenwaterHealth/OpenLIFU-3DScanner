@@ -47,7 +47,7 @@ class CloudRepository @Inject constructor(
     private val downloadQueue = LinkedBlockingQueue<DownloadingItem>()
     private var downloaderJob: Job? = null
 
-    // Delegate upload state to UploadRepository
+    // Delegate upload state to ReconstructionRepository
     val uploadState: StateFlow<UploadState> = reconstructionRepository.uploadState
     val photocollectionReady: StateFlow<Boolean> = reconstructionRepository.photocollectionReady
     val currentPhotoscanId: Long? get() = reconstructionRepository.currentPhotoscanId
@@ -64,21 +64,24 @@ class CloudRepository @Inject constructor(
     val scanConfig get() = reconstructionRepository.scanConfig
     fun setScanConfig(config: ScanConfig) = reconstructionRepository.setScanConfig(config)
 
-    // Delegate upload operations to UploadRepository
+    // Delegate upload operations to ReconstructionRepository
     fun isLoggedInAndOnline() = reconstructionRepository.isLoggedInAndOnline()
     fun getCurrentPhotocollection() = reconstructionRepository.getCurrentPhotocollection()
-    fun createPhotocollection(name: String, sessionId: Long?, autoUpload: Boolean) =
-        reconstructionRepository.createPhotocollection(name, sessionId, autoUpload)
+    fun createPhotocollection(
+        name: String,
+        sessionId: Long?,
+        autoUpload: Boolean,
+        cancelPrevious: Boolean = false
+    ) = reconstructionRepository.createPhotocollection(name, sessionId, autoUpload, cancelPrevious)
 
     fun onImageCaptured() = reconstructionRepository.onImageCaptured()
     fun onScanComplete() = reconstructionRepository.onScanComplete()
     fun uploadRemainingPhotos() = reconstructionRepository.uploadRemainingPhotos()
-    fun setStartingReconstruction() = reconstructionRepository.setStartingReconstruction()
-    suspend fun startReconstructionFlow() = reconstructionRepository.startReconstructionFlow()
+    fun startReconstruction() = reconstructionRepository.startReconstruction()
+    fun dismissCurrentSession() = reconstructionRepository.dismissCurrentSession()
     fun reset(removeLocalCollection: Boolean) =
         reconstructionRepository.reset(removeLocalCollection)
 
-    fun resetCurrentPhotocollection() = reconstructionRepository.resetCurrentPhotocollection()
     fun getImagesDir(referenceNumber: String) =
         reconstructionRepository.getImagesDir(referenceNumber)
 
@@ -100,7 +103,6 @@ class CloudRepository @Inject constructor(
                 Log.d(TAG, "Photoscan deleted: $id")
                 true
             }
-
             else -> {
                 Log.e(TAG, "Failed to delete photoscan: $result")
                 false
@@ -150,7 +152,6 @@ class CloudRepository @Inject constructor(
     suspend fun downloadPhotoscan(id: Long, outputDir: File): Boolean {
         try {
             val response = photoscanService.getMesh(id)
-
             if (response.isSuccessful) {
                 response.body()?.let { body ->
                     val dir = File(outputDir, SCAN_SUBDIR)

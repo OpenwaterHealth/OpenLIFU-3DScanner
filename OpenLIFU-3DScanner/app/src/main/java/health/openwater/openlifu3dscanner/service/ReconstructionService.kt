@@ -69,11 +69,7 @@ class ReconstructionService : Service() {
 
         // Must call startForeground() immediately in onCreate() to avoid
         // ForegroundServiceDidNotStartInTimeException
-        val notification = createNotification(
-            getString(R.string.notification_preparing_upload),
-            null,
-            null
-        )
+        val notification = createNotification(getString(R.string.notification_preparing_upload), null)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             startForeground(
                 NOTIFICATION_ID,
@@ -123,57 +119,19 @@ class ReconstructionService : Service() {
 
     private fun updateNotificationForState(state: UploadState) {
         val notification = when (state) {
-            is UploadState.Idle -> createNotification(
-                getString(R.string.notification_preparing),
-                null,
-                null
-            )
-
-            is UploadState.Uploading -> createNotification(
-                getString(R.string.notification_uploading_images),
-                null,
-                null
-            )
-
-            is UploadState.UploadComplete -> createNotification(
-                getString(R.string.notification_upload_complete_starting_reconstruction),
-                null,
-                null
-            )
-
-            is UploadState.StartingReconstruction -> createNotification(
-                getString(R.string.notification_starting_reconstruction),
-                null,
-                null
-            )
-
-            is UploadState.Reconstructing -> createNotification(
-                getString(R.string.notification_reconstructing_3d_model),
-                null,
-                null
-            )
-
-            is UploadState.Error -> createNotification(
-                getString(R.string.notification_error, state.message),
-                null,
-                null
-            )
+            is UploadState.Idle -> createNotification(getString(R.string.notification_preparing), null)
+            is UploadState.Uploading -> createNotification(getString(R.string.notification_uploading_images), null)
+            is UploadState.UploadComplete -> createNotification(getString(R.string.notification_upload_complete_starting_reconstruction), null)
+            is UploadState.StartingReconstruction -> createNotification(getString(R.string.notification_starting_reconstruction), null)
+            is UploadState.Reconstructing -> createNotification(getString(R.string.notification_reconstructing_3d_model), null)
+            is UploadState.Error -> createNotification(getString(R.string.notification_error, state.message), null)
         }
         updateNotification(notification)
     }
 
     private fun updateNotificationWithUploadProgress(progress: ImageUploadProgress) {
-        val contentText = getString(
-            R.string.d_of_d_images_uploaded,
-            progress.uploadedImages,
-            progress.totalImages
-        )
-        val notification = createNotification(
-            contentText,
-            progress.progress,
-            getString(R.string.uploading_images)
-        )
-        updateNotification(notification)
+        val contentText = getString(R.string.d_of_d_images_uploaded, progress.uploadedImages, progress.totalImages)
+        updateNotification(createNotification(contentText, progress.progress))
     }
 
     private fun updateNotificationWithReconstructionProgress(progress: ReconstructionProgress) {
@@ -181,21 +139,7 @@ class ReconstructionService : Service() {
         val isComplete = progress.status == PhotoscanStatus.FINISHED ||
                 progress.status == PhotoscanStatus.FAILED ||
                 progress.status == PhotoscanStatus.STOPPED
-        val notification = createNotification(
-            message,
-            if (isComplete) null else progress.progress,
-            when (progress.status) {
-                null,
-                PhotoscanStatus.STARTED,
-                PhotoscanStatus.RUNNING -> getString(R.string.reconstructing_3d_model)
-
-                PhotoscanStatus.FAILED -> getString(R.string.reconstruction_failed)
-                PhotoscanStatus.STOPPED -> getString(R.string.reconstruction_stopped)
-                PhotoscanStatus.FINISHED -> getString(R.string.reconstruction_complete)
-            },
-            ongoing = !isComplete
-        )
-        updateNotification(notification)
+        updateNotification(createNotification(message, if (isComplete) null else progress.progress, ongoing = !isComplete))
     }
 
     private fun updateNotification(notification: Notification) {
@@ -231,20 +175,21 @@ class ReconstructionService : Service() {
     private fun createNotification(
         contentText: String,
         progress: Int?,
-        title: String?,
         ongoing: Boolean = true
     ): Notification {
         val intent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
+            putExtra(MainActivity.EXTRA_DESTINATION, "photoscan")
         }
         val pendingIntent = PendingIntent.getActivity(
-            this, 0, intent,
+            this, NOTIFICATION_ID, intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
+        val collectionName = reconstructionRepository.scanConfig?.collectionName
         val builder = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.mipmap.ic_notification)
-            .setContentTitle(title ?: getString(R.string.app_name))
+            .setContentTitle(collectionName ?: getString(R.string.app_name))
             .setContentText(contentText)
             .setContentIntent(pendingIntent)
             .setOngoing(ongoing)
