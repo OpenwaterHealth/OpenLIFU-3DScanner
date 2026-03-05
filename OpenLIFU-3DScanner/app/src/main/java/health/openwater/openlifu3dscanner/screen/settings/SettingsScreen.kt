@@ -80,12 +80,16 @@ fun SettingsScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = stringResource(R.string.settings),
+                        text = stringResource(R.string.support_and_legal),
                         modifier = Modifier.clickable {
                             titleTapCount++
                             if (!scanSettingsUnlocked && titleTapCount >= 7) {
                                 scanSettingsUnlocked = true
-                                Toast.makeText(context, context.getString(R.string.scan_settings_unlocked), Toast.LENGTH_SHORT).show()
+                                Toast.makeText(
+                                    context,
+                                    context.getString(R.string.scan_settings_unlocked),
+                                    Toast.LENGTH_SHORT
+                                ).show()
                             }
                             if (titleTapCount >= 14) {
                                 showEnvSwitcherDialog = true
@@ -222,13 +226,13 @@ fun SettingsScreen(
                                 Text(if (resId != null) stringResource(resId) else it.toString())
                             }
                         )
-                    }
 
-                    // Support & Legal Category
-                    preferenceCategory(
-                        key = "support_legal",
-                        title = { Text(stringResource(R.string.support_and_legal)) }
-                    )
+                        // Support & Legal Category
+                        preferenceCategory(
+                            key = "support_legal",
+                            title = { Text(stringResource(R.string.support_and_legal)) }
+                        )
+                    }
 
                     // Video Tutorial
                     preference(
@@ -238,7 +242,7 @@ fun SettingsScreen(
                         onClick = {
                             val intent = Intent(
                                 Intent.ACTION_VIEW,
-                                "https://www.youtube.com/watch?v=U_cHAH4T8Co".toUri() // TODO: Replace with actual tutorial video
+                                "https://youtu.be/YI_TnGNIso4".toUri()
                             )
                             context.startActivity(intent)
                         }
@@ -320,7 +324,7 @@ fun SettingsScreen(
                             Text(
                                 text = stringResource(envDisplayName(env)),
                                 color = if (env.enabled) MaterialTheme.colorScheme.onSurface
-                                        else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                                else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
                             )
                         }
                     }
