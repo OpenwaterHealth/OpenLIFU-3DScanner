@@ -8,7 +8,6 @@ import health.openwater.openlifu3dscanner.network.Result
 import health.openwater.openlifu3dscanner.network.api.AuthService
 import health.openwater.openlifu3dscanner.repository.UserRepository
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -26,28 +25,12 @@ class UserViewModel @Inject constructor(
 
     suspend fun initialize() = userRepository.initialize()
 
-    // Track whether notice was already dismissed this session (without acknowledging)
-    // Resets when the user changes so a new user still sees the notice
-    private var noticeDismissedThisSession = false
+    val shouldShowNotice: Boolean get() = userRepository.shouldShowNotice
+    val isNoticeAcknowledged: Boolean get() = userRepository.isNoticeAcknowledged
 
-    init {
-        viewModelScope.launch {
-            uiState.distinctUntilChangedBy { it.user?.uid }.collect {
-                noticeDismissedThisSession = false
-            }
-        }
-    }
-
-    val shouldShowNotice: Boolean get() = !noticeDismissedThisSession && userRepository.shouldShowNotice
-
-    fun noticeDismissed() {
-        noticeDismissedThisSession = true
-    }
-
-    fun noticeAcknowledged() {
-        userRepository.noticeAcknowledged()
-        noticeDismissedThisSession = true
-    }
+    fun noticeDismissed() = userRepository.noticeDismissed()
+    fun noticeAcknowledged() = userRepository.noticeAcknowledged()
+    fun noticeUnacknowledged() = userRepository.noticeUnacknowledged()
 
     fun signOut() = userRepository.signOut()
 

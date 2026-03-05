@@ -1,5 +1,6 @@
 package health.openwater.openlifu3dscanner.screen.home
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -33,7 +34,10 @@ fun NoticeDialog(
             Column {
                 Text(stringResource(R.string.notice))
                 Spacer(modifier = Modifier.height(16.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.clickable { dontShowAgain = !dontShowAgain }
+                ) {
                     Checkbox(
                         checked = dontShowAgain,
                         onCheckedChange = { dontShowAgain = it }

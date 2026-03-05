@@ -57,16 +57,35 @@ class UserRepository @Inject constructor(
      * Empty stored uid means fresh install → show.
      * Different uid means new user → show.
      */
+    private var noticeDismissedThisSession = false
+
     val shouldShowNotice: Boolean
         get() {
             val currentUid = authService.getCurrentUser()?.uid ?: ""
             val acknowledgedUid = Prefs.getNoticeAcknowledgedUid(context)
-            return acknowledgedUid != currentUid
+            return !noticeDismissedThisSession && acknowledgedUid != currentUid
         }
+
+    val isNoticeAcknowledged: Boolean
+        get() {
+            val currentUid = authService.getCurrentUser()?.uid ?: ""
+            val acknowledgedUid = Prefs.getNoticeAcknowledgedUid(context)
+            return acknowledgedUid == currentUid
+        }
+
+    fun noticeDismissed() {
+        noticeDismissedThisSession = true
+    }
 
     fun noticeAcknowledged() {
         val currentUid = authService.getCurrentUser()?.uid ?: ""
         Prefs.setNoticeAcknowledgedUid(context, currentUid)
+        noticeDismissedThisSession = true
+    }
+
+    fun noticeUnacknowledged() {
+        Prefs.setNoticeAcknowledgedUid(context, "")
+        noticeDismissedThisSession = true
     }
 
     val userInfoState: StateFlow<UserInfoState> = combine(
@@ -119,6 +138,7 @@ class UserRepository @Inject constructor(
         val response = authService.signIn(email, password)
         if (response == AuthService.AuthResponse.SUCCESS) {
             _userState.value = UserState.Authenticated(authService.getCurrentUser()!!)
+            noticeDismissedThisSession = false
             refreshCredits()
         } else {
             _userState.value = UserState.Unauthenticated

@@ -28,7 +28,7 @@ fun SessionNameField(
     OutlinedTextField(
         value = value,
         onValueChange = {
-            val upper = it.uppercase(); if (upper.matches(idPattern)) onValueChange(
+            val upper = it.uppercase(); if (upper.length <= 10 && upper.matches(idPattern)) onValueChange(
             upper
         )
         },

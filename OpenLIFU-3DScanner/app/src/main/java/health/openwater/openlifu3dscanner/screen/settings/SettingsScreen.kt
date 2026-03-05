@@ -290,11 +290,13 @@ fun SettingsScreen(
 
     if (showNoticeDialog) {
         NoticeDialog(
-            isAcknowledged = !userViewModel.shouldShowNotice,
+            isAcknowledged = userViewModel.isNoticeAcknowledged,
             onDismiss = { dontShowAgain ->
                 showNoticeDialog = false
                 if (dontShowAgain) {
                     userViewModel.noticeAcknowledged()
+                } else {
+                    userViewModel.noticeUnacknowledged()
                 }
             }
         )
