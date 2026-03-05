@@ -15,12 +15,16 @@ import java.util.TimeZone
 object DateTypeAdapter : JsonDeserializer<Date>, JsonSerializer<Date> {
 
     private const val DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss"
+    private const val DATE_FORMAT_RFC1123 = "EEE, dd MMM yyyy HH:mm:ss zzz"
+
     private val dateFormatter = SimpleDateFormat(DATE_FORMAT, Locale.US).apply {
         timeZone = TimeZone.getTimeZone("UTC")
     }
+    private val rfc1123Formatter = SimpleDateFormat(DATE_FORMAT_RFC1123, Locale.US)
 
     override fun deserialize(json: JsonElement, typeOfT: Type, context: JsonDeserializationContext): Date? {
-        return dateFormatter.parse(json.asString)
+        val s = json.asString
+        return try { dateFormatter.parse(s) } catch (_: Exception) { rfc1123Formatter.parse(s) }
     }
 
     override fun serialize(src: Date, typeOfSrc: Type, context: JsonSerializationContext): JsonElement {
