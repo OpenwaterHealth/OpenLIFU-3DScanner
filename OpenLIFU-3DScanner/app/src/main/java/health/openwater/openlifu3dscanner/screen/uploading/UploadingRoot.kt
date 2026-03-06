@@ -17,17 +17,21 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.CropRotate
 import androidx.compose.material.icons.filled.Error
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -45,6 +49,8 @@ import health.openwater.openlifu3dscanner.network.dto.PhotoscanStatus
 import health.openwater.openlifu3dscanner.extensions.getModelsDir
 import health.openwater.openlifu3dscanner.viewmodel.CloudViewModel
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.tooling.preview.Preview
+import health.openwater.openlifu3dscanner.theme.HeadScannerTheme
 import java.io.File
 
 @OptIn(ExperimentalPermissionsApi::class)
@@ -82,6 +88,8 @@ fun UploadingRoot(
     val imageUploadProgress by cloudViewModel.imageUploadProgress.collectAsState()
     val reconstructionProgress by cloudViewModel.reconstructionProgress.collectAsState()
     val photocollectionReady by cloudViewModel.photocollectionReady.collectAsState()
+
+    var lastNonErrorState by remember { mutableStateOf<UploadState>(UploadState.Idle) }
 
     // Initialize upload for this collection
     LaunchedEffect(collectionName) {
@@ -122,6 +130,7 @@ fun UploadingRoot(
     }
 
     LaunchedEffect(uploadState) {
+        if (uploadState !is UploadState.Error) lastNonErrorState = uploadState
         if (uploadState is UploadState.UploadComplete) {
             cloudViewModel.startReconstruction()
         }
@@ -156,7 +165,15 @@ fun UploadingRoot(
             is UploadState.Error -> {
                 ErrorView(
                     message = (uploadState as UploadState.Error).message,
-                    onRetry = { cloudViewModel.startReconstruction() },
+                    onRetry = {
+                        if (lastNonErrorState is UploadState.Reconstructing ||
+                            lastNonErrorState is UploadState.StartingReconstruction
+                        ) {
+                            cloudViewModel.startReconstruction()
+                        } else {
+                            cloudViewModel.uploadRemainingPhotos()
+                        }
+                    },
                     onCancel = onNavigateBack
                 )
             }
@@ -303,6 +320,26 @@ private fun ErrorView(
     onRetry: () -> Unit,
     onCancel: () -> Unit
 ) {
+    var showCancelDialog by remember { mutableStateOf(false) }
+
+    if (showCancelDialog) {
+        AlertDialog(
+            onDismissRequest = { showCancelDialog = false },
+            title = { Text(stringResource(R.string.cancel_processing)) },
+            text = { Text(stringResource(R.string.are_you_sure_you_want_to_cancel_processing_all_unsaved_progress_will_be_lost)) },
+            confirmButton = {
+                TextButton(onClick = onCancel) {
+                    Text(stringResource(R.string.yes))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showCancelDialog = false }) {
+                    Text(stringResource(R.string.no_label))
+                }
+            }
+        )
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -341,7 +378,7 @@ private fun ErrorView(
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             OutlinedButton(
-                onClick = onCancel,
+                onClick = { showCancelDialog = true },
                 modifier = Modifier.weight(1f)
             ) {
                 Text(text = stringResource(R.string.cancel))
@@ -354,5 +391,38 @@ private fun ErrorView(
                 Text(stringResource(R.string.retry))
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun UploadingViewPreview() {
+    HeadScannerTheme {
+        UploadingView(
+            progress = ImageUploadProgress(progress = 35, uploadedImages = 42, totalImages = 120),
+            totalImages = 120
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun ReconstructingViewPreview() {
+    HeadScannerTheme {
+        ReconstructingView(
+            progress = ReconstructionProgress(status = PhotoscanStatus.RUNNING, message = "Meshing surfaces…", progress = 65)
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun ErrorViewPreview() {
+    HeadScannerTheme {
+        ErrorView(
+            message = "Failed to upload images. Please check your connection and try again.",
+            onRetry = {},
+            onCancel = {}
+        )
     }
 }

@@ -15,6 +15,7 @@
     <string name="cancel_processing">Cancel processing?</string>
     <string name="are_you_sure_you_want_to_cancel_processing_all_unsaved_progress_will_be_lost">Are you sure you want to cancel processing? You can resume it later from the collections screen.</string>
     <string name="yes">Yes</string>
+    <string name="no_label">No</string>
     <string name="navigate_back">Navigate Back</string>
     <string name="_1_point_camera_at_face">1. Point camera at face</string>
     <string name="_2_tap_button">2. Tap \"Start Scan\" button</string>

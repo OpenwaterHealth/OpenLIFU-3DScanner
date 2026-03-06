@@ -163,6 +163,7 @@ class ScanSession(
 
     fun startManualUpload() {
         if (!imageUploader.isRunning) {
+            uploadState.value = UploadState.Idle
             imageUploader.start(autoUpload = false, resetProgress = false)
         }
     }
