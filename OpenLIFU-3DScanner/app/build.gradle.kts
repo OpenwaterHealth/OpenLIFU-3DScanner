@@ -104,6 +104,7 @@ dependencies {
     implementation(libs.gson)
 
     implementation(libs.preference)
+    implementation(libs.play.app.update.ktx)
 }
 
 

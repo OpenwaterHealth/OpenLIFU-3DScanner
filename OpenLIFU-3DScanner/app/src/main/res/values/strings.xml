@@ -202,4 +202,8 @@
     <string name="transfer_status_not_started">Status: Not Started</string>
     <string name="transfer_status_in_progress">Status: In Progress…</string>
     <string name="transfer_status_complete">Status: Complete. You can now safely disconnect your phone.</string>
+    <string name="update_ready_title">Update Ready</string>
+    <string name="update_ready_message">A new version of the app has been downloaded and is ready to install.</string>
+    <string name="update_restart">Restart Now</string>
+    <string name="update_later">Later</string>
 </resources>
