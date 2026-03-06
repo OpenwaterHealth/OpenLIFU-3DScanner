@@ -41,6 +41,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -97,7 +98,7 @@ fun CreateCollectionScreen(
     var selectedSession by remember { mutableStateOf<Session?>(null) }
     var manualSessionName by remember { mutableStateOf("") }
 
-    var sessionMode by remember { mutableStateOf(SessionMode.EXISTING) }
+    var sessionMode by rememberSaveable { mutableStateOf(SessionMode.EXISTING) }
 
     var subjectExpanded by remember { mutableStateOf(false) }
     var sessionExpanded by remember { mutableStateOf(false) }
@@ -133,7 +134,11 @@ fun CreateCollectionScreen(
             selectedSession = foundSession
         } else {
             if (isOnline) {
-                qrError = qrPayload.subjectId
+                if (sessionMode == SessionMode.EXISTING) {
+                    qrError = qrPayload.subjectId
+                } else {
+                    manualSessionName = qrPayload.sessionName
+                }
             } else {
                 manualSessionName = qrPayload.sessionName
             }
