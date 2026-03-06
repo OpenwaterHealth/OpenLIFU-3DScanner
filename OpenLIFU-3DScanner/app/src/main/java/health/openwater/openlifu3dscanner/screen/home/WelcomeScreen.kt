@@ -33,6 +33,19 @@ fun WelcomeScreen(
     val userViewModel: UserViewModel = hiltViewModel()
     val uiState by userViewModel.uiState.collectAsStateWithLifecycle()
 
+    WelcomeScreenContent(
+        displayName = uiState.user?.displayName ?: "Guest",
+        onStartScan = onStartScan,
+        onViewCollection = onViewCollection,
+    )
+}
+
+@Composable
+internal fun WelcomeScreenContent(
+    displayName: String,
+    onStartScan: () -> Unit,
+    onViewCollection: () -> Unit,
+) {
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
@@ -49,7 +62,7 @@ fun WelcomeScreen(
             )
 
             Text(
-                text = stringResource(R.string.welcome_back, uiState.user?.displayName ?: "Guest"),
+                text = stringResource(R.string.welcome_back, displayName),
                 color = MaterialTheme.colorScheme.onBackground,
                 fontSize = 24.sp,
                 style = MaterialTheme.typography.headlineMedium

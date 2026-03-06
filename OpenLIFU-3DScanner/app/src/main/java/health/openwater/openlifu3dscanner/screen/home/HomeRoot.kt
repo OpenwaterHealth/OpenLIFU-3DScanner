@@ -1,6 +1,7 @@
 package health.openwater.openlifu3dscanner.screen.home
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -32,12 +33,14 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withLink
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import health.openwater.openlifu3dscanner.R
 import health.openwater.openlifu3dscanner.preferences.ApiEnvironment
 import health.openwater.openlifu3dscanner.preferences.Prefs
+import health.openwater.openlifu3dscanner.theme.HeadScannerTheme
 import health.openwater.openlifu3dscanner.viewmodel.UserViewModel
 
 @Composable
@@ -58,22 +61,52 @@ fun HomeRoot(
     val isLoggedIn = uiState.user != null
     val isOnline = isLoggedIn && hasCredits && isConnected
 
-    var showOfflineDialog by remember { mutableStateOf(false) }
-
     LaunchedEffect(Unit) {
         userViewModel.initialize()
         userViewModel.getCredits()
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        if (uiState.isLoading) {
-            LoadingScreen()
-        } else {
-            WelcomeScreen(
-                onStartScan = onStartScan,
-                onViewCollection = onViewCollection,
+    HomeRootContent(
+        isOnline = isOnline,
+        isLoggedIn = isLoggedIn,
+        apiEnv = apiEnv,
+        onSupport = onSupport,
+        onSettings = onSettings,
+        badge = {
+            UserProfileBadge(
+                onSignIn = onSignIn,
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(16.dp)
             )
+        },
+        mainContent = {
+            if (uiState.isLoading) {
+                LoadingScreen()
+            } else {
+                WelcomeScreen(
+                    onStartScan = onStartScan,
+                    onViewCollection = onViewCollection,
+                )
+            }
         }
+    )
+}
+
+@Composable
+private fun HomeRootContent(
+    isOnline: Boolean,
+    isLoggedIn: Boolean,
+    apiEnv: ApiEnvironment,
+    onSupport: () -> Unit,
+    onSettings: () -> Unit,
+    badge: @Composable BoxScope.() -> Unit,
+    mainContent: @Composable BoxScope.() -> Unit,
+) {
+    var showOfflineDialog by remember { mutableStateOf(false) }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        mainContent()
 
         Row(
             modifier = Modifier
@@ -100,12 +133,7 @@ fun HomeRoot(
             }
         }
 
-        UserProfileBadge(
-            onSignIn = onSignIn,
-            modifier = Modifier
-                .align(Alignment.TopStart)
-                .padding(16.dp)
-        )
+        badge()
 
         if (apiEnv != ApiEnvironment.PRODUCTION) {
             Surface(
@@ -174,5 +202,53 @@ fun HomeRoot(
                 }
             )
         }
+    }
+}
+
+@Preview(showBackground = true, showSystemUi = true)
+@Composable
+private fun HomeRootOnlinePreview() {
+    HeadScannerTheme {
+        HomeRootContent(
+            isOnline = true,
+            isLoggedIn = true,
+            apiEnv = ApiEnvironment.PRODUCTION,
+            onSupport = {},
+            onSettings = {},
+            badge = {},
+            mainContent = { WelcomeScreenContent(displayName = "John", onStartScan = {}, onViewCollection = {}) }
+        )
+    }
+}
+
+@Preview(showBackground = true, showSystemUi = true)
+@Composable
+private fun HomeRootOfflinePreview() {
+    HeadScannerTheme {
+        HomeRootContent(
+            isOnline = false,
+            isLoggedIn = false,
+            apiEnv = ApiEnvironment.PRODUCTION,
+            onSupport = {},
+            onSettings = {},
+            badge = {},
+            mainContent = { WelcomeScreenContent(displayName = "Guest", onStartScan = {}, onViewCollection = {}) }
+        )
+    }
+}
+
+@Preview(showBackground = true, showSystemUi = true)
+@Composable
+private fun HomeRootDevEnvPreview() {
+    HeadScannerTheme {
+        HomeRootContent(
+            isOnline = true,
+            isLoggedIn = true,
+            apiEnv = ApiEnvironment.DEV,
+            onSupport = {},
+            onSettings = {},
+            badge = {},
+            mainContent = { WelcomeScreenContent(displayName = "John", onStartScan = {}, onViewCollection = {}) }
+        )
     }
 }
