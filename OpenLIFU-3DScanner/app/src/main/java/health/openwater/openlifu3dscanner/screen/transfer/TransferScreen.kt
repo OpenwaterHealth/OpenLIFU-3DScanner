@@ -27,7 +27,7 @@ fun TransferScreen(
     onNavigateBack: () -> Unit,
     cloudViewModel: CloudViewModel = hiltViewModel()
 ) {
-    val collectionName = cloudViewModel.scanConfig?.collectionName ?: ""
+    val collectionName = cloudViewModel.scanConfig?.collectionName
     fun onBack() {
         onNavigateBack()
     }

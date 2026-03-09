@@ -66,14 +66,14 @@ enum class TransferStatus { NOT_STARTED, IN_PROGRESS, COMPLETE }
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TransferRoot(
-    collectionName: String,
+    collectionName: String?,
 ) {
     val context = LocalContext.current
     val usbConnected by rememberUsbConnectionState()
     val transferStatus by rememberTransferStatus()
 
     LaunchedEffect(transferStatus) {
-        if (transferStatus == TransferStatus.COMPLETE) {
+        if (transferStatus == TransferStatus.COMPLETE && !collectionName.isNullOrBlank()) {
             withContext(Dispatchers.IO) {
                 getModelsDir(context).resolve(collectionName).deleteRecursively()
             }
@@ -85,22 +85,27 @@ fun TransferRoot(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        // Title
-        Text(
-            text = stringResource(R.string.subject_scan_id_s, collectionName),
-            color = MaterialTheme.colorScheme.onBackground,
-            fontSize = 26.sp,
-            textAlign = TextAlign.Center,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp)
-        )
+        // Title — only shown when scan ID is known
+        if (!collectionName.isNullOrBlank()) {
+            Text(
+                text = stringResource(R.string.subject_scan_id_s, collectionName),
+                color = MaterialTheme.colorScheme.onBackground,
+                fontSize = 26.sp,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+            )
+        }
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Connect USB Message
+        // Connection status message
         Text(
-            text = stringResource(R.string.connect_to_pc_via_usb_to_transfer_files),
+            text = stringResource(
+                if (usbConnected) R.string.usb_ready_to_transfer
+                else R.string.connect_to_pc_via_usb_to_transfer_files
+            ),
             color = MaterialTheme.colorScheme.onBackground,
             fontSize = 14.sp,
             textAlign = TextAlign.Center,

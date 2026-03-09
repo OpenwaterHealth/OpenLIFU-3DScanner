@@ -199,6 +199,7 @@
     <string name="qr_invalid">No valid session found</string>
     <string name="qr_session_not_found">Session \"%1$s\" was not found. Please check the data and try again.</string>
     <string name="connect_to_pc_via_usb_to_transfer_files">Connect to PC via USB to transfer files</string>
+    <string name="usb_ready_to_transfer">USB connected — run the transfer command on your PC to begin</string>
     <string name="transfer_status_not_started">Status: Not Started</string>
     <string name="transfer_status_in_progress">Status: In Progress…</string>
     <string name="transfer_status_complete">Status: Complete. You can now safely disconnect your phone.</string>
