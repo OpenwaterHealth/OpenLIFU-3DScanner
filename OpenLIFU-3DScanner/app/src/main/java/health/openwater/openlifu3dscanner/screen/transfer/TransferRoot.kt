@@ -26,6 +26,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -41,11 +42,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import health.openwater.openlifu3dscanner.R
+import health.openwater.openlifu3dscanner.extensions.getModelsDir
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlin.time.Duration.Companion.seconds
 
 /**
@@ -65,8 +68,17 @@ enum class TransferStatus { NOT_STARTED, IN_PROGRESS, COMPLETE }
 fun TransferRoot(
     collectionName: String,
 ) {
+    val context = LocalContext.current
     val usbConnected by rememberUsbConnectionState()
     val transferStatus by rememberTransferStatus()
+
+    LaunchedEffect(transferStatus) {
+        if (transferStatus == TransferStatus.COMPLETE) {
+            withContext(Dispatchers.IO) {
+                getModelsDir(context).resolve(collectionName).deleteRecursively()
+            }
+        }
+    }
 
     Column(
         modifier = Modifier.fillMaxSize(),
