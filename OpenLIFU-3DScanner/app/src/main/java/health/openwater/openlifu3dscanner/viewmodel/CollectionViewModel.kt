@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import health.openwater.openlifu3dscanner.extensions.getModelsDir
 import health.openwater.openlifu3dscanner.network.Result
 import health.openwater.openlifu3dscanner.network.dto.Photocollection
 import health.openwater.openlifu3dscanner.network.dto.Photoscan
@@ -11,6 +12,7 @@ import health.openwater.openlifu3dscanner.network.model.DownloadingItem
 import health.openwater.openlifu3dscanner.network.model.Type
 import health.openwater.openlifu3dscanner.repository.CloudRepository
 import health.openwater.openlifu3dscanner.repository.CollectionRepository
+import health.openwater.openlifu3dscanner.repository.ScanOwnershipRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -26,7 +28,10 @@ data class CollectionUiState(
     val loadingPhotoscans: Boolean = true,
     val photoscans: List<Photoscan>? = null,
     val photoscansError: String? = null,
-    val photoscansServerError: Boolean = false
+    val photoscansServerError: Boolean = false,
+
+    /** Names of local scan directories owned by the current user. Null = not yet loaded. */
+    val ownedLocalCollections: Set<String>? = null
 ) {
     val isLoading: Boolean
         get() = loadingPhotocollections || loadingPhotoscans
@@ -43,7 +48,8 @@ data class CollectionUiState(
 class CollectionViewModel @Inject constructor(
     application: Application,
     private val cloudRepository: CloudRepository,
-    private val collectionRepository: CollectionRepository
+    private val collectionRepository: CollectionRepository,
+    private val scanOwnershipRepository: ScanOwnershipRepository
 ) : AndroidViewModel(application) {
 
     private val _uiState = MutableStateFlow(CollectionUiState())
@@ -133,6 +139,21 @@ class CollectionViewModel @Inject constructor(
                 )
             }
         }
+    }
+
+    /**
+     * Claims any unowned local scan directories for the current user (one-time migration),
+     * then updates [CollectionUiState.ownedLocalCollections] with the current user's owned names.
+     */
+    fun loadOwnedLocalCollections() = viewModelScope.launch {
+        val localDirNames = getModelsDir(getApplication())
+            .listFiles()
+            ?.filter { it.isDirectory }
+            ?.map { it.name }
+            ?: emptyList()
+        scanOwnershipRepository.claimUnowned(localDirNames)
+        val owned = scanOwnershipRepository.getOwnedCollectionNames()
+        _uiState.update { it.copy(ownedLocalCollections = owned) }
     }
 
     suspend fun getPhotocollection(

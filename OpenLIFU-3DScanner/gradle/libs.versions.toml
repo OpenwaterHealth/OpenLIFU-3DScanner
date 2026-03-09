@@ -29,6 +29,7 @@ cameraExtensions = "1.5.3"
 material3 = "1.4.0"
 grgit = "5.3.3"
 playAppUpdate = "2.1.0"
+room = "2.7.0"
 
 [libraries]
 accompanist-permissions = { module = "com.google.accompanist:accompanist-permissions", version.ref = "accompanistPermissions" }
@@ -67,6 +68,9 @@ androidx-hilt-navigation-compose = { module = "androidx.hilt:hilt-navigation-com
 socket-io-client = { module = "io.socket:socket.io-client", version.ref = "socketIoClient" }
 androidx-camera-extensions = { group = "androidx.camera", name = "camera-extensions", version.ref = "cameraExtensions" }
 play-app-update-ktx = { module = "com.google.android.play:app-update-ktx", version.ref = "playAppUpdate" }
+androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
+androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
+androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

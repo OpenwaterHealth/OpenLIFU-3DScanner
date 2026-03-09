@@ -14,9 +14,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableStateSetOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.launch
 import dagger.hilt.android.lifecycle.HiltViewModel
 import health.openwater.openlifu3dscanner.core.FaceAnalysisResult
 import health.openwater.openlifu3dscanner.repository.CloudRepository
+import health.openwater.openlifu3dscanner.repository.ScanOwnershipRepository
 import health.openwater.openlifu3dscanner.extensions.getModelsDir
 import health.openwater.openlifu3dscanner.preferences.Prefs
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,7 +32,8 @@ import javax.inject.Inject
 @HiltViewModel
 class ScannerViewModel @Inject constructor(
     private val application: Application,
-    private val cloudRepository: CloudRepository
+    private val cloudRepository: CloudRepository,
+    private val scanOwnershipRepository: ScanOwnershipRepository
 ) : AndroidViewModel(application) {
 
     val _isScanning = MutableStateFlow(false)
@@ -154,6 +158,8 @@ class ScannerViewModel @Inject constructor(
 
         val file = File(getModelsDir(application), collectionName).apply { mkdirs() }
         currentScanPath = file
+
+        viewModelScope.launch { scanOwnershipRepository.recordOwnership(collectionName) }
 
         startingAngle = currentAngle  // Store the starting orientation
         _isScanning.value = true

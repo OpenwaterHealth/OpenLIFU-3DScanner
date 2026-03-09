@@ -105,10 +105,14 @@ fun CollectionScreen(
 
     // Compute combined collectionItems (cloud scans + on-device scans)
     val collectionItems =
-        remember(uiState.photocollections, uiState.photoscans, uiState.hasError, localRefreshKey) {
+        remember(uiState.photocollections, uiState.photoscans, uiState.hasError, uiState.ownedLocalCollections, localRefreshKey) {
             val photocollections = uiState.photocollections
             val photoscans = uiState.photoscans
+            val ownedNames = uiState.ownedLocalCollections
             val localScans = onDeviceScans()
+                .let { scans ->
+                    if (ownedNames != null) scans.filter { it.name in ownedNames } else scans
+                }
 
             if (uiState.isLoading && photoscans == null) return@remember emptyList()
 
@@ -129,6 +133,7 @@ fun CollectionScreen(
     fun refresh() {
         collectionViewModel.loadPhotocollections()
         collectionViewModel.loadPhotoscans()
+        collectionViewModel.loadOwnedLocalCollections()
     }
 
     fun toggleSelection(item: CollectionItem) {
