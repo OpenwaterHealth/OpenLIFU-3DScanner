@@ -1,6 +1,7 @@
 package health.openwater.openlifu3dscanner.screen.scanner
 
 import android.annotation.SuppressLint
+import androidx.compose.foundation.background
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -48,15 +49,20 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import health.openwater.openlifu3dscanner.R
 import health.openwater.openlifu3dscanner.extensions.drawSegmentedArc
 import health.openwater.openlifu3dscanner.preferences.Prefs
 import health.openwater.openlifu3dscanner.viewmodel.CloudViewModel
 import health.openwater.openlifu3dscanner.viewmodel.FaceStatus
 import health.openwater.openlifu3dscanner.viewmodel.ScannerViewModel
+import health.openwater.openlifu3dscanner.viewmodel.UserViewModel
 
 private const val MIN_IMAGES_COUNT = 20
+private const val OVAL_ASPECT_RATIO = 1.3f        // height / width – fixed regardless of screen width
+private const val MAX_OVAL_HEIGHT_OF_WIDTH = 1.2f   // safety cap; 0.90 * 1.3 = 1.17, so normal phones are never capped
 
 @SuppressLint("LocalContextGetResourceValueCall")
 @Composable
@@ -66,33 +72,38 @@ fun ScanControls(
     snackbarHostState: SnackbarHostState,
     onProceed: () -> Unit,
     cloudViewModel: CloudViewModel = hiltViewModel(),
-    viewModel: ScannerViewModel = hiltViewModel()
+    scannerViewModel: ScannerViewModel = hiltViewModel(),
+    userViewModel: UserViewModel = hiltViewModel()
 ) {
-    val isScanning by viewModel.isScanning.collectAsState()
-    val isCompleted by viewModel.isCompleted.collectAsState()
+    val isScanning by scannerViewModel.isScanning.collectAsState()
+    val isCompleted by scannerViewModel.isCompleted.collectAsState()
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
-    val ovalSizePref = remember { Prefs.getOvalSize(context, isOnline = autoUploadEnabled) }
+    val uiState by userViewModel.uiState.collectAsStateWithLifecycle()
+    val isConnected by userViewModel.isConnected.collectAsStateWithLifecycle()
+    val hasCredits = (uiState.credits ?: 0) > 0
+    val isLoggedIn = uiState.user != null
+    val isOnline = isLoggedIn && hasCredits && isConnected
+
+    val ovalSizePref = remember { Prefs.getOvalSize(context, isOnline) }
     val ovalWidthFactor = when (ovalSizePref) {
         150 -> 0.78f
         200 -> 0.90f
         else -> 0.65f
     }
-    val ovalHeightFactor = when (ovalSizePref) {
-        150 -> 0.54f
-        200 -> 0.62f
-        else -> 0.45f
-    }
     val ovalTop = 100f
 
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+        val screenWidthPx = constraints.maxWidth.toFloat()
         val screenHeightPx = constraints.maxHeight.toFloat()
-        LaunchedEffect(ovalWidthFactor, ovalHeightFactor, screenHeightPx) {
-            if (screenHeightPx > 0f) {
-                viewModel.setOvalBounds(
-                    widthFactor = ovalWidthFactor,
-                    heightFactor = ovalHeightFactor,
+        LaunchedEffect(ovalWidthFactor, screenWidthPx, screenHeightPx) {
+            if (screenWidthPx > 0f && screenHeightPx > 0f) {
+                val ovalHeight = minOf(screenWidthPx * ovalWidthFactor * OVAL_ASPECT_RATIO, screenWidthPx * MAX_OVAL_HEIGHT_OF_WIDTH)
+                val ovalWidth = ovalHeight / OVAL_ASPECT_RATIO
+                scannerViewModel.setOvalBounds(
+                    widthFactor = ovalWidth / screenWidthPx,
+                    heightFactor = ovalHeight / screenHeightPx,
                     topFraction = ovalTop / screenHeightPx
                 )
             }
@@ -104,9 +115,9 @@ fun ScanControls(
                 // Draw full black background
                 drawRect(color = Color.Black.copy(alpha = 0.3f))
 
-                // Calculate oval dimensions (centered, portrait-oriented)
-                val ovalWidth = size.width * ovalWidthFactor
-                val ovalHeight = size.height * ovalHeightFactor
+                // Calculate oval dimensions (centered, portrait-oriented, fixed aspect ratio, capped height)
+                val ovalHeight = minOf(size.width * ovalWidthFactor * OVAL_ASPECT_RATIO, size.width * MAX_OVAL_HEIGHT_OF_WIDTH)
+                val ovalWidth = ovalHeight / OVAL_ASPECT_RATIO
                 val ovalLeft = (size.width - ovalWidth) / 2f
 
                 // Cut out the oval using BlendMode
@@ -134,8 +145,8 @@ fun ScanControls(
                     Text(
                         text = stringResource(
                             R.string.photos_d_d,
-                            viewModel.capturedBuckets.size,
-                            viewModel.totalBuckets
+                            scannerViewModel.capturedBuckets.size,
+                            scannerViewModel.totalBuckets
                         ),
                         color = Color.White,
                         fontSize = 18.sp,
@@ -145,13 +156,13 @@ fun ScanControls(
                     if (!isScanning) {
                         Column(horizontalAlignment = Alignment.End) {
                             Text(
-                                text = when (viewModel.faceStatus) {
+                                text = when (scannerViewModel.faceStatus) {
                                     FaceStatus.READY -> stringResource(R.string.face_ready)
                                     FaceStatus.CENTER_FACE -> stringResource(R.string.center_face_in_oval)
                                     FaceStatus.MOVE_CLOSER -> stringResource(R.string.move_closer)
                                     FaceStatus.NO_FACE -> stringResource(R.string.no_face_found)
                                 },
-                                color = if (viewModel.faceStatus == FaceStatus.READY) Color(
+                                color = if (scannerViewModel.faceStatus == FaceStatus.READY) Color(
                                     0xFF00E676
                                 )
                                 else Color(0xFFFF9800),
@@ -177,7 +188,7 @@ fun ScanControls(
 
                     } else {
                         if (!isCompleted) {
-                            if (!viewModel.isOrientationValid) {
+                            if (!scannerViewModel.isOrientationValid) {
                                 Text(
                                     text = stringResource(R.string.hold_phone_upright),
                                     color = Color(0xFFFF9800),
@@ -199,7 +210,7 @@ fun ScanControls(
 
                         // Progress percentage based on captures
                         val progress =
-                            (viewModel.capturedBuckets.size.toFloat() / viewModel.totalBuckets.toFloat() * 100).toInt()
+                            (scannerViewModel.capturedBuckets.size.toFloat() / scannerViewModel.totalBuckets.toFloat() * 100).toInt()
                         Text(
                             text = stringResource(R.string.complete, progress),
                             color = Color.Cyan,
@@ -214,7 +225,7 @@ fun ScanControls(
                     if (isScanning) {
                         // Stop button - full width
                         Button(
-                            onClick = { viewModel.stopScanning() },
+                            onClick = { scannerViewModel.stopScanning() },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(56.dp),
@@ -229,7 +240,7 @@ fun ScanControls(
                                 fontWeight = FontWeight.Bold
                             )
                         }
-                    } else if (viewModel.capturedBuckets.isNotEmpty()) {
+                    } else if (scannerViewModel.capturedBuckets.isNotEmpty()) {
                         // Re-capture and Proceed buttons - 50/50 width
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -244,7 +255,7 @@ fun ScanControls(
                                             autoUploadEnabled
                                         )
                                     }
-                                    viewModel.resetForRecapture(collectionName)
+                                    scannerViewModel.resetForRecapture(collectionName)
                                 },
                                 modifier = Modifier
                                     .weight(1f)
@@ -263,7 +274,7 @@ fun ScanControls(
 
                             Button(
                                 onClick = {
-                                    if (viewModel.capturedBuckets.size < MIN_IMAGES_COUNT) {
+                                    if (scannerViewModel.capturedBuckets.size < MIN_IMAGES_COUNT) {
                                         scope.launch {
                                             snackbarHostState.showSnackbar(
                                                 message = context.getString(
@@ -296,8 +307,8 @@ fun ScanControls(
                     } else {
                         // Start button - full width
                         Button(
-                            onClick = { viewModel.startScanning(collectionName) },
-                            enabled = viewModel.faceDetected,
+                            onClick = { scannerViewModel.startScanning(collectionName) },
+                            enabled = scannerViewModel.faceDetected,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(56.dp),
@@ -317,7 +328,7 @@ fun ScanControls(
 
             // Sticky level: lock to horizontal when level, only unlock beyond breakout threshold
             var isLockedLevel by remember { mutableStateOf(false) }
-            val roll = viewModel.currentRoll
+            val roll = scannerViewModel.currentRoll
             val absRoll = abs(roll)
             if (!isLockedLevel && absRoll < 3f) isLockedLevel = true
             if (isLockedLevel && absRoll > 7f) isLockedLevel = false
@@ -334,12 +345,13 @@ fun ScanControls(
             )
 
             Canvas(modifier = Modifier.fillMaxSize()) {
+                val ovalHeight = minOf(size.width * ovalWidthFactor * OVAL_ASPECT_RATIO, size.width * MAX_OVAL_HEIGHT_OF_WIDTH)
+                val ovalWidth = ovalHeight / OVAL_ASPECT_RATIO
                 val centerX = size.width / 2f
-                val centerY = (size.height * ovalHeightFactor) / 2f + ovalTop
+                val centerY = ovalHeight / 2f + ovalTop
 
-                val ovalRadiusX =
-                    size.width * ovalWidthFactor / 2f + 8f  // Slightly outside the cutout
-                val ovalRadiusY = size.height * ovalHeightFactor / 2f + 8f
+                val ovalRadiusX = ovalWidth / 2f + 8f  // Slightly outside the cutout
+                val ovalRadiusY = ovalHeight / 2f + 8f
                 val ovalCenter = Offset(centerX, centerY)
 
                 // Static horizontal reference ticks outside the tilt indicator
@@ -380,19 +392,19 @@ fun ScanControls(
                     )
                 }
 
-                val totalSegments = (360f / viewModel.captureInterval).toInt()
-                val segmentSweep = viewModel.captureInterval - 2f  // Gap between segments
+                val totalSegments = (360f / scannerViewModel.captureInterval).toInt()
+                val segmentSweep = scannerViewModel.captureInterval - 2f  // Gap between segments
                 val strokeWidth = 12f
 
                 // Get relative angle from starting position
-                val relativeAngle = viewModel.getRelativeAngle()
+                val relativeAngle = scannerViewModel.getRelativeAngle()
 
                 // Draw segmented arc border
                 for (i in 0 until totalSegments) {
-                    val startAngle = i * viewModel.captureInterval - 90f  // Start from top
-                    val isCaptured = viewModel.capturedBuckets.contains(i)
+                    val startAngle = i * scannerViewModel.captureInterval - 90f  // Start from top
+                    val isCaptured = scannerViewModel.capturedBuckets.contains(i)
                     val isCurrent =
-                        isScanning && (relativeAngle / viewModel.captureInterval).toInt() == i
+                        isScanning && (relativeAngle / scannerViewModel.captureInterval).toInt() == i
 
                     val segmentColor = when {
                         isCurrent -> Color.Yellow
@@ -417,3 +429,248 @@ fun ScanControls(
         }
     }
 }
+
+// region Previews
+
+private fun previewScanControlsContent(
+    isScanning: Boolean,
+    isCompleted: Boolean,
+    capturedCount: Int,
+    totalBuckets: Int,
+    faceStatusLabel: String,
+    faceStatusColor: Color,
+    showFaceStatus: Boolean,
+    progress: Int,
+    showOrientationWarning: Boolean,
+    startEnabled: Boolean
+): @Composable () -> Unit = {
+    val ovalWidthFactor = 0.65f
+    val ovalTop = 100f
+    val captureInterval = 360f / totalBuckets
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFF2A2A2A))
+    ) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            drawRect(color = Color.Black.copy(alpha = 0.3f))
+            val ovalHeight = minOf(size.width * ovalWidthFactor * OVAL_ASPECT_RATIO, size.width * MAX_OVAL_HEIGHT_OF_WIDTH)
+            val ovalWidth = ovalHeight / OVAL_ASPECT_RATIO
+            val ovalLeft = (size.width - ovalWidth) / 2f
+            drawOval(
+                color = Color.Transparent,
+                topLeft = Offset(ovalLeft, ovalTop),
+                size = Size(ovalWidth, ovalHeight),
+                blendMode = BlendMode.Clear
+            )
+        }
+
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Photos $capturedCount / $totalBuckets",
+                    color = Color.White,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                if (showFaceStatus) {
+                    Text(
+                        text = faceStatusLabel,
+                        color = faceStatusColor,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp)
+            ) {
+                if (!isScanning) {
+                    if (!isCompleted) Instructions()
+                } else {
+                    if (!isCompleted) {
+                        if (showOrientationWarning) {
+                            Text(
+                                text = "Hold phone upright",
+                                color = Color(0xFFFF9800),
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                textAlign = TextAlign.Center
+                            )
+                        } else {
+                            Text(
+                                text = "Walk to next capture point",
+                                color = Color.White,
+                                fontSize = 18.sp,
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "$progress% Complete",
+                        color = Color.Cyan,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                when {
+                    isScanning -> Button(
+                        onClick = {},
+                        modifier = Modifier.fillMaxWidth().height(56.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE53935))
+                    ) {
+                        Text(text = "Stop Scan", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    }
+
+                    capturedCount > 0 -> Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        OutlinedButton(
+                            onClick = {},
+                            modifier = Modifier.weight(1f).height(56.dp),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White)
+                        ) {
+                            Text(text = "Re-Capture", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                        }
+                        Button(
+                            onClick = {},
+                            modifier = Modifier.weight(1f).height(56.dp),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00E676))
+                        ) {
+                            Text(text = "Proceed", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+                        }
+                    }
+
+                    else -> Button(
+                        onClick = {},
+                        enabled = startEnabled,
+                        modifier = Modifier.fillMaxWidth().height(56.dp),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text(text = "Start Scan", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+        }
+
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val ovalHeight = minOf(size.width * ovalWidthFactor * OVAL_ASPECT_RATIO, size.width * MAX_OVAL_HEIGHT_OF_WIDTH)
+            val ovalWidth = ovalHeight / OVAL_ASPECT_RATIO
+            val centerX = size.width / 2f
+            val centerY = ovalHeight / 2f + ovalTop
+            val ovalRadiusX = ovalWidth / 2f + 8f
+            val ovalRadiusY = ovalHeight / 2f + 8f
+            val ovalCenter = Offset(centerX, centerY)
+            val lineHalfLength = ovalRadiusX * 0.35f
+            val gap = 8f
+            val tickLength = lineHalfLength * 0.25f
+
+            drawLine(
+                color = Color.White.copy(alpha = 0.3f),
+                start = Offset(centerX - lineHalfLength - gap - tickLength, centerY),
+                end = Offset(centerX - lineHalfLength - gap, centerY),
+                strokeWidth = 2f, cap = StrokeCap.Round
+            )
+            drawLine(
+                color = Color.White.copy(alpha = 0.3f),
+                start = Offset(centerX + lineHalfLength + gap, centerY),
+                end = Offset(centerX + lineHalfLength + gap + tickLength, centerY),
+                strokeWidth = 2f, cap = StrokeCap.Round
+            )
+            rotate(degrees = 0f, pivot = ovalCenter) {
+                drawLine(
+                    color = Color(0xFF00E676),
+                    start = Offset(centerX - lineHalfLength, centerY),
+                    end = Offset(centerX + lineHalfLength, centerY),
+                    strokeWidth = 3f, cap = StrokeCap.Round
+                )
+            }
+
+            for (i in 0 until totalBuckets) {
+                val startAngle = i * captureInterval - 90f
+                val isCaptured = i < capturedCount
+                val segmentColor = when {
+                    isCaptured -> Color(0xFF00E676)
+                    else -> Color.White.copy(alpha = 0.25f)
+                }
+                drawSegmentedArc(
+                    center = ovalCenter,
+                    radiusX = ovalRadiusX,
+                    radiusY = ovalRadiusY,
+                    startAngle = startAngle,
+                    sweepAngle = captureInterval - 2f,
+                    color = segmentColor,
+                    strokeWidth = 12f,
+                    isCaptured = isCaptured,
+                    isCurrent = false,
+                    blinkAlpha = 1f
+                )
+            }
+        }
+    }
+}
+
+@Preview(showBackground = true, widthDp = 590, heightDp = 844, name = "Idle – no face")
+@Composable
+private fun ScanControlsIdlePreview() {
+    previewScanControlsContent(
+        isScanning = false, isCompleted = false,
+        capturedCount = 0, totalBuckets = 36,
+        faceStatusLabel = "No Face Found", faceStatusColor = Color(0xFFFF9800),
+        showFaceStatus = true, progress = 0,
+        showOrientationWarning = false, startEnabled = false
+    ).invoke()
+}
+
+@Preview(showBackground = true, widthDp = 390, heightDp = 844, name = "Scanning – 10 of 36")
+@Composable
+private fun ScanControlsScanningPreview() {
+    previewScanControlsContent(
+        isScanning = true, isCompleted = false,
+        capturedCount = 10, totalBuckets = 36,
+        faceStatusLabel = "", faceStatusColor = Color.White,
+        showFaceStatus = false, progress = 28,
+        showOrientationWarning = false, startEnabled = false
+    ).invoke()
+}
+
+@Preview(showBackground = true, widthDp = 390, heightDp = 844, name = "Post-scan – recapture / proceed")
+@Composable
+private fun ScanControlsPostScanPreview() {
+    previewScanControlsContent(
+        isScanning = false, isCompleted = false,
+        capturedCount = 36, totalBuckets = 36,
+        faceStatusLabel = "Face Ready", faceStatusColor = Color(0xFF00E676),
+        showFaceStatus = true, progress = 100,
+        showOrientationWarning = false, startEnabled = false
+    ).invoke()
+}
+
+// endregion
