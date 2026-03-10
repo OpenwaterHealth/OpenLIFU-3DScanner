@@ -20,12 +20,12 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
@@ -354,7 +354,7 @@ fun CreateCollectionScreen(
                                             ExposedDropdownMenuDefaults.TrailingIcon(subjectExpanded)
                                         },
                                         modifier = Modifier
-                                            .menuAnchor(MenuAnchorType.PrimaryNotEditable)
+                                            .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
                                             .fillMaxWidth()
                                     )
 
@@ -362,16 +362,21 @@ fun CreateCollectionScreen(
                                         expanded = subjectExpanded,
                                         onDismissRequest = { subjectExpanded = false }
                                     ) {
-                                        subjectsState.subjects.forEach { subject ->
-                                            DropdownMenuItem(
-                                                text = { Text(subject.localId) },
-                                                onClick = {
-                                                    selectedSubject = subject
-                                                    selectedSession = null
-                                                    subjectExpanded = false
-                                                }
-                                            )
-                                        }
+                                        subjectsState.subjects
+                                            .sortedByDescending { subject ->
+                                                subject.sessions.maxOfOrNull { it.creationDate }
+                                                    ?: subject.creationDate
+                                            }
+                                            .forEach { subject ->
+                                                DropdownMenuItem(
+                                                    text = { Text(subject.localId) },
+                                                    onClick = {
+                                                        selectedSubject = subject
+                                                        selectedSession = null
+                                                        subjectExpanded = false
+                                                    }
+                                                )
+                                            }
                                     }
                                 }
 
@@ -398,7 +403,7 @@ fun CreateCollectionScreen(
                                             )
                                         },
                                         modifier = Modifier
-                                            .menuAnchor(MenuAnchorType.PrimaryNotEditable)
+                                            .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
                                             .fillMaxWidth()
                                     )
 
@@ -407,6 +412,7 @@ fun CreateCollectionScreen(
                                         onDismissRequest = { sessionExpanded = false }
                                     ) {
                                         selectedSubject?.sessions.orEmpty()
+                                            .sortedByDescending { it.creationDate }
                                             .forEach { session ->
                                                 DropdownMenuItem(
                                                     text = { Text(session.localId) },

@@ -34,6 +34,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import health.openwater.openlifu3dscanner.BuildConfig
 import health.openwater.openlifu3dscanner.R
 import health.openwater.openlifu3dscanner.screen.collection.CollectionScreen
 import health.openwater.openlifu3dscanner.screen.create.CreateCollectionScreen
@@ -303,7 +304,7 @@ fun AppNavigation(
         // USB transfer overlay — slides up from bottom when USB is connected, hidden on TransferScreen
         val onTransferScreen = currentRoute?.destination?.route == Screen.Transfer.route
         AnimatedVisibility(
-            visible = usbConnected && !usbOverlayDismissed && !onTransferScreen,
+            visible = usbConnected && !usbOverlayDismissed && !onTransferScreen && !BuildConfig.DEBUG,
             enter = slideInVertically { it },
             exit = slideOutVertically { it }
         ) {
