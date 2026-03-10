@@ -153,6 +153,7 @@ class CollectionViewModel @Inject constructor(
             ?: emptyList()
         scanOwnershipRepository.claimUnowned(localDirNames)
         val owned = scanOwnershipRepository.getOwnedCollectionNames()
+            ?: scanOwnershipRepository.getUnownedCollectionNames(localDirNames)
         _uiState.update { it.copy(ownedLocalCollections = owned) }
     }
 

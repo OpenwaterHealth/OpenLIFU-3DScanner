@@ -18,12 +18,21 @@ class ScanOwnershipRepository @Inject constructor(
     }
 
     /**
-     * Returns the set of local collection names owned by the current user.
-     * Returns empty set if not signed in.
+     * Returns the set of local collection names owned by the current user,
+     * or null if not signed in (guests should see all local collections).
      */
-    suspend fun getOwnedCollectionNames(): Set<String> {
-        val uid = authService.getCurrentUser()?.uid ?: return emptySet()
+    suspend fun getOwnedCollectionNames(): Set<String>? {
+        val uid = authService.getCurrentUser()?.uid ?: return null
         return dao.getCollectionNamesForUser(uid).toSet()
+    }
+
+    /**
+     * Returns the subset of [candidates] that have no owner record.
+     * Used to show guests only unclaimed local collections.
+     */
+    suspend fun getUnownedCollectionNames(candidates: Collection<String>): Set<String> {
+        val alreadyOwned = dao.getAllOwnedCollectionNames().toSet()
+        return candidates.filter { it !in alreadyOwned }.toSet()
     }
 
     /**
