@@ -129,9 +129,12 @@ fun CreateCollectionScreen(
         }
 
         if (foundSubject != null) {
-            sessionMode = SessionMode.EXISTING
-            selectedSubject = foundSubject
-            selectedSession = foundSession
+            if (sessionMode == SessionMode.EXISTING) {
+                selectedSubject = foundSubject
+                selectedSession = foundSession
+            } else {
+                manualSessionName = qrPayload.sessionName
+            }
         } else {
             if (isOnline) {
                 if (sessionMode == SessionMode.EXISTING) {

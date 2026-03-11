@@ -109,10 +109,9 @@ fun CollectionScreen(
             val photocollections = uiState.photocollections
             val photoscans = uiState.photoscans
             val ownedNames = uiState.ownedLocalCollections
-            val localScans = onDeviceScans()
-                .let { scans ->
-                    if (ownedNames != null) scans.filter { it.name in ownedNames } else scans
-                }
+            val localScans = ownedNames?.let { names ->
+                onDeviceScans().filter { it.name in names }
+            } ?: emptyList()
 
             if (uiState.isLoading && photoscans == null) return@remember emptyList()
 
