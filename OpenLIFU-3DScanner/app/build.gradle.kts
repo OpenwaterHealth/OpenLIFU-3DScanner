@@ -44,7 +44,8 @@ android {
         }
         release {
             signingConfig = signingConfigs.findByName("release")
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -119,6 +120,7 @@ play {
     releaseStatus.set(ReleaseStatus.DRAFT)
     defaultToAppBundles.set(true)
     serviceAccountCredentials.set(file("play-key.json"))
+    releaseName.set("${android.defaultConfig.versionName}")
 }
 
 fun getCommitNumber(): Int {
