@@ -1,8 +1,10 @@
 package health.openwater.openlifu3dscanner.screen.home
 
 import android.Manifest
+import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,6 +18,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -24,8 +27,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.core.view.WindowCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
@@ -44,6 +49,17 @@ fun HomeScreen(
     onSettings: () -> Unit,
     onSignIn: () -> Unit,
 ) {
+    val view = LocalView.current
+    val darkTheme = isSystemInDarkTheme()
+    if (!view.isInEditMode) {
+        DisposableEffect(darkTheme) {
+            val window = (view.context as Activity).window
+            val controller = WindowCompat.getInsetsController(window, view)
+            controller.isAppearanceLightStatusBars = !darkTheme
+            onDispose { controller.isAppearanceLightStatusBars = false }
+        }
+    }
+
     var showNoCreditsWarning by remember { mutableStateOf(false) }
     var showNoInternetWarning by remember { mutableStateOf(false) }
     var showSupportDialog by remember { mutableStateOf(false) }

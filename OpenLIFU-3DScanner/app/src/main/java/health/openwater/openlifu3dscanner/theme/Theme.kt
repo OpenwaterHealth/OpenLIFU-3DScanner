@@ -16,7 +16,7 @@ private val LightColorScheme = lightColorScheme(
 
     secondary = Color(0xFFE05020),         // Red-orange from mid arcs
     onSecondary = Color.White,
-    secondaryContainer = Color(0xFFFFDBC8),
+    secondaryContainer = Color(0xFFFDC3A5),
     onSecondaryContainer = Color(0xFF321200),
 
     tertiary = Color(0xFFF07030),          // Warm orange from icon center

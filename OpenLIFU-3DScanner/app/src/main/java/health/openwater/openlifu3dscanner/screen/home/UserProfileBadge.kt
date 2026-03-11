@@ -1,15 +1,17 @@
 package health.openwater.openlifu3dscanner.screen.home
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.ui.res.painterResource
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -50,7 +52,8 @@ fun UserProfileBadge(
 
     if (uiState.user != null) {
         Surface(
-            modifier = modifier.clickable { showProfileDialog = true },
+            onClick = { showProfileDialog = true },
+            modifier = modifier,
             shape = MaterialTheme.shapes.extraLarge,
             color = MaterialTheme.colorScheme.primaryContainer,
             tonalElevation = 2.dp,
@@ -61,8 +64,7 @@ fun UserProfileBadge(
                     modifier = Modifier
                         .size(size.dp)
                         .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.secondaryContainer)
-                        .clickable { showProfileDialog = true },
+                        .background(MaterialTheme.colorScheme.secondaryContainer),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
@@ -73,20 +75,32 @@ fun UserProfileBadge(
                     )
                 }
 
-                Text(
-                    text = "\uD83C\uDFE6 ${uiState.credits ?: "N/A"} ",
-                    fontSize = 10.sp,
+                Row(
                     modifier = Modifier
                         .padding(horizontal = 8.dp)
                         .align(Alignment.CenterVertically),
-                    color = MaterialTheme.colorScheme.onSecondaryContainer,
-                    maxLines = 1
-                )
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.credit),
+                        contentDescription = null,
+                        modifier = Modifier.size(12.dp),
+                        tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                    )
+                    Text(
+                        text = uiState.credits?.toString() ?: "N/A",
+                        fontSize = 10.sp,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                        maxLines = 1,
+                    )
+                }
             }
         }
     } else {
         Surface(
-            modifier = modifier.clickable { onSignIn() },
+            onClick = { onSignIn() },
+            modifier = modifier,
             shape = MaterialTheme.shapes.extraLarge,
             color = MaterialTheme.colorScheme.primaryContainer,
             tonalElevation = 2.dp,
