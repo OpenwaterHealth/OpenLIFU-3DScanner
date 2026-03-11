@@ -178,7 +178,7 @@ class PhotoscanContentProvider : ContentProvider() {
 
     override fun openFile(uri: Uri, mode: String): ParcelFileDescriptor {
         val segments = uri.pathSegments
-        Log.w("PhotoscanProvider", "openFile uri=$uri segments=$segments size=${segments.size}")
+        Log.d("PhotoscanProvider", "openFile uri=$uri segments=$segments size=${segments.size}")
         val ctx = context ?: throw FileNotFoundException("No context")
         val modelsDir = getModelsDir(ctx)
 
