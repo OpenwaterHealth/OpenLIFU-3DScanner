@@ -53,7 +53,8 @@ internal fun WelcomeScreenContent(
             modifier = Modifier
                 .align(Alignment.Center)
                 .padding(horizontal = 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Image(
                 painter = painterResource(R.drawable.logo),

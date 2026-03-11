@@ -9,50 +9,54 @@ import androidx.compose.ui.graphics.Color
 
 /* --- Light theme --- */
 private val LightColorScheme = lightColorScheme(
-    primary = Color(0xFF497073),      // Green 800
+    primary = Color(0xFFC83010),           // Deep red from icon outer arcs
     onPrimary = Color.White,
+    primaryContainer = Color(0xFFFFDAD3),  // Pale red-pink
+    onPrimaryContainer = Color(0xFF3D0A00),
 
-    secondary = Color(0xFF66BB6A),    // Green 400
-    onSecondary = Color.Black,
+    secondary = Color(0xFFE05020),         // Red-orange from mid arcs
+    onSecondary = Color.White,
+    secondaryContainer = Color(0xFFFFDBC8),
+    onSecondaryContainer = Color(0xFF321200),
 
-    primaryContainer = Color(0xFF497073),
-    onPrimaryContainer = Color.White,
+    tertiary = Color(0xFFF07030),          // Warm orange from icon center
+    onTertiary = Color.White,
+    tertiaryContainer = Color(0xFFFFDCBE),
+    onTertiaryContainer = Color(0xFF2C1300),
 
-    secondaryContainer = Color(0xFF2C4346),
-    onSecondaryContainer = Color.White,
+    background = Color(0xFFFFFBFF),
+    onBackground = Color(0xFF201A19),
 
-    tertiary = Color(0xFF26A69A),     // Teal-ish accent
-    onTertiary = Color.Black,
-
-    background = Color(0xFFFFFFFF),  // White
-    onBackground = Color(0xFF1C1B1F),
-
-    surface = Color(0xFFFFFFFF),
-    onSurface = Color(0xFF1C1B1F)
+    surface = Color(0xFFFFFBFF),
+    onSurface = Color(0xFF201A19),
+    surfaceVariant = Color(0xFFF5DDD8),
+    onSurfaceVariant = Color(0xFF534340),
 )
 
 /* --- Dark theme --- */
 private val DarkColorScheme = darkColorScheme(
-    primary = Color(0xFF62979A),      // Green 300
+    primary = Color(0xFFFF6040),           // Vivid red-orange, high chroma
     onPrimary = Color.White,
+    primaryContainer = Color(0xFF7A1C08),
+    onPrimaryContainer = Color(0xFFFFDAD3),
 
-    secondary = Color(0xFFA5D6A7),    // Green 200
-    onSecondary = Color(0xFF003300),
+    secondary = Color(0xFFFF8050),         // Vivid orange
+    onSecondary = Color(0xFF2A0D00),
+    secondaryContainer = Color(0xFF5C2A00),
+    onSecondaryContainer = Color(0xFFFFDBC8),
 
-    primaryContainer = Color(0xFF497073),
-    onPrimaryContainer = Color.White,
+    tertiary = Color(0xFFFFA060),          // Bright amber
+    onTertiary = Color(0xFF301800),
+    tertiaryContainer = Color(0xFF4E2600),
+    onTertiaryContainer = Color(0xFFFFDCBE),
 
-    secondaryContainer = Color(0xFF2C4346),
-    onSecondaryContainer = Color.White,
+    background = Color(0xFF120806),        // Near-black with warm tint
+    onBackground = Color(0xFFF2E0DC),
 
-    tertiary = Color(0xFF4DB6AC),
-    onTertiary = Color(0xFF00201A),
-
-    background = Color(0xFF000000),
-    onBackground = Color(0xFFE6E1E5),
-
-    surface = Color(0xFF121212),
-    onSurface = Color(0xFFE6E1E5)
+    surface = Color(0xFF120806),
+    onSurface = Color(0xFFF2E0DC),
+    surfaceVariant = Color(0xFF3A2420),
+    onSurfaceVariant = Color(0xFFD0B8B3),
 )
 
 @Composable
@@ -68,7 +72,7 @@ fun HeadScannerTheme(
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = MaterialTheme.typography,
+        typography = AppTypography,
         content = content
     )
 }

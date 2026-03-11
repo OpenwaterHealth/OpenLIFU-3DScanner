@@ -7,9 +7,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.BatteryManager
 import android.os.Build
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,6 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Usb
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -35,7 +34,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -92,6 +90,7 @@ fun TransferRoot(
                 color = MaterialTheme.colorScheme.onBackground,
                 fontSize = 26.sp,
                 textAlign = TextAlign.Center,
+                fontWeight = FontWeight.Bold,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 24.dp)
@@ -109,6 +108,7 @@ fun TransferRoot(
             color = MaterialTheme.colorScheme.onBackground,
             fontSize = 14.sp,
             textAlign = TextAlign.Center,
+            minLines = 2,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp)
@@ -117,18 +117,15 @@ fun TransferRoot(
         Spacer(modifier = Modifier.height(50.dp))
 
         // USB Icon
-        Box(
-            modifier = Modifier.size(width = 150.dp, height = 250.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Image(
-                painter = painterResource(id = R.drawable.usb_connected_image),
-                contentDescription = stringResource(if (usbConnected) R.string.usb_connected else R.string.usb_disconnected),
-                modifier = Modifier
-                    .fillMaxSize()
-                    .alpha(if (usbConnected) 1f else 0.1f)
-            )
-        }
+        Icon(
+            imageVector = Icons.Default.Usb,
+            contentDescription = stringResource(if (usbConnected) R.string.usb_connected else R.string.usb_disconnected),
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(250.dp)
+                .alpha(if (usbConnected) 1f else 0.2f)
+        )
 
         Spacer(modifier = Modifier.height(32.dp))
 

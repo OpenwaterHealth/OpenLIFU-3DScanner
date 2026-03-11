@@ -38,6 +38,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import androidx.core.net.toUri
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import health.openwater.openlifu3dscanner.BuildConfig
@@ -81,6 +82,7 @@ fun SettingsScreen(
                 title = {
                     Text(
                         text = stringResource(R.string.support_and_legal),
+                        fontWeight = FontWeight.Bold,
                         modifier = Modifier.clickable {
                             titleTapCount++
                             if (!scanSettingsUnlocked && titleTapCount >= 7) {
@@ -128,7 +130,7 @@ fun SettingsScreen(
                     if (scanSettingsUnlocked) {
                         preferenceCategory(
                             key = "scan_settings",
-                            title = { Text(stringResource(R.string.scan_settings)) }
+                            title = { Text(stringResource(R.string.scan_settings), fontWeight = FontWeight.Bold) }
                         )
 
                         // Oval Size (Online) Preference
@@ -136,7 +138,7 @@ fun SettingsScreen(
                             key = Prefs.OVAL_SIZE_ONLINE_KEY,
                             defaultValue = Prefs.OVAL_SIZE_ONLINE_DEFAULT,
                             values = Prefs.OVAL_SIZE_MAP.keys.toList(),
-                            title = { Text(stringResource(R.string.oval_size_online)) },
+                            title = { Text(stringResource(R.string.oval_size_online), fontWeight = FontWeight.Bold) },
                             valueToText = {
                                 val resId = Prefs.OVAL_SIZE_MAP[it]
                                 AnnotatedString(if (resId != null) context.getString(resId) else it.toString())
@@ -152,7 +154,7 @@ fun SettingsScreen(
                             key = Prefs.OVAL_SIZE_OFFLINE_KEY,
                             defaultValue = Prefs.OVAL_SIZE_OFFLINE_DEFAULT,
                             values = Prefs.OVAL_SIZE_MAP.keys.toList(),
-                            title = { Text(stringResource(R.string.oval_size_offline)) },
+                            title = { Text(stringResource(R.string.oval_size_offline), fontWeight = FontWeight.Bold) },
                             valueToText = {
                                 val resId = Prefs.OVAL_SIZE_MAP[it]
                                 AnnotatedString(if (resId != null) context.getString(resId) else it.toString())
@@ -168,7 +170,7 @@ fun SettingsScreen(
                             key = Prefs.IMAGE_SIZE_KEY,
                             defaultValue = Prefs.IMAGE_SIZE_DEFAULT,
                             values = Prefs.IMAGE_SIZE_MAP.keys.toList(),
-                            title = { Text(stringResource(R.string.image_size)) },
+                            title = { Text(stringResource(R.string.image_size), fontWeight = FontWeight.Bold) },
                             valueToText = {
                                 val resId = Prefs.IMAGE_SIZE_MAP[it]
                                 AnnotatedString(if (resId != null) context.getString(resId) else it.toString())
@@ -184,7 +186,7 @@ fun SettingsScreen(
                             key = Prefs.PHOTO_COUNT_KEY,
                             defaultValue = Prefs.PHOTO_COUNT_DEFAULT,
                             values = Prefs.PHOTO_COUNT_MAP.keys.toList(),
-                            title = { Text(stringResource(R.string.photo_count_setting)) },
+                            title = { Text(stringResource(R.string.photo_count_setting), fontWeight = FontWeight.Bold) },
                             valueToText = {
                                 val resId = Prefs.PHOTO_COUNT_MAP[it]
                                 AnnotatedString(if (resId != null) context.getString(resId) else it.toString())
@@ -200,7 +202,7 @@ fun SettingsScreen(
                             key = Prefs.CAPTURE_MODE_ONLINE_KEY,
                             defaultValue = Prefs.CAPTURE_MODE_ONLINE_DEFAULT,
                             values = Prefs.CAPTURE_MODE_MAP.keys.toList(),
-                            title = { Text(stringResource(R.string.capture_mode_online)) },
+                            title = { Text(stringResource(R.string.capture_mode_online), fontWeight = FontWeight.Bold) },
                             valueToText = {
                                 val resId = Prefs.CAPTURE_MODE_MAP[it]
                                 AnnotatedString(if (resId != null) context.getString(resId) else it.toString())
@@ -216,7 +218,7 @@ fun SettingsScreen(
                             key = Prefs.CAPTURE_MODE_OFFLINE_KEY,
                             defaultValue = Prefs.CAPTURE_MODE_OFFLINE_DEFAULT,
                             values = Prefs.CAPTURE_MODE_MAP.keys.toList(),
-                            title = { Text(stringResource(R.string.capture_mode_offline)) },
+                            title = { Text(stringResource(R.string.capture_mode_offline), fontWeight = FontWeight.Bold) },
                             valueToText = {
                                 val resId = Prefs.CAPTURE_MODE_MAP[it]
                                 AnnotatedString(if (resId != null) context.getString(resId) else it.toString())
@@ -230,14 +232,14 @@ fun SettingsScreen(
                         // Support & Legal Category
                         preferenceCategory(
                             key = "support_legal",
-                            title = { Text(stringResource(R.string.support_and_legal)) }
+                            title = { Text(stringResource(R.string.support_and_legal), fontWeight = FontWeight.Bold) }
                         )
                     }
 
                     // Video Tutorial
                     preference(
                         key = "video_tutorial",
-                        title = { Text(stringResource(R.string.video_tutorial)) },
+                        title = { Text(stringResource(R.string.video_tutorial), fontWeight = FontWeight.Bold) },
                         summary = { Text(stringResource(R.string.video_tutorial_summary)) },
                         onClick = {
                             val intent = Intent(
@@ -251,7 +253,7 @@ fun SettingsScreen(
                     // Submit Feedback
                     preference(
                         key = "submit_feedback",
-                        title = { Text(stringResource(R.string.submit_feedback)) },
+                        title = { Text(stringResource(R.string.submit_feedback), fontWeight = FontWeight.Bold) },
                         summary = { Text(stringResource(R.string.submit_feedback_summary)) },
                         onClick = {
                             val deviceInfo = buildString {
@@ -279,7 +281,7 @@ fun SettingsScreen(
                     // Acknowledge Notice
                     preference(
                         key = "acknowledge_notice",
-                        title = { Text(stringResource(R.string.acknowledge_notice)) },
+                        title = { Text(stringResource(R.string.acknowledge_notice), fontWeight = FontWeight.Bold) },
                         summary = { Text(stringResource(R.string.acknowledge_notice_summary)) },
                         onClick = { showNoticeDialog = true }
                     )
