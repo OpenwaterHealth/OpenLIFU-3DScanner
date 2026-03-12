@@ -1,9 +1,14 @@
 package health.openwater.openlifu3dscanner.network.api
 
+import android.content.Context
 import android.util.Log
+import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
+import dagger.hilt.android.qualifiers.ApplicationContext
+import health.openwater.openlifu3dscanner.preferences.ApiEnvironment
+import health.openwater.openlifu3dscanner.preferences.Prefs
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.tasks.await
@@ -13,7 +18,9 @@ import javax.inject.Singleton
 import kotlin.coroutines.resume
 
 @Singleton
-class AuthService @Inject constructor() {
+class AuthService @Inject constructor(
+    @param:ApplicationContext private val context: Context
+) {
     enum class AuthResponse {
         SUCCESS,
         INVALID_CREDENTIALS,
@@ -21,7 +28,10 @@ class AuthService @Inject constructor() {
         UNKNOWN
     }
 
-    private val auth = FirebaseAuth.getInstance()
+    private val auth get() = when (Prefs.getApiEnv(context)) {
+        ApiEnvironment.DEV -> FirebaseAuth.getInstance(FirebaseApp.getInstance("dev"))
+        else -> FirebaseAuth.getInstance()
+    }
 
     @Volatile
     private var idToken: String? = null

@@ -8,7 +8,6 @@ plugins {
 
     alias(libs.plugins.google.devtools.ksp)
     alias(libs.plugins.dagger.hilt)
-    alias(libs.plugins.google.services)
     alias(libs.plugins.grgit)
     alias(libs.plugins.firebase.crashlytics)
     id("com.github.triplet.play")
@@ -63,6 +62,17 @@ android {
     }
 }
 
+
+androidComponents {
+    finalizeDsl {
+        it.buildTypes.configureEach {
+            extensions.findByName("firebaseCrashlytics")?.apply {
+                javaClass.methods.find { it.name == "setMappingFileUploadEnabled" }
+                    ?.invoke(this, false)
+            }
+        }
+    }
+}
 
 dependencies {
     implementation(libs.androidx.appcompat)

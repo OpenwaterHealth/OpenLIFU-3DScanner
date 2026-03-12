@@ -142,7 +142,7 @@ object ApiModule {
 
     @Provides
     @Singleton
-    fun provideAuthService(): AuthService = AuthService()
+    fun provideAuthService(@ApplicationContext context: Context): AuthService = AuthService(context)
 
     @Provides
     @Singleton
