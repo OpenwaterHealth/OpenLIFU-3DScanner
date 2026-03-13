@@ -69,7 +69,7 @@ fun HomeScreen(
     val hasCredits = (uiState.credits ?: 0) > 0
 
     var showNotice by remember { mutableStateOf(userViewModel.shouldShowNotice) }
-    LaunchedEffect(uiState.user) {
+    LaunchedEffect(uiState.uid) {
         if (userViewModel.shouldShowNotice) {
             showNotice = true
         }
@@ -89,9 +89,9 @@ fun HomeScreen(
             onRequestPermissions()
             return
         }
-        if (uiState.user != null && uiState.credits == null) {
+        if (uiState.uid != null && uiState.credits == null) {
             showNoInternetWarning = true
-        } else if (uiState.user != null && !hasCredits) {
+        } else if (uiState.uid != null && !hasCredits) {
             showNoCreditsWarning = true
         } else {
             onCreateCollection()

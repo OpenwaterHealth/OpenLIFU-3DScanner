@@ -5,5 +5,6 @@ plugins {
     alias(libs.plugins.dagger.hilt) apply false
     alias(libs.plugins.google.devtools.ksp) apply false
     alias(libs.plugins.firebase.crashlytics) apply false
+    alias(libs.plugins.google.services) apply false
     id("com.github.triplet.play") version "4.0.0" apply false
 }

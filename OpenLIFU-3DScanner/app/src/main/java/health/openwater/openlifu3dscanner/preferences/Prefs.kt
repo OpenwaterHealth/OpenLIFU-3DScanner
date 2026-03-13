@@ -17,6 +17,10 @@ object Prefs {
     const val AUTO_UPLOAD_KEY = "pref_auto_upload"
     const val NOTICE_ACKNOWLEDGED_UID_KEY = "pref_notice_acknowledged_uid"
     const val API_ENV_KEY = "pref_api_env"
+    const val ACCESS_TOKEN_KEY = "pref_access_token"
+    const val REFRESH_TOKEN_KEY = "pref_refresh_token"
+    const val TOKEN_EXPIRATION_MS_KEY = "pref_token_expiration_ms"
+    const val USER_UID_KEY = "pref_user_uid"
 
     // Default values
     const val IMAGE_SIZE_DEFAULT = 1024
@@ -113,4 +117,40 @@ object Prefs {
     }
 
     fun getApiBaseUrl(context: Context): String = getApiEnv(context).baseUrl
+
+    fun getAccessToken(context: Context): String? =
+        getInstance(context).getString(ACCESS_TOKEN_KEY, null)
+
+    fun getRefreshToken(context: Context): String? =
+        getInstance(context).getString(REFRESH_TOKEN_KEY, null)
+
+    fun getTokenExpirationMs(context: Context): Long =
+        getInstance(context).getLong(TOKEN_EXPIRATION_MS_KEY, 0L)
+
+    fun getUserUid(context: Context): String? =
+        getInstance(context).getString(USER_UID_KEY, null)
+
+    fun saveAuthTokens(
+        context: Context,
+        accessToken: String,
+        refreshToken: String,
+        expirationMs: Long,
+        uid: String
+    ) {
+        getInstance(context).edit(commit = true) {
+            putString(ACCESS_TOKEN_KEY, accessToken)
+            putString(REFRESH_TOKEN_KEY, refreshToken)
+            putLong(TOKEN_EXPIRATION_MS_KEY, expirationMs)
+            putString(USER_UID_KEY, uid)
+        }
+    }
+
+    fun clearAuthTokens(context: Context) {
+        getInstance(context).edit(commit = true) {
+            remove(ACCESS_TOKEN_KEY)
+            remove(REFRESH_TOKEN_KEY)
+            remove(TOKEN_EXPIRATION_MS_KEY)
+            remove(USER_UID_KEY)
+        }
+    }
 }

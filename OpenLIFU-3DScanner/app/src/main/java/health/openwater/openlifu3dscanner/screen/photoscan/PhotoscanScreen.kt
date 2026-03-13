@@ -91,7 +91,7 @@ fun PhotoscanScreen(
 
     val userState by userViewModel.uiState.collectAsStateWithLifecycle()
     val hasCredits = (userState.credits ?: 0) > 0
-    val isLoggedIn = userState.user != null
+    val isLoggedIn = userState.uid != null
     var showNoCreditsWarning by remember { mutableStateOf(false) }
 
     // Loading dialog while deleting

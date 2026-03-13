@@ -2,24 +2,20 @@ package health.openwater.openlifu3dscanner.network.api
 
 import android.content.Context
 import android.util.Log
-import com.google.firebase.FirebaseApp
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
-import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import dagger.hilt.android.qualifiers.ApplicationContext
-import health.openwater.openlifu3dscanner.preferences.ApiEnvironment
+import health.openwater.openlifu3dscanner.core.AuthUser
+import health.openwater.openlifu3dscanner.network.dto.AuthLoginRequest
+import health.openwater.openlifu3dscanner.network.dto.AuthRefreshRequest
 import health.openwater.openlifu3dscanner.preferences.Prefs
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlinx.coroutines.tasks.await
-import java.util.Date
+import retrofit2.HttpException
+import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlin.coroutines.resume
 
 @Singleton
 class AuthService @Inject constructor(
-    @param:ApplicationContext private val context: Context
+    @param:ApplicationContext private val context: Context,
+    private val authApi: AuthApi
 ) {
     enum class AuthResponse {
         SUCCESS,
@@ -28,137 +24,114 @@ class AuthService @Inject constructor(
         UNKNOWN
     }
 
-    private val auth get() = when (Prefs.getApiEnv(context)) {
-        ApiEnvironment.DEV -> FirebaseAuth.getInstance(FirebaseApp.getInstance("dev"))
-        else -> FirebaseAuth.getInstance()
-    }
-
     @Volatile
     private var idToken: String? = null
 
     @Volatile
-    private var tokenExpirationTimestamp: Long = 0
+    private var tokenExpirationMs: Long = 0
 
     @Volatile
     private var isInitialized = false
 
-    init {
-        // Listen for auth state changes
-        auth.addIdTokenListener(FirebaseAuth.IdTokenListener { firebaseAuth ->
-            val user = firebaseAuth.currentUser
-            user?.getIdToken(false)?.addOnSuccessListener { result ->
-                idToken = result.token
-                tokenExpirationTimestamp = result.expirationTimestamp
-                Log.d(TAG, "Token updated via listener")
-            }
-        })
-    }
-
     /**
-     * Initialize the auth service by fetching the current token.
-     * Call this early in app startup (e.g., Application.onCreate or splash screen).
+     * Load stored tokens into memory. Call early at app startup.
      */
     suspend fun initialize() {
         if (isInitialized) return
-
-        auth.currentUser?.let { user ->
-            try {
-                val result = user.getIdToken(false).await()
-                idToken = result.token
-                tokenExpirationTimestamp = result.expirationTimestamp
-                isInitialized = true
-                Log.d(TAG, "AuthService initialized with token")
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to initialize token", e)
-            }
-        }
+        val accessToken = Prefs.getAccessToken(context) ?: return
+        idToken = accessToken
+        tokenExpirationMs = Prefs.getTokenExpirationMs(context)
+        isInitialized = true
+        Log.d(TAG, "AuthService initialized from stored tokens")
     }
 
     suspend fun signIn(email: String, password: String): AuthResponse {
         return try {
-            val result = auth.signInWithEmailAndPassword(email, password).await()
-            if (result.user != null) {
-                // Immediately get fresh token after sign in
-                getToken()
-                isInitialized = true
-                AuthResponse.SUCCESS
-            } else {
-                AuthResponse.UNKNOWN
+            val response = authApi.login(AuthLoginRequest(email, password)).data
+            val expirationMs = response.expirationDate?.time
+                ?: (System.currentTimeMillis() + DEFAULT_TOKEN_LIFETIME_MS)
+            saveTokens(response.accessToken, response.refreshToken, expirationMs, response.uid)
+            isInitialized = true
+            AuthResponse.SUCCESS
+        } catch (e: HttpException) {
+            Log.w(TAG, "Sign-in HTTP error: ${e.code()}")
+            when (e.code()) {
+                400, 401, 403 -> AuthResponse.INVALID_CREDENTIALS
+                else -> AuthResponse.NETWORK_ERROR
             }
-        } catch (_: FirebaseAuthInvalidCredentialsException) {
-            AuthResponse.INVALID_CREDENTIALS
-        } catch (_: Exception) {
+        } catch (e: IOException) {
+            Log.w(TAG, "Sign-in network error", e)
             AuthResponse.NETWORK_ERROR
+        } catch (e: Exception) {
+            Log.e(TAG, "Sign-in unexpected error", e)
+            AuthResponse.UNKNOWN
         }
     }
 
     fun signOut() {
-        auth.signOut()
         idToken = null
-        tokenExpirationTimestamp = 0
+        tokenExpirationMs = 0
         isInitialized = false
+        Prefs.clearAuthTokens(context)
     }
 
     suspend fun signOutAndAwait() {
-        suspendCancellableCoroutine { continuation ->
-            var listener: FirebaseAuth.AuthStateListener? = null
-            listener = FirebaseAuth.AuthStateListener { firebaseAuth ->
-                if (firebaseAuth.currentUser == null && continuation.isActive) {
-                    auth.removeAuthStateListener(listener!!)
-                    continuation.resume(Unit)
-                }
-            }
-            auth.addAuthStateListener(listener)
-            continuation.invokeOnCancellation { auth.removeAuthStateListener(listener) }
-            auth.signOut()
-        }
-        // Auth state changed in memory; give Firebase time to flush its SharedPreferences to disk
-        delay(300)
-        idToken = null
-        tokenExpirationTimestamp = 0
-        isInitialized = false
+        signOut()
     }
 
-    fun isSignedIn() = auth.currentUser != null
+    fun isSignedIn() = Prefs.getRefreshToken(context) != null
 
-    fun getCurrentUser() = auth.currentUser
+    fun getCurrentUser(): AuthUser? {
+        val uid = Prefs.getUserUid(context) ?: return null
+        if (!isSignedIn()) return null
+        return AuthUser(uid)
+    }
 
     suspend fun getToken(): String? {
-        // Ensure initialization happened
-        if (!isInitialized) {
-            initialize()
-        }
+        if (!isInitialized) initialize()
 
-        val now = Date().time / 1000
-        if (now > tokenExpirationTimestamp || idToken == null) {
+        val now = System.currentTimeMillis()
+        if (idToken == null || now > tokenExpirationMs - TOKEN_REFRESH_BUFFER_MS) {
+            val refreshToken = Prefs.getRefreshToken(context) ?: run {
+                Log.w(TAG, "No refresh token available")
+                return null
+            }
             try {
-                val response = auth.currentUser?.getIdToken(true)?.await()
-                tokenExpirationTimestamp = response?.expirationTimestamp ?: 0L
-                idToken = response?.token
-                Log.d(TAG, "Token refreshed, expires in ${tokenExpirationTimestamp - now} seconds")
-            } catch (e: FirebaseAuthInvalidUserException) {
-                Log.w(TAG, e.message ?: "Invalid user")
-                signOut()
-                idToken = null
-                tokenExpirationTimestamp = 0
+                val response = authApi.refreshToken(AuthRefreshRequest(refreshToken)).data
+                val expirationMs = response.expirationDate?.time
+                    ?: (now + DEFAULT_TOKEN_LIFETIME_MS)
+                saveTokens(response.accessToken, response.refreshToken, expirationMs, response.uid)
+                Log.d(TAG, "Token refreshed successfully")
+            } catch (e: HttpException) {
+                Log.w(TAG, "Token refresh HTTP error: ${e.code()}", e)
+                if (e.code() == 400 || e.code() == 401) {
+                    // Refresh token is invalid/expired — sign out
+                    signOut()
+                }
+                return null
             } catch (e: Exception) {
-                Log.e(TAG, "Error refreshing token", e)
-                idToken = null
+                Log.e(TAG, "Token refresh failed", e)
+                return null
             }
         }
         return idToken
     }
 
     /**
-     * Returns the cached token synchronously without blocking.
+     * Returns the cached access token synchronously without blocking.
      * Used by OkHttp interceptor to avoid deadlocks.
-     * Token is kept fresh by:
-     * - IdTokenListener for auth state changes
-     * - initialize() or getToken() calls throughout the app
      */
     fun getTokenSync(): String? = idToken
 
+    private fun saveTokens(accessToken: String, refreshToken: String, expirationMs: Long, uid: String) {
+        idToken = accessToken
+        tokenExpirationMs = expirationMs
+        Prefs.saveAuthTokens(context, accessToken, refreshToken, expirationMs, uid)
+    }
+
     companion object {
         private val TAG = AuthService::class.java.simpleName
+        private const val DEFAULT_TOKEN_LIFETIME_MS = 3_600_000L  // 1 hour
+        private const val TOKEN_REFRESH_BUFFER_MS = 5 * 60 * 1000L  // refresh 5 min before expiry
     }
 }

@@ -14,6 +14,7 @@ import health.openwater.openlifu3dscanner.preferences.Prefs
 import dagger.hilt.components.SingletonComponent
 import health.openwater.openlifu3dscanner.core.ConnectivityObserver
 import health.openwater.openlifu3dscanner.network.adapter.DateTypeAdapter
+import health.openwater.openlifu3dscanner.network.api.AuthApi
 import health.openwater.openlifu3dscanner.network.api.AuthService
 import health.openwater.openlifu3dscanner.network.api.PhotocollectionService
 import health.openwater.openlifu3dscanner.network.api.PhotoscanService
@@ -38,6 +39,10 @@ import javax.inject.Singleton
 @Qualifier
 @Retention(AnnotationRetention.BINARY)
 annotation class WebSocketScope
+
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class NoAuth
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -70,7 +75,7 @@ object ApiModule {
             // Don't retry if we already attempted a refresh for this request
             if (response.request.header("X-Auth-Retry") != null) return@Authenticator null
 
-            // Try to force-refresh the Firebase token and retry the request
+            // Try to refresh the token and retry the request
             val freshToken = runBlocking { authService.getToken() }
             if (freshToken != null) {
                 response.request.newBuilder()
@@ -108,6 +113,31 @@ object ApiModule {
         .addInterceptor(loggingInterceptor)
         .build()
 
+    /** Separate OkHttpClient for auth endpoints — no auth header, no authenticator. */
+    @Provides
+    @Singleton
+    @NoAuth
+    fun provideNoAuthOkHttpClient(loggingInterceptor: HttpLoggingInterceptor): OkHttpClient =
+        OkHttpClient.Builder()
+            .connectTimeout(CONNECT_TIMEOUT, TimeUnit.SECONDS)
+            .readTimeout(READ_TIMEOUT, TimeUnit.SECONDS)
+            .writeTimeout(WRITE_TIMEOUT, TimeUnit.SECONDS)
+            .addInterceptor(loggingInterceptor)
+            .build()
+
+    @Provides
+    @Singleton
+    @NoAuth
+    fun provideNoAuthRetrofit(
+        @ApplicationContext context: Context,
+        @NoAuth client: OkHttpClient,
+        gson: Gson
+    ): Retrofit = Retrofit.Builder()
+        .baseUrl(Prefs.getApiBaseUrl(context))
+        .client(client)
+        .addConverterFactory(GsonConverterFactory.create(gson))
+        .build()
+
     @Provides
     @Singleton
     fun provideRetrofit(
@@ -119,6 +149,16 @@ object ApiModule {
         .client(client)
         .addConverterFactory(GsonConverterFactory.create(gson))
         .build()
+
+    @Provides
+    @Singleton
+    fun provideAuthApi(@NoAuth retrofit: Retrofit): AuthApi =
+        retrofit.create(AuthApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideAuthService(@ApplicationContext context: Context, authApi: AuthApi): AuthService =
+        AuthService(context, authApi)
 
     @Provides
     @Singleton
@@ -139,10 +179,6 @@ object ApiModule {
     @Singleton
     fun provideSubjectService(retrofit: Retrofit): SubjectService =
         retrofit.create(SubjectService::class.java)
-
-    @Provides
-    @Singleton
-    fun provideAuthService(@ApplicationContext context: Context): AuthService = AuthService(context)
 
     @Provides
     @Singleton

@@ -40,17 +40,16 @@ fun UserProfileBadge(
     var showProfileDialog by remember { mutableStateOf(false) }
 
     // Hide badge while loading or while credits are being fetched for logged-in user
-    if (uiState.isLoading || (uiState.user != null && uiState.credits == null)) return
+    if (uiState.isLoading || (uiState.uid != null && uiState.credits == null)) return
 
-    val initial = uiState.user
-        ?.displayName
+    val initial = uiState.displayName
         ?.trim()
         ?.takeIf { it.isNotEmpty() }
         ?.substring(0, 1)
         ?.uppercase(Locale.getDefault())
         ?: "?"
 
-    if (uiState.user != null) {
+    if (uiState.uid != null) {
         Surface(
             onClick = { showProfileDialog = true },
             modifier = modifier,
@@ -113,7 +112,7 @@ fun UserProfileBadge(
         }
     }
 
-    if (showProfileDialog && uiState.user != null) {
+    if (showProfileDialog && uiState.uid != null) {
         UserProfileDialog(
             onDismiss = { showProfileDialog = false },
             onSignOut = { userViewModel.signOut() }

@@ -30,7 +30,7 @@ fun ProcessingScreen(
     val uiState by userViewModel.uiState.collectAsStateWithLifecycle()
     val isConnected by userViewModel.isConnected.collectAsStateWithLifecycle()
     val hasCredits = (uiState.credits ?: 0) > 0
-    val canUpload = uiState.user != null && hasCredits && isConnected
+    val canUpload = uiState.uid != null && hasCredits && isConnected
 
     var showCancelDialog by remember { mutableStateOf(false) }
 

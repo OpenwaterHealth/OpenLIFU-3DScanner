@@ -31,13 +31,13 @@ fun UserProfileDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = uiState.user?.displayName ?: "",
+                text = uiState.displayName ?: "",
                 style = MaterialTheme.typography.titleLarge
             )
         },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(text = uiState.user?.email ?: "")
+                Text(text = uiState.email ?: "")
                 uiState.institutionName?.let { Text(text = stringResource(R.string.institution_s, it)) }
                 Text(text = "Credits: ${uiState.credits}")
             }

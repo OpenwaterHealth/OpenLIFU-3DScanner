@@ -34,7 +34,7 @@ fun WelcomeScreen(
     val uiState by userViewModel.uiState.collectAsStateWithLifecycle()
 
     WelcomeScreenContent(
-        displayName = uiState.user?.displayName ?: "Guest",
+        displayName = uiState.displayName ?: "Guest",
         onStartScan = onStartScan,
         onViewCollection = onViewCollection,
     )

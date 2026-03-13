@@ -75,7 +75,7 @@ fun CollectionScreen(
 
     val userUiState by userViewModel.uiState.collectAsStateWithLifecycle()
     val isConnected by userViewModel.isConnected.collectAsStateWithLifecycle()
-    val isLoggedIn = userUiState.user != null
+    val isLoggedIn = userUiState.uid != null
     val isOnline = isLoggedIn && isConnected
 
     // Multi-select state

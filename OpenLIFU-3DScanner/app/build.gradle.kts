@@ -1,5 +1,4 @@
 import com.github.triplet.gradle.androidpublisher.ReleaseStatus
-import org.gradle.kotlin.dsl.implementation
 import org.ajoberstar.grgit.Grgit
 
 plugins {
@@ -10,6 +9,7 @@ plugins {
     alias(libs.plugins.dagger.hilt)
     alias(libs.plugins.grgit)
     alias(libs.plugins.firebase.crashlytics)
+    alias(libs.plugins.google.services)
     id("com.github.triplet.play")
 }
 
@@ -62,18 +62,6 @@ android {
     }
 }
 
-
-androidComponents {
-    finalizeDsl {
-        it.buildTypes.configureEach {
-            extensions.findByName("firebaseCrashlytics")?.apply {
-                javaClass.methods.find { it.name == "setMappingFileUploadEnabled" }
-                    ?.invoke(this, false)
-            }
-        }
-    }
-}
-
 dependencies {
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.core.ktx)
@@ -98,7 +86,6 @@ dependencies {
     implementation(libs.logging.interceptor)
 
     implementation(platform(libs.firebase.bom))
-    implementation(libs.firebase.auth)
     implementation(libs.firebase.crashlytics)
     implementation(libs.firebase.analytics)
     implementation(libs.socket.io.client)

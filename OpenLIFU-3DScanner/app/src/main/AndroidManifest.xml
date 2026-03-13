@@ -56,11 +56,6 @@
             android:foregroundServiceType="dataSync" />
 
         <provider
-            android:name="com.google.firebase.provider.FirebaseInitProvider"
-            android:authorities="${applicationId}.firebaseinitprovider"
-            tools:node="remove" />
-
-        <provider
             android:name=".provider.PhotoscanContentProvider"
             android:authorities="health.openwater.openlifu3dscanner.photoscans"
             android:exported="true"

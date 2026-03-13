@@ -83,7 +83,7 @@ fun ScanControls(
     val uiState by userViewModel.uiState.collectAsStateWithLifecycle()
     val isConnected by userViewModel.isConnected.collectAsStateWithLifecycle()
     val hasCredits = (uiState.credits ?: 0) > 0
-    val isLoggedIn = uiState.user != null
+    val isLoggedIn = uiState.uid != null
     val isOnline = isLoggedIn && hasCredits && isConnected
 
     val ovalSizePref = remember { Prefs.getOvalSize(context, isOnline) }

@@ -46,6 +46,9 @@ class UserRepository @Inject constructor(
 
     private val _institutionName = MutableStateFlow<String?>(null)
 
+    private val _displayName = MutableStateFlow<String?>(null)
+    private val _email = MutableStateFlow<String?>(null)
+
     val isConnected: StateFlow<Boolean> = connectivityObserver.isConnected
 
     private val _error = MutableStateFlow<String?>(null)
@@ -92,10 +95,20 @@ class UserRepository @Inject constructor(
         _userState,
         _credits,
         _institutionName,
+        _displayName,
+        _email,
         _error
-    ) { userState, credits, institutionName, error ->
+    ) { values ->
+        val userState = values[0] as UserState
+        val credits = values[1] as Int?
+        val institutionName = values[2] as String?
+        val displayName = values[3] as String?
+        val email = values[4] as String?
+        val error = values[5] as String?
         UserInfoState(
-            user = (userState as? UserState.Authenticated)?.user,
+            uid = (userState as? UserState.Authenticated)?.uid,
+            displayName = displayName,
+            email = email,
             credits = credits,
             institutionName = institutionName,
             isLoading = userState is UserState.Loading,
@@ -123,7 +136,7 @@ class UserRepository @Inject constructor(
         authService.initialize()
         val currentUser = authService.getCurrentUser()
         _userState.value = if (currentUser != null) {
-            UserState.Authenticated(currentUser)
+            UserState.Authenticated(currentUser.uid)
         } else {
             UserState.Unauthenticated
         }
@@ -137,7 +150,7 @@ class UserRepository @Inject constructor(
         _error.value = null
         val response = authService.signIn(email, password)
         if (response == AuthService.AuthResponse.SUCCESS) {
-            _userState.value = UserState.Authenticated(authService.getCurrentUser()!!)
+            _userState.value = UserState.Authenticated(authService.getCurrentUser()!!.uid)
             noticeDismissedThisSession = false
             refreshCredits()
         } else {
@@ -163,13 +176,16 @@ class UserRepository @Inject constructor(
     suspend fun refreshCredits() {
         val currentUser = authService.getCurrentUser()
         if (currentUser != null) {
-            _userState.value = UserState.Authenticated(currentUser)
+            _userState.value = UserState.Authenticated(currentUser.uid)
         }
 
         when (val result = getUser()) {
             is Result.Success -> {
-                _credits.value = result.body.data?.user?.credit
-                _institutionName.value = result.body.data?.user?.institutionName
+                val userInfo = result.body.data?.user
+                _credits.value = userInfo?.credit
+                _institutionName.value = userInfo?.institutionName
+                _displayName.value = userInfo?.displayName
+                _email.value = userInfo?.email
                 _error.value = null
             }
             is Result.NetworkError -> _error.value = result.message ?: "Network error"
@@ -184,6 +200,8 @@ class UserRepository @Inject constructor(
         _userState.value = UserState.Unauthenticated
         _credits.value = null
         _institutionName.value = null
+        _displayName.value = null
+        _email.value = null
         _error.value = null
     }
 
@@ -192,6 +210,8 @@ class UserRepository @Inject constructor(
         _userState.value = UserState.Unauthenticated
         _credits.value = null
         _institutionName.value = null
+        _displayName.value = null
+        _email.value = null
         _error.value = null
     }
 

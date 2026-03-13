@@ -86,7 +86,7 @@ fun CreateCollectionScreen(
     val subjectsState by homeViewModel.subjectsState.collectAsStateWithLifecycle()
     val uiState by userViewModel.uiState.collectAsStateWithLifecycle()
 
-    val isLoggedIn = uiState.user != null
+    val isLoggedIn = uiState.uid != null
     val isConnected by userViewModel.isConnected.collectAsStateWithLifecycle()
     val isOnline = isLoggedIn && isConnected
     val hasCredits = (uiState.credits ?: 0) > 0
