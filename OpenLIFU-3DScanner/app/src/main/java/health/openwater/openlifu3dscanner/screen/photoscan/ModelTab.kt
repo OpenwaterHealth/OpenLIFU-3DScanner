@@ -45,6 +45,21 @@ fun ModelTab(
         remember(collectionName) { File(getModelsDir(context), "$collectionName/$SCAN_SUBDIR") }
     val isLocalOnly = photoscanId == 0L
 
+    // Pre-load model data on IO thread so the GL thread never blocks the main thread
+    // on heavy file I/O. Only triggered once we know a local model file exists.
+    var modelData by remember { mutableStateOf<ModelData?>(null) }
+    LaunchedEffect(downloadState) {
+        if ((downloadState is DownloadState.Success || downloadState is DownloadState.Offline)
+            && modelData == null
+        ) {
+            modelData = try {
+                loadModelData(scanDir.absolutePath)
+            } catch (_: Exception) {
+                null
+            }
+        }
+    }
+
     LaunchedEffect(photocollectionId, isLocalOnly, photoscanId) {
         if (isLocalOnly) {
             // Local-only scan - check if we have a model file
@@ -121,27 +136,41 @@ fun ModelTab(
 
                 is DownloadState.Offline,
                 is DownloadState.Success -> {
-                    var rendererReady by remember { mutableStateOf(false) }
-
-                    Box(modifier = Modifier.fillMaxSize()) {
-                        AndroidView(
+                    val data = modelData
+                    if (data == null) {
+                        // Still pre-loading OBJ/texture on IO thread
+                        Box(
                             modifier = Modifier.fillMaxSize(),
-                            factory = { context ->
-                                ModelSurfaceView(context, scanDir.absolutePath) {
-                                    rendererReady = true
-                                }
-                            }
-                        )
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(48.dp),
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    } else {
+                        var rendererReady by remember { mutableStateOf(false) }
 
-                        if (!rendererReady) {
-                            Box(
+                        Box(modifier = Modifier.fillMaxSize()) {
+                            AndroidView(
                                 modifier = Modifier.fillMaxSize(),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(48.dp),
-                                    color = MaterialTheme.colorScheme.primary
-                                )
+                                factory = { ctx ->
+                                    ModelSurfaceView(ctx, data) {
+                                        rendererReady = true
+                                    }
+                                }
+                            )
+
+                            if (!rendererReady) {
+                                Box(
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(48.dp),
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
                             }
                         }
                     }
@@ -169,4 +198,3 @@ fun ModelTab(
         }
     }
 }
-

@@ -11,12 +11,12 @@ import android.view.ScaleGestureDetector
 @SuppressLint("ViewConstructor")
 class ModelSurfaceView(
     context: Context,
-    modelDir: String,
+    modelData: ModelData,
     onReady: (() -> Unit)? = null
 ) : GLSurfaceView(context) {
 
     private val mainHandler = Handler(Looper.getMainLooper())
-    private val renderer = ModelRenderer(modelDir) {
+    private val renderer = ModelRenderer(modelData) {
         mainHandler.post { onReady?.invoke() }
     }
     private val scaleDetector = ScaleGestureDetector(context, ScaleListener())
@@ -54,9 +54,7 @@ class ModelSurfaceView(
             }
 
             MotionEvent.ACTION_POINTER_UP -> {
-                // If a finger is lifted during a pinch, reset prevX/Y to remaining finger
                 if (event.pointerCount > 1) {
-                    // pick the remaining finger (usually index 0 if lifted is 1)
                     val newIndex = if (event.actionIndex == 0) 1 else 0
                     prevX = event.getX(newIndex)
                     prevY = event.getY(newIndex)
