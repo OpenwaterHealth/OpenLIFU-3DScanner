@@ -1,6 +1,6 @@
 # OpenLIFU-3DScanner
 
-An Android application for capturing 3D photogrammetric meshes used in transducer localization for the [OpenLIFU](https://www.openwater.health/openlifu) low-intensity focused ultrasound research platform.
+An Android application for capturing 3D photogrammetric meshes used in transducer localization for the [Open-LIFU](https://www.openwater.health/openlifu) low-intensity focused ultrasound research platform.
 
 OpenLIFU-3DScanner turns a standard Android phone into a 3D scanning tool for medical research. The app guides users through capturing a series of photographs of a patient wearing a transducer device, then processes those images into a 3D mesh that feeds into the broader Open-LIFU neuronavigation and sonication-planning workflow.
 
