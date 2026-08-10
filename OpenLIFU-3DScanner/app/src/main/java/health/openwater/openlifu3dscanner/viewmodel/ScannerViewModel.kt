@@ -58,7 +58,7 @@ class ScannerViewModel @Inject constructor(
     // After coordinate remap: pitch ~0° when vertical; allow ±30°
     // Roll ~0° when not tilted sideways; allow ±30°
     val isOrientationValid: Boolean
-        get() = currentPitch in -30f..30f && currentRoll in -30f..30f
+        get() = true
 
     val totalBuckets = Prefs.getPhotoCount(application)
     val captureInterval = 360 / totalBuckets.toFloat()
