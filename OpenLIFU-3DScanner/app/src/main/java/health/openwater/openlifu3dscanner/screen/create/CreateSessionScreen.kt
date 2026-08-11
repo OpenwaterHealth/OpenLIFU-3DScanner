@@ -1,0 +1,523 @@
+package health.openwater.openlifu3dscanner.screen.create
+
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.QrCodeScanner
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import health.openwater.openlifu3dscanner.R
+import health.openwater.openlifu3dscanner.extensions.getModelsDir
+import health.openwater.openlifu3dscanner.screen.qr.QrPayload
+import health.openwater.openlifu3dscanner.network.dto.Session
+import health.openwater.openlifu3dscanner.network.dto.SubjectWithSessions
+import health.openwater.openlifu3dscanner.preferences.Prefs
+import health.openwater.openlifu3dscanner.repository.ScanConfig
+import health.openwater.openlifu3dscanner.viewmodel.CloudViewModel
+import health.openwater.openlifu3dscanner.viewmodel.HomeViewModel
+import health.openwater.openlifu3dscanner.viewmodel.UserViewModel
+import java.io.File
+
+enum class SessionMode {
+    EXISTING,
+    NEW
+}
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun CreateCollectionScreen(
+    onNavigateBack: () -> Unit,
+    onStartScan: () -> Unit,
+    onQrScan: () -> Unit = {},
+    qrPayload: QrPayload? = null,
+    onQrPayloadConsumed: () -> Unit = {},
+) {
+    val homeViewModel: HomeViewModel = hiltViewModel()
+    val userViewModel: UserViewModel = hiltViewModel()
+    val cloudViewModel: CloudViewModel = hiltViewModel()
+
+    val subjectsState by homeViewModel.subjectsState.collectAsStateWithLifecycle()
+    val uiState by userViewModel.uiState.collectAsStateWithLifecycle()
+
+    val isLoggedIn = uiState.uid != null
+    val isConnected by userViewModel.isConnected.collectAsStateWithLifecycle()
+    val isOnline = isLoggedIn && isConnected
+    val hasCredits = (uiState.credits ?: 0) > 0
+
+    val context = LocalContext.current
+    var autoUploadEnabled by remember { mutableStateOf(Prefs.getAutoUpload(context)) }
+
+    var selectedSubject by remember { mutableStateOf<SubjectWithSessions?>(null) }
+    var selectedSession by remember { mutableStateOf<Session?>(null) }
+    var manualSessionName by remember { mutableStateOf("") }
+
+    var sessionMode by rememberSaveable { mutableStateOf(SessionMode.EXISTING) }
+
+    var subjectExpanded by remember { mutableStateOf(false) }
+    var sessionExpanded by remember { mutableStateOf(false) }
+
+    var showOverwriteDialog by remember { mutableStateOf(false) }
+    var pendingSessionName by remember { mutableStateOf("") }
+    var pendingSessionId by remember { mutableStateOf<Long?>(null) }
+
+    var isRefreshing by remember { mutableStateOf(false) }
+    var qrError by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(subjectsState.isLoading) {
+        if (!subjectsState.isLoading) isRefreshing = false
+    }
+
+    LaunchedEffect(qrPayload) {
+        if (qrPayload == null) return@LaunchedEffect
+        onQrPayloadConsumed()
+        var foundSubject: SubjectWithSessions? = null
+        var foundSession: Session? = null
+        val subject = subjectsState.subjects.find { it.localId == qrPayload.subjectId }
+        if (subject != null) {
+            val session = subject.sessions.find { it.localId == qrPayload.sessionId }
+            if (session != null) {
+                foundSubject = subject
+                foundSession = session
+            }
+        }
+
+        if (foundSubject != null) {
+            if (sessionMode == SessionMode.EXISTING) {
+                selectedSubject = foundSubject
+                selectedSession = foundSession
+            } else {
+                manualSessionName = qrPayload.sessionName
+            }
+        } else {
+            if (isOnline) {
+                if (sessionMode == SessionMode.EXISTING) {
+                    qrError = qrPayload.subjectId
+                } else {
+                    manualSessionName = qrPayload.sessionName
+                }
+            } else {
+                manualSessionName = qrPayload.sessionName
+            }
+        }
+    }
+
+    LaunchedEffect(isLoggedIn) {
+        if (isLoggedIn) {
+            homeViewModel.loadSubjects()
+        }
+    }
+
+    val isManualMode = !isLoggedIn || !hasCredits || subjectsState.error != null
+    val canStart = when {
+        isManualMode -> manualSessionName.isNotBlank()
+        sessionMode == SessionMode.EXISTING -> selectedSession != null
+        else -> manualSessionName.isNotBlank()
+    }
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(text = stringResource(R.string.create_new_photo_collection)) },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.navigate_back)
+                        )
+                    }
+                },
+                actions = {
+                    IconButton(onClick = onQrScan) {
+                        Icon(
+                            imageVector = Icons.Filled.QrCodeScanner,
+                            contentDescription = stringResource(R.string.scan_qr_code)
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary,
+                    actionIconContentColor = MaterialTheme.colorScheme.onPrimary,
+                )
+            )
+        },
+        bottomBar = {
+            Surface(
+                tonalElevation = 3.dp,
+                shadowElevation = 3.dp,
+            ) {
+                Button(
+                    onClick = {
+                        val sessionName: String
+                        val sessionId: Long?
+
+                        if (isManualMode) {
+                            sessionName = manualSessionName.trim()
+                            sessionId = null
+                        } else if (sessionMode == SessionMode.EXISTING) {
+                            sessionName = selectedSession!!.name
+                            sessionId = selectedSession!!.id
+                        } else {
+                            sessionName = manualSessionName.trim()
+                            sessionId = null
+                        }
+
+                        val existingDir = File(getModelsDir(context), sessionName)
+                        if (existingDir.exists() && existingDir.listFiles()?.isNotEmpty() == true) {
+                            pendingSessionName = sessionName
+                            pendingSessionId = sessionId
+                            showOverwriteDialog = true
+                        } else {
+                            cloudViewModel.setScanConfig(
+                                ScanConfig(
+                                    collectionName = sessionName,
+                                    autoUploadEnabled = if (hasCredits) autoUploadEnabled else false,
+                                    sessionId = sessionId
+                                )
+                            )
+                            onStartScan()
+                        }
+                    },
+                    enabled = canStart,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .navigationBarsPadding()
+                        .padding(horizontal = 24.dp, vertical = 16.dp)
+                ) {
+                    Text(
+                        text = stringResource(R.string.next),
+                        fontSize = 16.sp,
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    )
+                }
+            }
+        }
+    ) { contentPadding ->
+        PullToRefreshBox(
+            isRefreshing = isRefreshing,
+            onRefresh = {
+                if (isLoggedIn) {
+                    selectedSubject = null
+                    selectedSession = null
+                    isRefreshing = true
+                    homeViewModel.loadSubjects()
+                }
+            },
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(contentPadding)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 24.dp, vertical = 24.dp)
+            ) {
+                if (!isLoggedIn || !hasCredits) {
+                    val focusRequester = remember { FocusRequester() }
+                    LaunchedEffect(Unit) { focusRequester.requestFocus() }
+
+                    SessionNameField(
+                        value = manualSessionName,
+                        onValueChange = { manualSessionName = it },
+                        focusRequester = focusRequester
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Text(
+                        text = stringResource(R.string.manual_input_hint),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    return@Column
+                }
+
+                when {
+                    subjectsState.error != null -> {
+                        Text(
+                            text = stringResource(R.string.failed_to_load_subjects),
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        SessionNameField(
+                            value = manualSessionName,
+                            onValueChange = { manualSessionName = it }
+                        )
+                    }
+
+                    else -> {
+                        // ---------- Session mode selector ----------
+                        Text(
+                            text = stringResource(R.string.subject_id),
+                            style = MaterialTheme.typography.labelLarge,
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+
+                        SingleChoiceSegmentedButtonRow(
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            SegmentedButton(
+                                selected = sessionMode == SessionMode.EXISTING,
+                                onClick = {
+                                    sessionMode = SessionMode.EXISTING
+                                    manualSessionName = ""
+                                },
+                                shape = SegmentedButtonDefaults.itemShape(
+                                    index = 0,
+                                    count = 2
+                                )
+                            ) {
+                                Text(stringResource(R.string.select_existing))
+                            }
+
+                            SegmentedButton(
+                                selected = sessionMode == SessionMode.NEW,
+                                onClick = {
+                                    sessionMode = SessionMode.NEW
+                                    selectedSubject = null
+                                    selectedSession = null
+                                },
+                                shape = SegmentedButtonDefaults.itemShape(
+                                    index = 1,
+                                    count = 2
+                                )
+                            ) {
+                                Text(stringResource(R.string.manually_input))
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        // ---------- Session input ----------
+                        when (sessionMode) {
+                            SessionMode.EXISTING -> {
+                                // Subject picker
+                                ExposedDropdownMenuBox(
+                                    expanded = subjectExpanded,
+                                    onExpandedChange = { subjectExpanded = it }
+                                ) {
+                                    OutlinedTextField(
+                                        value = selectedSubject?.localId.orEmpty(),
+                                        onValueChange = {},
+                                        readOnly = true,
+                                        label = { Text(stringResource(R.string.select_subject_id)) },
+                                        trailingIcon = {
+                                            ExposedDropdownMenuDefaults.TrailingIcon(subjectExpanded)
+                                        },
+                                        modifier = Modifier
+                                            .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
+                                            .fillMaxWidth()
+                                    )
+
+                                    ExposedDropdownMenu(
+                                        expanded = subjectExpanded,
+                                        onDismissRequest = { subjectExpanded = false }
+                                    ) {
+                                        subjectsState.subjects
+                                            .sortedByDescending { subject ->
+                                                subject.sessions.maxOfOrNull { it.creationDate }
+                                                    ?: subject.creationDate
+                                            }
+                                            .forEach { subject ->
+                                                DropdownMenuItem(
+                                                    text = { Text(subject.localId) },
+                                                    onClick = {
+                                                        selectedSubject = subject
+                                                        selectedSession = null
+                                                        subjectExpanded = false
+                                                    }
+                                                )
+                                            }
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(16.dp))
+
+                                // Session picker
+                                ExposedDropdownMenuBox(
+                                    expanded = sessionExpanded,
+                                    onExpandedChange = {
+                                        if (selectedSubject != null) sessionExpanded = it
+                                    }
+                                ) {
+                                    OutlinedTextField(
+                                        value = selectedSession?.localId.orEmpty(),
+                                        onValueChange = {},
+                                        readOnly = true,
+                                        enabled = selectedSubject != null,
+                                        label = {
+                                            Text(stringResource(R.string.select_session_id))
+                                        },
+                                        trailingIcon = {
+                                            ExposedDropdownMenuDefaults.TrailingIcon(
+                                                sessionExpanded
+                                            )
+                                        },
+                                        modifier = Modifier
+                                            .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
+                                            .fillMaxWidth()
+                                    )
+
+                                    ExposedDropdownMenu(
+                                        expanded = sessionExpanded,
+                                        onDismissRequest = { sessionExpanded = false }
+                                    ) {
+                                        selectedSubject?.sessions.orEmpty()
+                                            .sortedByDescending { it.creationDate }
+                                            .forEach { session ->
+                                                DropdownMenuItem(
+                                                    text = { Text(session.localId) },
+                                                    onClick = {
+                                                        selectedSession = session
+                                                        sessionExpanded = false
+                                                    }
+                                                )
+                                            }
+                                    }
+                                }
+                            }
+
+                            SessionMode.NEW -> {
+                                Text(
+                                    text = stringResource(R.string.manual_input_hint),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+
+                                SessionNameField(
+                                    value = manualSessionName,
+                                    onValueChange = { manualSessionName = it }
+                                )
+
+                                Spacer(modifier = Modifier.height(8.dp))
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(24.dp))
+
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    autoUploadEnabled = !autoUploadEnabled
+                                    Prefs.setAutoUpload(context, autoUploadEnabled)
+                                }
+                        ) {
+                            Checkbox(
+                                checked = autoUploadEnabled,
+                                onCheckedChange = {
+                                    autoUploadEnabled = it
+                                    Prefs.setAutoUpload(context, it)
+                                }
+                            )
+                            Text(
+                                text = stringResource(R.string.auto_photo_upload),
+                                modifier = Modifier.padding(start = 8.dp)
+                            )
+                        }
+                    }
+                }
+            }
+        } // end PullToRefreshBox
+    }
+
+    qrError?.let { sessionName ->
+        AlertDialog(
+            onDismissRequest = { qrError = null },
+            title = { Text(stringResource(R.string.qr_invalid)) },
+            text = { Text(stringResource(R.string.qr_session_not_found, sessionName)) },
+            confirmButton = {
+                TextButton(onClick = { qrError = null }) {
+                    Text(stringResource(R.string.ok))
+                }
+            }
+        )
+    }
+
+    if (showOverwriteDialog) {
+        AlertDialog(
+            onDismissRequest = { showOverwriteDialog = false },
+            title = { Text(stringResource(R.string.overwrite_existing_data_title)) },
+            text = {
+                Text(stringResource(R.string.overwrite_existing_data_message, pendingSessionName))
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showOverwriteDialog = false
+                        File(getModelsDir(context), pendingSessionName).deleteRecursively()
+                        cloudViewModel.setScanConfig(
+                            ScanConfig(
+                                collectionName = pendingSessionName,
+                                autoUploadEnabled = if (hasCredits) autoUploadEnabled else false,
+                                sessionId = pendingSessionId
+                            )
+                        )
+                        onStartScan()
+                    }
+                ) {
+                    Text(stringResource(R.string.overwrite))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showOverwriteDialog = false }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        )
+    }
+}

@@ -1,0 +1,126 @@
+package health.openwater.openlifu3dscanner.screen.scanner
+
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.unit.dp
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Cloud
+import androidx.compose.material.icons.filled.CloudOff
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.activity.compose.BackHandler
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import health.openwater.openlifu3dscanner.R
+import health.openwater.openlifu3dscanner.viewmodel.CloudViewModel
+import health.openwater.openlifu3dscanner.viewmodel.UserViewModel
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ScannerScreen(
+    onNavigateBack: () -> Unit,
+    onNavigateToProcessing: (autoUploadEnabled: Boolean, isLoggedIn: Boolean) -> Unit,
+    cloudViewModel: CloudViewModel = hiltViewModel()
+) {
+    val scanConfig = cloudViewModel.scanConfig
+    if (scanConfig == null) {
+        LaunchedEffect(Unit) { onNavigateBack() }
+        return
+    }
+
+    val collectionName = scanConfig.collectionName
+    val autoUploadEnabled = scanConfig.autoUploadEnabled
+    val sessionId = scanConfig.sessionId
+
+    val userViewModel: UserViewModel = hiltViewModel()
+    val uiState by userViewModel.uiState.collectAsStateWithLifecycle()
+    val isConnected by userViewModel.isConnected.collectAsStateWithLifecycle()
+    val hasCredits = (uiState.credits ?: 0) > 0
+    val isLoggedIn = uiState.uid != null && hasCredits
+    val isOnline = isLoggedIn && isConnected
+
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(Unit) {
+        // Move any previous session to background (or clean it up if idle/errored)
+        cloudViewModel.dismissCurrentSession()
+        if (cloudViewModel.isLoggedInAndOnline() && hasCredits) {
+            cloudViewModel.createPhotocollection(collectionName, autoUploadEnabled, sessionId)
+        }
+    }
+
+    BackHandler {
+        cloudViewModel.reset(autoUploadEnabled)
+        onNavigateBack()
+    }
+
+    KeepScreenOn()
+
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        topBar = {
+            TopAppBar(
+                title = { Text(text = stringResource(R.string.capturing)) },
+                navigationIcon = {
+                    IconButton(onClick = {
+                        cloudViewModel.reset(removeLocalCollection = true)
+                        onNavigateBack()
+                    }) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.navigate_back)
+                        )
+                    }
+                },
+                actions = {
+                    Icon(
+                        imageVector = if (isOnline) Icons.Filled.Cloud else Icons.Filled.CloudOff,
+                        contentDescription = stringResource(
+                            if (isOnline) R.string.online else R.string.offline
+                        ),
+                        modifier = Modifier.padding(end = 16.dp)
+                    )
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary,
+                    actionIconContentColor = MaterialTheme.colorScheme.onPrimary,
+                )
+            )
+        }
+    ) { contentPadding ->
+        Surface(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(contentPadding),
+        ) {
+            ScannerComponent(
+                collectionName = collectionName,
+                autoUploadEnabled = autoUploadEnabled,
+                isOnline = isOnline,
+                snackbarHostState = snackbarHostState,
+                onProceed = {
+                    cloudViewModel.onScanComplete()
+                    onNavigateToProcessing(autoUploadEnabled, isLoggedIn)
+                }
+            )
+        }
+    }
+}
