@@ -323,11 +323,11 @@ The device's **`TYPE_GAME_ROTATION_VECTOR`** sensor is used at `SENSOR_DELAY_GAM
 
 | Measurement | Threshold |
 |------------|-----------|
-| Pitch (forward/back tilt) | Must be within ±30° of vertical |
-| Roll (sideways tilt) | Must be within ±30° |
+| Pitch (forward/back tilt) | Must be within ±80° of upright |
+| Roll (sideways tilt) | Unrestricted; displayed as leveling guidance |
 | Compass heading | Tracked to calculate angular position for orbit guidance |
 
-The rotation matrix from the sensor is remapped from device frame to world frame. The heading angle drives the orbit arc UI and determines the filename angle suffix for each captured photo.
+The rotation matrix from the sensor is remapped from device frame to world frame. Capture pauses only within approximately 10° of pointing the camera straight up or down, where horizontal heading cannot be determined reliably. The heading angle drives the orbit arc UI and determines the filename angle suffix for each captured photo.
 
 ### Image Processing Before Upload
 

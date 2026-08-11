@@ -48,17 +48,17 @@ class ScannerViewModel @Inject constructor(
     var startingAngle by mutableFloatStateOf(0f)
         private set
 
-    // Pitch and roll for orientation validation
+    // Pitch is used to avoid unreliable heading measurements near straight up/down.
+    // Roll remains available for the level indicator but does not restrict capture.
     var currentPitch by mutableFloatStateOf(0f)
         private set
     var currentRoll by mutableFloatStateOf(0f)
         private set
 
-    // Phone must be held roughly upright to capture
-    // After coordinate remap: pitch ~0° when vertical; allow ±30°
-    // Roll ~0° when not tilted sideways; allow ±30°
+    // After coordinate remap, pitch is ~0° when the phone is upright. Exclude only
+    // the final 10° near straight up/down, where horizontal heading is unstable.
     val isOrientationValid: Boolean
-        get() = true
+        get() = currentPitch in -80f..80f
 
     val totalBuckets = Prefs.getPhotoCount(application)
     val captureInterval = 360 / totalBuckets.toFloat()
@@ -123,7 +123,7 @@ class ScannerViewModel @Inject constructor(
                 ).toFloat()
                 currentAngle = if (heading < 0) heading + 360f else heading
 
-                // Pitch/roll for orientation validation (remapped for upright phone)
+                // Pitch for heading validation and roll for the level indicator
                 SensorManager.remapCoordinateSystem(
                     rotationMatrix,
                     SensorManager.AXIS_X,
