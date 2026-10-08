@@ -1,5 +1,9 @@
 # OpenLIFU-3DScanner
 
+## Disclaimer
+
+CAUTION - Investigational device. Limited by Federal (or United States) law to investigational use. The system described here has not been evaluated by the FDA and is not designed for the treatment or diagnosis of any disease. It is provided AS-IS, with no warranties. User assumes all liability and responsibility for identifying and mitigating risks associated with using this software.
+
 An Android application for capturing 3D photogrammetric meshes used in transducer localization for the [Open-LIFU](https://www.openwater.health/openlifu) low-intensity focused ultrasound research platform.
 
 OpenLIFU-3DScanner turns a standard Android phone into a 3D scanning tool for medical research. The app guides users through capturing a series of photographs of a patient wearing a transducer device, then processes those images into a 3D mesh that feeds into the broader Open-LIFU neuronavigation and sonication-planning workflow.
